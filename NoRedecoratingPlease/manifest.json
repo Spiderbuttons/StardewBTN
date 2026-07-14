@@ -1,0 +1,9 @@
+{
+    "Name": "No Redecorating Please",
+    "Author": "Spiderbuttons",
+    "Version": "1.0.0",
+    "Description": "Your spouse will no longer redecorate your house for you.",
+    "UniqueID": "Spiderbuttons.NoRedecoratingPlease",
+    "EntryDll": "NoRedecoratingPlease.dll",
+    "UpdateKeys": [ "Nexus:49172" ]
+}
