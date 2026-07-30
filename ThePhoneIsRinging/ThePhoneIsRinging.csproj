@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>ThePhoneIsRinging</AssemblyName>
+        <RootNamespace>ThePhoneIsRinging</RootNamespace>
+        <Version>1.0.0</Version>
+        <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>Latest</LangVersion>
+        <GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley</GamePath>
+        <GameModsPath>$(GamePath)\ModsDebug</GameModsPath>
+        <StartArguments>--mods-path "$(GameModsPath)"</StartArguments>
+        <EnableHarmony>true</EnableHarmony>
+        <EnableModDeploy>true</EnableModDeploy>
+        <EnableModZip>true</EnableModZip>
+        <ModFolderName>ThePhoneIsRinging</ModFolderName>
+        <Title>ThePhoneIsRinging</Title>
+        <Authors>Spiderbuttons</Authors>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <OutputPath>bin\Debug</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <TranslationClassBuilder_ClassName>i18n</TranslationClassBuilder_ClassName>
+        <TranslationClassBuilder_AddGetByKey>true</TranslationClassBuilder_AddGetByKey>
+        <TranslationClassBuilder_AddKeyMap>true</TranslationClassBuilder_AddKeyMap>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Publicize Include="StardewModdingAPI"/>
+        <Publicize Include="Stardew Valley"/>
+        <Publicize Include="StardewValley.GameData"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.*"/>
+        <PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.2.1"/>
+        <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+</Project>
