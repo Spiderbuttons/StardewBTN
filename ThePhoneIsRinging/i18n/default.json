@@ -1,3 +1,12 @@
 ﻿{
-  "Key": "Value"
+  "PhoneRingingNotification": "The phone is ringing!",
+  
+  "Config.HudNotification.Name": "HUD Notification",
+  "Config.HudNotification.Description": "Display a message in the corner of your screen when the phone is ringing.",
+  
+  "Config.HudTimeLeft.Name": "Display Time Remaining",
+  "Config.HudTimeLeft.Description": "Display the time remaining until the phone stops ringing. Only does something if HUD Notification is enabled.",
+  
+  "Config.ExclamationPoint.Name": "Exclamation Point",
+  "Config.ExclamationPoint.Description": "Display an exclamation point above the phone while it's ringing.",
 }
