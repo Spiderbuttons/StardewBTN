@@ -5,5 +5,5 @@
     "Description": "Display a message on screen when the phone is ringing in your house.",
     "UniqueID": "Spiderbuttons.ThePhoneIsRinging",
     "EntryDll": "ThePhoneIsRinging.dll",
-    "UpdateKeys": []
+    "UpdateKeys": [ "Nexus:49934" ]
 }
