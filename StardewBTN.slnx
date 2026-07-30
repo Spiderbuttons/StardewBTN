@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="NoRedecoratingPlease/NoRedecoratingPlease.csproj" />
+  <Project Path="ThePhoneIsRinging/ThePhoneIsRinging.csproj" />
 </Solution>

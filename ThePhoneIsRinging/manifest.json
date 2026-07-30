@@ -1,0 +1,9 @@
+{
+    "Name": "The Phone Is Ringing",
+    "Author": "Spiderbuttons",
+    "Version": "1.0.0",
+    "Description": "Display a message on screen when the phone is ringing in your house.",
+    "UniqueID": "Spiderbuttons.ThePhoneIsRinging",
+    "EntryDll": "ThePhoneIsRinging.dll",
+    "UpdateKeys": [ "Nexus:49934" ]
+}
