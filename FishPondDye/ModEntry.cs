@@ -1,4 +1,5 @@
 ﻿using System;
+using FishPondDye.Components;
 using GenericModConfigMenu;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
@@ -8,6 +9,7 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using FishPondDye.Helpers;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace FishPondDye
 {
@@ -37,11 +39,39 @@ namespace FishPondDye
             var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
             if (configMenu != null) Config.SetupConfig(configMenu, ModManifest, Helper);
         }
+        
+        private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
+        {
+            if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/Node"))
+            {
+                e.LoadFromModFile<Texture2D>("assets/node.png", AssetLoadPriority.Exclusive);
+            }
+            
+            if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/FloppyButton"))
+            {
+                e.LoadFromModFile<Texture2D>("assets/floppy_button.png", AssetLoadPriority.Exclusive);
+            }
+            
+            if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/ResetButton"))
+            {
+                e.LoadFromModFile<Texture2D>("assets/reset_button.png", AssetLoadPriority.Exclusive);
+            }
+        }
 
         private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
             if (!Context.IsWorldReady)
                 return;
+
+            if (e.Button is SButton.F3)
+            {
+                if (Game1.activeClickableMenu is not null) Game1.activeClickableMenu = null;
+                else
+                {
+                    // ColourWheel.ColourWheelTexture = ColourWheel.GenerateColourWheelTexture(2048, 2048);
+                    Game1.activeClickableMenu = new ColourPicker(null);
+                }
+            }
         }
     }
 }
