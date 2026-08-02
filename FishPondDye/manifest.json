@@ -1,0 +1,9 @@
+{
+    "Name": "Fish Pond Dye",
+    "Author": "Spiderbuttons",
+    "Version": "1.0.0",
+    "Description": "Dye your fish ponds whatever colour you want, regardless of which fish are living in them.",
+    "UniqueID": "Spiderbuttons.FishPondDye",
+    "EntryDll": "FishPondDye.dll",
+    "UpdateKeys": []
+}
