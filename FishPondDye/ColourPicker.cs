@@ -16,7 +16,7 @@ public class ColourPicker : IClickableMenu
 {
     private FishPond? _pond = null;
 
-    private readonly ColourWheel _colourWheel = new();
+    private readonly ColourWheel _colourWheel = new(2048, 2048);
     private float _value = 1f;
 
     public ColourPicker(FishPond? pond)
@@ -62,10 +62,9 @@ public class ColourPicker : IClickableMenu
         float y = Game1.uiViewport.Height / 2.5f;
         
         // Idk 40% of the viewport height seems fine.
-        float scale = Math.Min(Game1.uiViewport.Width / (float)_colourWheel.Width, Game1.uiViewport.Height / (float)_colourWheel.Height) * 0.7f;
-        float rotation = (float)Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 1000f;
+        float scale = Math.Min(Game1.uiViewport.Width / (float)_colourWheel.Width, Game1.uiViewport.Height / (float)_colourWheel.Height) * 0.4f;
         
-        _colourWheel.draw(b, new Vector2(x, y), 0f, scale);
+        _colourWheel.draw(b, new Vector2(x, y), scale);
         
         drawMouse(b);
     }
@@ -74,7 +73,7 @@ public class ColourPicker : IClickableMenu
     {
         base.update(time);
         // _value = (float)Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 1000f) * 0.5f + 0.5f;
-        _value = 1f;
-        _colourWheel.Value = _value;
+        // var smoothing = (float)Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 1000f) * 0.5f + 0.5f;
+        _colourWheel.Smoothing = 1.0f;
     }
 }

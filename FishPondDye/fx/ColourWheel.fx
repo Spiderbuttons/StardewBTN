@@ -9,18 +9,9 @@
 
 static const float PI = 3.14159265359;
 
-Texture2D ColourWheelTex;
-
 float2 Resolution;
-float BlurMultiplier = 1.0f;
-
-float Smoothing = 1.0f;
-float Value = 1.0f;
-
-sampler2D Sampler = sampler_state
-{
-    Texture = <ColourWheelTex>;
-};
+float Smoothing;
+float Value;
 
 struct VertexShaderOutput
 {
@@ -29,64 +20,44 @@ struct VertexShaderOutput
     float2 TextureCoordinates : TEXCOORD0;
 };
 
-float4 ColourWheel(VertexShaderOutput input) : COLOR
+bool isTransparentAtPoint(float2 coordinates)
 {
-    float2 coords = input.TextureCoordinates;
-    // return float4(coords.x, coords.y, 0, 1);
+    return length((coordinates - 0.5) * 2) > 1.0;
+}
+
+float4 PointToColour(float2 coordinates)
+{
+    coordinates -= 0.5f;
     
-    coords -= 0.5f;
-    
-    float distFromCenter = length(coords * 2.0f);
-    if (distFromCenter > 1)
-    {
-        return float4(255, 255, 255, 0);
-    }
-    
-    float hue = atan2(coords.y, coords.x) * 3.0 / PI;
-    
+    float hue = atan2(coordinates.y, coordinates.x) * 3.0 / PI;
     float4 hueRGB = float4(hue, hue - 2.0, hue + 2.0, 0);
     hueRGB = clamp(abs(3.0 - abs(hueRGB)) - 1.0, 0.0, 1.0);
-    
     float4 smoothHueRGB = hueRGB * hueRGB * (3.0 - hueRGB * 2.0);
     
+    float distFromCenter = length(coordinates * 2.0f);
     float saturation = clamp(distFromCenter / 1, 0.0, 1.0);
     
     float3 rgb = lerp(hueRGB.rgb, smoothHueRGB.rgb, Smoothing);
     rgb = lerp(float3(1, 1, 1), rgb, saturation);
     
-    return float4 (rgb * Value, 1.0);
+    return float4 (rgb * Value, 1);
 }
 
-float4 BlurHoriz(VertexShaderOutput input) : COLOR
+float4 ColourWheel(VertexShaderOutput input) : COLOR
 {
-	float4 colour = float4(0, 0, 0, 0);
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(-4.0f * BlurMultiplier / Resolution.x, 0)) * 0.05f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(-3.0f * BlurMultiplier / Resolution.x, 0)) * 0.09f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(-2.0f * BlurMultiplier / Resolution.x, 0)) * 0.12f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(-1.0f * BlurMultiplier / Resolution.x, 0)) * 0.15f;
-    colour += tex2D(Sampler, input.TextureCoordinates) * 0.16f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(1.0f * BlurMultiplier / Resolution.x, 0)) * 0.15f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(2.0f * BlurMultiplier / Resolution.x, 0)) * 0.12f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(3.0f * BlurMultiplier / Resolution.x, 0)) * 0.09f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(4.0f * BlurMultiplier / Resolution.x, 0)) * 0.05f;
-    
-    return colour;
-}
-
-float4 BlurVert(VertexShaderOutput input) : COLOR
-{
-    float4 colour = float4(0, 0, 0, 0);
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(0, -4.0f * BlurMultiplier / Resolution.y)) * 0.05f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(0, -3.0f * BlurMultiplier / Resolution.y)) * 0.09f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(0, -2.0f * BlurMultiplier / Resolution.y)) * 0.12f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(0, -1.0f * BlurMultiplier / Resolution.y)) * 0.15f;
-    colour += tex2D(Sampler, input.TextureCoordinates) * 0.16f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(0, 1.0f * BlurMultiplier / Resolution.y)) * 0.15f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(0, 2.0f * BlurMultiplier / Resolution.y)) * 0.12f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(0, 3.0f * BlurMultiplier / Resolution.y)) * 0.09f;
-    colour += tex2D(Sampler, input.TextureCoordinates + float2(0, 4.0f * BlurMultiplier / Resolution.y)) * 0.05f;
-    
-    return colour;
+    float2 uv = input.TextureCoordinates;
+    float alpha = 0.0;
+    for (int x = -3; x <= 3; x++)
+    {
+        for (int y = -3; y <= 3; y++)
+        {
+            float2 neighbourUV = uv + float2(x, y) / Resolution;
+            alpha += isTransparentAtPoint(neighbourUV) ? 0.0 : 1.0;
+        }
+    }
+    alpha /= 45.0; // It's 49 cuz going from -3 to 3 maks a 7x7 grid. Convolution? Idk.
+    alpha = clamp(alpha, 0.0, 1.0);
+    return PointToColour(uv) * alpha;
 }
 
 technique ColourWheel
@@ -95,12 +66,4 @@ technique ColourWheel
     {
         PixelShader = compile PS_SHADERMODEL ColourWheel();
     }
- //    pass P1
- //    {
- //        PixelShader = compile PS_SHADERMODEL BlurHoriz();
- //    }
-	// pass P2
- //    {
- //        PixelShader = compile PS_SHADERMODEL BlurVert();
- //    }
 };

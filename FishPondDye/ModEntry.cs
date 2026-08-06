@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using FishPondDye.Components;
 using GenericModConfigMenu;
 using HarmonyLib;
@@ -32,6 +33,11 @@ namespace FishPondDye
 
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
+            
+            ShaderHelper.WatchShader("colourWheel", (effect) =>
+            {
+                ColourWheel.ColourWheelEffect = effect;
+            });
         }
 
         private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
@@ -60,6 +66,11 @@ namespace FishPondDye
 
         private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
+            if (e.Button is SButton.F2)
+            {
+                Log.Debug(Assembly.GetEntryAssembly()?.Location);
+            }
+            
             if (!Context.IsWorldReady)
                 return;
 
@@ -68,7 +79,6 @@ namespace FishPondDye
                 if (Game1.activeClickableMenu is not null) Game1.activeClickableMenu = null;
                 else
                 {
-                    // ColourWheel.ColourWheelTexture = ColourWheel.GenerateColourWheelTexture(2048, 2048);
                     Game1.activeClickableMenu = new ColourPicker(null);
                 }
             }

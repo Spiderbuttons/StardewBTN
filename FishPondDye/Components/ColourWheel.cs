@@ -12,13 +12,17 @@ namespace FishPondDye.Components;
 
 public class ColourWheel
 {
-    private static Effect ColourWheelEffect => field ??= LoadColourWheelFx() ?? throw new Exception("Failed to load ColourWheel shader.");
+    public static Effect ColourWheelEffect
+    {
+        get => field ??= LoadColourWheelFx() ?? throw new Exception("Failed to load ColourWheel shader.");
+        set;
+    }
 
     private static Effect? LoadColourWheelFx()
     {
         try
         {
-            byte[] stream = File.ReadAllBytes(Path.Combine(ModEntry.ModHelper.DirectoryPath, "assets", "colourWheel.mgfx"));
+            byte[] stream = File.ReadAllBytes(Path.Combine(ModEntry.ModHelper.DirectoryPath, "assets", "shaders", "colourWheel.mgfx"));
             return new Effect(Game1.graphics.GraphicsDevice, stream);
         } catch (Exception e)
         {
@@ -26,17 +30,17 @@ public class ColourWheel
             return null;
         }
     }
-    
-    public static Texture2D ColourWheelTexture
-    {
-        get => field ??= GenerateColourWheelTexture(1024, 1024);
-        set;
-    }
 
     public int Width { get; set; }
     public int Height { get; set; }
 
     public float Value
+    {
+        get;
+        set => field = Math.Clamp(value, 0f, 1f);
+    }
+
+    public float Smoothing
     {
         get;
         set => field = Math.Clamp(value, 0f, 1f);
@@ -196,38 +200,26 @@ public class ColourWheel
         // return ColorPicker.HsvToRgb(hue * 360f, saturation, value);
     }
 
-    public void draw(SpriteBatch b, Vector2 position, float rotation, float scale)
+    public void draw(SpriteBatch b, Vector2 position, float scale)
     {
         b.End();
-        b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.Default, RasterizerState.CullNone, effect: ColourWheelEffect);
-        
-        // ColourWheelEffect.Parameters["Resolution"].SetValue(new Vector2(0.5f, 0.5f));
-        ColourWheelEffect.Parameters["Value"].SetValue(Value);
+        b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearWrap, DepthStencilState.Default, RasterizerState.CullNone, effect: ColourWheelEffect);
+
+        ColourWheelEffect.Parameters["Resolution"].SetValue(new Vector2(Width, Height));
+        ColourWheelEffect.Parameters["Value"].SetValue(1.0f);
         ColourWheelEffect.Parameters["Smoothing"].SetValue(1.0f);
-        // ColourWheelEffect.Parameters["BlurMultiplier"].SetValue(1.0f);
         
         b.Draw(
             texture: Game1.staminaRect,
             destinationRectangle: new Rectangle(
-                (int)(position.X - (2048 * scale) / 2f),
-                (int)(position.Y - (2048 * scale) / 2f),
-                (int)(2048 * scale),
-                (int)(2048 * scale)
+                (int)(position.X - Width * scale),
+                (int)(position.Y - Height * scale),
+                (int)(Width * scale),
+                (int)(Height * scale)
             ),
-            color: Color.Black
+            color: Color.White
         );
-        
-        // b.Draw(
-        //     texture: ColourWheelTexture,
-        //     position: position,
-        //     sourceRectangle: null,
-        //     color: Color.Lerp(Color.Black, Color.White, Value),
-        //     rotation: rotation,
-        //     origin: new Vector2(ColourWheelTexture.Width / 2f, ColourWheelTexture.Height / 2f),
-        //     scale: scale,
-        //     effects: SpriteEffects.None,
-        //     layerDepth: 1f
-        // );
+
         b.End();
         b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone);
     }
