@@ -7,7 +7,7 @@
     #define PS_SHADERMODEL ps_4_0_level_9_1
 #endif
 
-static const float PI = 3.14159265359;
+static const float PI = 3.14159265359793;
 
 float2 Resolution;
 float Smoothing;
@@ -27,20 +27,23 @@ bool isTransparentAtPoint(float2 coordinates)
 
 float4 PointToColour(float2 coordinates)
 {
+    // https://www.shadertoy.com/view/3fcfWr
+    
     coordinates -= 0.5f;
     
     float hue = atan2(coordinates.y, coordinates.x) * 3.0 / PI;
-    float4 hueRGB = float4(hue, hue - 2.0, hue + 2.0, 0);
+    float3 hueRGB = float3(hue, hue - 2.0, hue + 2.0);
     hueRGB = clamp(abs(3.0 - abs(hueRGB)) - 1.0, 0.0, 1.0);
-    float4 smoothHueRGB = hueRGB * hueRGB * (3.0 - hueRGB * 2.0);
+    
+    float3 smoothHueRGB = hueRGB * hueRGB * (3.0 - hueRGB * 2.0);
     
     float distFromCenter = length(coordinates * 2.0f);
     float saturation = clamp(distFromCenter / 1, 0.0, 1.0);
     
-    float3 rgb = lerp(hueRGB.rgb, smoothHueRGB.rgb, Smoothing);
+    float3 rgb = lerp(hueRGB.rgb, smoothHueRGB.rgb, 1);
     rgb = lerp(float3(1, 1, 1), rgb, saturation);
     
-    return float4 (rgb * Value, 1);
+    return float4(rgb * Value, 1);
 }
 
 float4 ColourWheel(VertexShaderOutput input) : COLOR
