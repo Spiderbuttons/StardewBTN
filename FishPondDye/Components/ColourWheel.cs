@@ -72,6 +72,30 @@ public class ColourWheel
         return distance.Length() <= radius;
     }
 
+    public static Vector3 RGBToHSV(Color color)
+    {
+        var (r, g, b) = (color.R / 255d, color.G / 255d, color.B / 255d);
+        double max = Math.Max(r, Math.Max(g, b));
+        double min = Math.Min(r, Math.Min(g, b));
+        double delta = max - min;
+        
+        double hue;
+        const float TOLERANCE = 0.0000000001f;
+        if (delta == 0)
+            hue = 0;
+        else if (Math.Abs(max - r) < TOLERANCE)
+            hue = (60 * ((g - b) / delta) + 360) % 360;
+        else if (Math.Abs(max - g) < TOLERANCE)
+            hue = (60 * ((b - r) / delta) + 120) % 360;
+        else
+            hue = (60 * ((r - g) / delta) + 240) % 360;
+        
+        double saturation = max == 0 ? 0 : delta / max;
+        double value = max;
+
+        return new Vector3((float)hue, (float)saturation, (float)value);
+    }
+
     public static Color PointToRGB(Vector2 point)
     {
         /* https://www.shadertoy.com/view/3fcfWr */
@@ -125,8 +149,26 @@ public class ColourWheel
     {
         b.End();
         b.Begin(effect: ColourWheelEffect);
-
-        ColourWheelEffect.Parameters["Resolution"].SetValue(new Vector2(2048, 2048));
+        
+        ColourWheelEffect.Parameters["Resolution"].SetValue(new Vector2(Width * 5f, Height * 5f));
+        
+        ColourWheelEffect.Parameters["Value"].SetValue(0.1f);
+        b.Draw(
+            texture: Game1.staminaRect,
+            destinationRectangle: new Rectangle(
+                x: (int)CenterPoint.X,
+                y: (int)CenterPoint.Y,
+                width: (int)(Width * 1.01f),
+                height: (int)(Height * 1.01f)
+            ),
+            sourceRectangle: null,
+            color: new Color(84, 35, 15) * 0.4f,
+            rotation: 0f,
+            origin: new Vector2(0.5f, 0.5f),
+            effects: SpriteEffects.None,
+            layerDepth: 1f
+        );
+        
         ColourWheelEffect.Parameters["Value"].SetValue(Value);
         
         b.Draw(
@@ -138,7 +180,7 @@ public class ColourWheel
                 height: (int)Height
             ),
             sourceRectangle: null,
-            color: Color.Black,
+            color: Color.White,
             rotation: 0f,
             origin: new Vector2(0.5f, 0.5f),
             effects: SpriteEffects.None,

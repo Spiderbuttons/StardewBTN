@@ -60,7 +60,7 @@ float4 ColourWheel(VertexShaderOutput input) : COLOR
     }
     alpha /= 45.0; // It's 49 cuz going from -3 to 3 maks a 7x7 grid. Convolution? Idk.
     alpha = clamp(alpha, 0.0, 1.0);
-    return PointToColour(uv) * alpha;
+    return PointToColour(uv) * alpha * input.Color;
 }
 
 technique ColourWheel
