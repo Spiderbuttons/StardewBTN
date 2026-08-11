@@ -47,6 +47,11 @@ public class GradientBar
         ColourTwo = colourTwo ?? Color.White;
     }
 
+    public bool ContainsPoint(Point point)
+    {
+        return Bounds.Contains(point);
+    }
+
     public void draw(SpriteBatch b)
     {
         if (Bounds.IsEmpty) return;

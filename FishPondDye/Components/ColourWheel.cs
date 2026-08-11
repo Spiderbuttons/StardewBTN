@@ -42,6 +42,8 @@ public class ColourWheel
         set => field = Math.Clamp(value, 0f, 1f);
     }
 
+    public bool IsSelected = false;
+
     public ColourWheel(Vector2 centerPoint, float width, float height)
     {
         CenterPoint = centerPoint;
@@ -75,25 +77,48 @@ public class ColourWheel
     public static Vector3 RGBToHSV(Color color)
     {
         var (r, g, b) = (color.R / 255d, color.G / 255d, color.B / 255d);
-        double max = Math.Max(r, Math.Max(g, b));
-        double min = Math.Min(r, Math.Min(g, b));
-        double delta = max - min;
+        float max = (float)Math.Max(r, Math.Max(g, b));
+        float min = (float)Math.Min(r, Math.Min(g, b));
+        float delta = max - min;
         
-        double hue;
-        const float TOLERANCE = 0.0000000001f;
+        float hue;
+        const float TOLERANCE = 0.00001f;
         if (delta == 0)
             hue = 0;
         else if (Math.Abs(max - r) < TOLERANCE)
-            hue = (60 * ((g - b) / delta) + 360) % 360;
+            hue = (float)(60 * ((g - b) / delta) + 360) % 360;
         else if (Math.Abs(max - g) < TOLERANCE)
-            hue = (60 * ((b - r) / delta) + 120) % 360;
+            hue = (float)(60 * ((b - r) / delta) + 120) % 360;
         else
-            hue = (60 * ((r - g) / delta) + 240) % 360;
+            hue = (float)(60 * ((r - g) / delta) + 240) % 360;
         
-        double saturation = max == 0 ? 0 : delta / max;
-        double value = max;
+        float saturation = max == 0 ? 0 : delta / max;
+        return new Vector3(hue, saturation, max);
+    }
+    
+    public static Color HUEtoRGB(float hue)
+    {
+        float r = Math.Abs(hue * 6 - 3) - 1;
+        float g = 2 - Math.Abs(hue * 6 - 2);
+        float b = 2 - Math.Abs(hue * 6 - 4);
+        return new Color(
+            Math.Clamp(r, 0f, 1f),
+            Math.Clamp(g, 0f, 1f),
+            Math.Clamp(b, 0f, 1f)
+        );
+    }
+    
+    public static Color HSVtoRGB(Vector3 hsv)
+    {
+        float hue = hsv.X / 360f;
+        float saturation = hsv.Y;
+        float value = hsv.Z;
 
-        return new Vector3((float)hue, (float)saturation, (float)value);
+        Color rgb = HUEtoRGB(hue);
+        Vector3 rgbVector = new Vector3(rgb.R, rgb.G, rgb.B) / 255f;
+
+        Vector3 result = Vector3.Lerp(Vector3.One, rgbVector, saturation) * value;
+        return new Color(result.X, result.Y, result.Z);
     }
 
     public static Color PointToRGB(Vector2 point)
@@ -123,26 +148,9 @@ public class ColourWheel
 
     public static Vector2 RGBToPoint(Color color)
     {
-        var (r, g, b) = (color.R / 255d, color.G / 255d, color.B / 255d);
-        double max = Math.Max(r, Math.Max(g, b));
-        double min = Math.Min(r, Math.Min(g, b));
-        double delta = max - min;
-        
-        double hue;
-        const float TOLERANCE = 0.0000000001f;
-        if (delta == 0)
-            hue = 0;
-        else if (Math.Abs(max - r) < TOLERANCE)
-            hue = (60 * ((g - b) / delta) + 360) % 360;
-        else if (Math.Abs(max - g) < TOLERANCE)
-            hue = (60 * ((b - r) / delta) + 120) % 360;
-        else
-            hue = (60 * ((r - g) / delta) + 240) % 360;
-        
-        double saturation = max == 0 ? 0 : delta / max;
-        
-        double angle = hue * Math.PI / 180;
-        return new Vector2((float)(saturation * Math.Cos(angle)), (float)(saturation * Math.Sin(angle)));
+        Vector3 hsv = RGBToHSV(color);
+        double angle = hsv.X * Math.PI / 180;
+        return new Vector2((float)(hsv.Y * Math.Cos(angle)), (float)(hsv.Y * Math.Sin(angle)));
     }
 
     public void draw(SpriteBatch b)

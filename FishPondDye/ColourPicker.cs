@@ -13,7 +13,7 @@ namespace FishPondDye;
 
 public class ColourPicker : IClickableMenu
 {
-    private static Texture2D _selectionCircle = GenerateSelectionOutline();
+    private static readonly Texture2D _selectionCircle = GenerateSelectionOutline();
     
     private FishPond? _pond = null;
 
@@ -23,47 +23,158 @@ public class ColourPicker : IClickableMenu
             y: Game1.uiViewport.Height / 3f), 
         width: (int)(Game1.uiViewport.Height / 4f), 
         height: (int)(Game1.uiViewport.Height / 4f));
+
+    private float _red = 1;
+    private float _green = 1;
+    private float _blue = 1;
     
-    private ColourSlider RedSlider = new();
-    private ColourSlider BlueSlider = new();
-    private ColourSlider GreenSlider = new();
-    private ColourSlider HueSlider = new(isHueBar: true);
-    private ColourSlider SaturationSlider = new();
-    private ColourSlider ValueSlider = new();
+    private float _hue => ColourWheel.RGBToHSV(ColourWithoutValue).X;
+    private float _saturation => ColourWheel.RGBToHSV(ColourWithoutValue).Y;
+    private float _value = 1;
     
-    private float _value = 1f;
-    
-    public Color SelectedColour = Color.White;
+    public Color ColourWithoutValue => new(_red, _green, _blue);
+    public Color SelectedColour => Color.Lerp(Color.Black, ColourWithoutValue, _value);
 
     private bool _isSelecting = false;
+    
+    private ColourSlider RedSlider;
+    private ColourSlider BlueSlider;
+    private ColourSlider GreenSlider;
+    private ColourSlider HueSlider;
+    private ColourSlider SaturationSlider;
+    private ColourSlider ValueSlider;
 
     public ColourPicker(FishPond? pond)
     {
         _pond = pond;
+        RedSlider = new ColourSlider(getter: GetR, setter: SetR);
+        GreenSlider = new ColourSlider(getter: GetG, setter: SetG);
+        BlueSlider = new ColourSlider(getter: GetB, setter: SetB);
+        HueSlider = new ColourSlider(getter: GetHue, setter: SetHue, isHueBar: true);
+        SaturationSlider = new ColourSlider(getter: GetSaturation, setter: SetSaturation);
+        ValueSlider = new ColourSlider(getter: GetValue, setter: SetValue);
     }
+
+    private void SetR(float r)
+    {
+        _red = r;
+    }
+    
+    private void SetG(float g)
+    {
+        _green = g;
+    }
+    
+    private void SetB(float b)
+    {
+        _blue = b;
+    }
+    
+    private void SetHue(float h)
+    {
+        var hsl = ColourWheel.RGBToHSV(ColourWithoutValue);
+        hsl.X = h * 360f;
+        Color rgb = ColourWheel.HSVtoRGB(hsl);
+        _red = rgb.R / 255f;
+        _green = rgb.G / 255f;
+        _blue = rgb.B / 255f;
+    }
+
+    private void SetSaturation(float s)
+    {
+        var hsl = ColourWheel.RGBToHSV(ColourWithoutValue);
+        hsl.Y = s;
+        Color rgb = ColourWheel.HSVtoRGB(hsl);
+        _red = rgb.R / 255f;
+        _green = rgb.G / 255f;
+        _blue = rgb.B / 255f;
+    }
+
+    private void SetValue(float v)
+    {
+        _value = v;
+    }
+    
+    public void SetColourWithoutValue(Color colour)
+    {
+        _red = colour.R / 255f;
+        _green = colour.G / 255f;
+        _blue = colour.B / 255f;
+    }
+    
+    private float GetR() => _red;
+    private float GetG() => _green;
+    private float GetB() => _blue;
+    private float GetHue() => _hue / 360f;
+    private float GetSaturation() => _saturation;
+    private float GetValue() => _value;
     
     public override void releaseLeftClick(int x, int y)
     {
         base.releaseLeftClick(x, y);
-        _isSelecting = false;
+        _colourWheel.IsSelected = false;
+        RedSlider.IsSelected = false;
+        GreenSlider.IsSelected = false;
+        BlueSlider.IsSelected = false;
+        HueSlider.IsSelected = false;
+        SaturationSlider.IsSelected = false;
+        ValueSlider.IsSelected = false;
     }
 
     public override void leftClickHeld(int x, int y)
     {
         base.leftClickHeld(x, y);
-        if (_isSelecting) SelectedColour = _colourWheel.GetColourAtPoint(new Vector2(x, y));
+        if (_colourWheel.IsSelected) SetColourWithoutValue(_colourWheel.GetColourAtPoint(new Vector2(x, y)));
+        
+        if (RedSlider.IsSelected)
+        {
+            float progress = (x - RedSlider.Bar.Bounds.X) / (float)RedSlider.Bar.Bounds.Width;
+            progress = Math.Clamp(progress, 0f, 1f);
+            SetR(progress);
+        }
+        if (GreenSlider.IsSelected)
+        {
+            float progress = (x - GreenSlider.Bar.Bounds.X) / (float)GreenSlider.Bar.Bounds.Width;
+            progress = Math.Clamp(progress, 0f, 1f);
+            SetG(progress);
+        }
+        if (BlueSlider.IsSelected)
+        {
+            float progress = (x - BlueSlider.Bar.Bounds.X) / (float)BlueSlider.Bar.Bounds.Width;
+            progress = Math.Clamp(progress, 0f, 1f);
+            SetB(progress);
+        }
+        
+        if (HueSlider.IsSelected)
+        {
+            float progress = (x - HueSlider.Bar.Bounds.X) / (float)HueSlider.Bar.Bounds.Width;
+            progress = Math.Clamp(progress, 0f, 1f);
+            SetHue(progress);
+        }
+        if (SaturationSlider.IsSelected)
+        {
+            float progress = (x - SaturationSlider.Bar.Bounds.X) / (float)SaturationSlider.Bar.Bounds.Width;
+            progress = Math.Clamp(progress, 0f, 1f);
+            SetSaturation(progress);
+        }
+        if (ValueSlider.IsSelected)
+        {
+            float progress = (x - ValueSlider.Bar.Bounds.X) / (float)ValueSlider.Bar.Bounds.Width;
+            progress = Math.Clamp(progress, 0f, 1f);
+            SetValue(progress);
+        }
     }
 
     public override void receiveLeftClick(int x, int y, bool playSound = true)
     {
         base.receiveLeftClick(x, y, playSound);
-        if (_isSelecting) return;
-        if (_colourWheel.Contains(new Vector2(x,y)))
-        {
-            _isSelecting = true;
-            SelectedColour = _colourWheel.GetColourAtCursor();
-            return;
-        }
+        _colourWheel.IsSelected = _colourWheel.Contains(new Vector2(x, y));
+        RedSlider.IsSelected = RedSlider.ContainsPoint(new Point(x, y));
+        GreenSlider.IsSelected = GreenSlider.ContainsPoint(new Point(x, y));
+        BlueSlider.IsSelected = BlueSlider.ContainsPoint(new Point(x, y));
+        HueSlider.IsSelected = HueSlider.ContainsPoint(new Point(x, y));
+        SaturationSlider.IsSelected = SaturationSlider.ContainsPoint(new Point(x, y));
+        ValueSlider.IsSelected = ValueSlider.ContainsPoint(new Point(x, y));
     }
 
     public override void receiveRightClick(int x, int y, bool playSound = true)
@@ -118,7 +229,6 @@ public class ColourPicker : IClickableMenu
     {
         b.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.4f);
         
-        // draw a box in the center of the screen that is 1/3rd the screen width and half the screen height
         Game1.DrawBox(
             x: Game1.uiViewport.Width / 2 - Game1.uiViewport.Width / 6,
             y: Game1.uiViewport.Height / 2 - Game1.uiViewport.Width / 6,
@@ -130,8 +240,7 @@ public class ColourPicker : IClickableMenu
         drawSelectionCircle(b);
         drawRgbBars(b);
         drawSliderGrabbers(b);
-
-        // b.Draw(Game1.staminaRect, new Rectangle(rectX, rectY, rectWidth, rectHeight), color: SelectedColour);
+        
         drawMouse(b);
     }
 
@@ -175,12 +284,12 @@ public class ColourPicker : IClickableMenu
 
     public void drawSelectionCircle(SpriteBatch b)
     {
-        Vector2 selectionPos = ColourWheel.RGBToPoint(SelectedColour);
+        Vector2 selectionPos = ColourWheel.RGBToPoint(ColourWithoutValue);
         selectionPos = new Vector2(
             x: _colourWheel.CenterPoint.X + selectionPos.X * (_colourWheel.Width / 2f),
             y: _colourWheel.CenterPoint.Y + selectionPos.Y * (_colourWheel.Height / 2f)
         );
-        Vector2 scale = new Vector2(2.5f, 2.5f);
+        Vector2 scale = new Vector2(2f, 2f);
         b.Draw(
             texture: _selectionCircle,
             position: selectionPos,
@@ -202,40 +311,11 @@ public class ColourPicker : IClickableMenu
         HueSlider.draw(b);
         SaturationSlider.draw(b);
         ValueSlider.draw(b);
-
-        // float grabberHeight = RedSlider.Bounds.Height / (float)_sliderGrabberMiddle.Height;
-        //
-        // Vector2 redGrabberPosition = new Vector2(RedSlider.Bounds.X + RedSlider.Bounds.Width * redValue, RedSlider.Bounds.Y);
-        // drawSliderGrabber(b, redGrabberPosition, grabberHeight);
-        //
-        // Vector2 greenGrabberPosition = new Vector2(GreenSlider.Bounds.X + GreenSlider.Bounds.Width * greenValue, GreenSlider.Bounds.Y);
-        // drawSliderGrabber(b, greenGrabberPosition, grabberHeight);
-        //
-        // Vector2 blueGrabberPosition = new Vector2(BlueSlider.Bounds.X + BlueSlider.Bounds.Width * blueValue, BlueSlider.Bounds.Y);
-        // drawSliderGrabber(b, blueGrabberPosition, grabberHeight);
-        //
-        // Vector3 hsl = ColourWheel.RGBToHSV(SelectedColour);
-        // float hueValue = hsl.X / 360.0f;
-        // float saturationValue = hsl.Y;
-        // float valueValue = hsl.Z;
-        //
-        // Vector2 hueGrabberPosition = new Vector2(HueSlider.Bounds.X + HueSlider.Bounds.Width * hueValue, HueSlider.Bounds.Y);
-        // drawSliderGrabber(b, hueGrabberPosition, grabberHeight);
-        //
-        // Vector2 saturationGrabberPosition = new Vector2(SaturationSlider.Bounds.X + SaturationSlider.Bounds.Width * saturationValue, SaturationSlider.Bounds.Y);
-        // drawSliderGrabber(b, saturationGrabberPosition, grabberHeight);
-        //
-        // Vector2 valueGrabberPosition = new Vector2(ValueSlider.Bounds.X + ValueSlider.Bounds.Width * valueValue, ValueSlider.Bounds.Y);
-        // drawSliderGrabber(b, valueGrabberPosition, grabberHeight);
     }
 
     public override void update(GameTime time)
     {
         base.update(time);
-        _value = (float)Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 1000f) * 0.5f + 0.5f;
-        var smoothing = (float)Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 10f) * 0.5f + 0.5f;
-        _colourWheel.Smoothing = smoothing;
-        _colourWheel.Value = 1.0f;
         UpdateWheelCenter();
         UpdateSliders();
     }
@@ -256,58 +336,30 @@ public class ColourPicker : IClickableMenu
         float leftEdge = _colourWheel.CenterPoint.X + barWidth / 2f + rgbStrings.X * 2.25f;
         float topEdge = _colourWheel.CenterPoint.Y - _colourWheel.Height / 2f;
         float bottomEdge = _colourWheel.CenterPoint.Y + _colourWheel.Height / 2f;
-
+        
         Vector2 rBar = new Vector2(leftEdge, topEdge);
         Vector2 gBar = new Vector2(leftEdge, topEdge + barHeight + barSpacing);
         Vector2 bBar = new Vector2(leftEdge, topEdge + (barHeight + barSpacing) * 2);
         
-        float redValue = SelectedColour.R / 255f;
-        float greenValue = SelectedColour.G / 255f;
-        float blueValue = SelectedColour.B / 255f;
-        
         RedSlider.UpdateBarBounds(new Rectangle((int)rBar.X, (int)rBar.Y, width: barWidth, height: barHeight));
         RedSlider.UpdateColours(new Color(0, SelectedColour.G, SelectedColour.B), new Color(255, SelectedColour.G, SelectedColour.B));
-        RedSlider.UpdateProgress(redValue);
         
         GreenSlider.UpdateBarBounds(new Rectangle((int)gBar.X, (int)gBar.Y, width: barWidth, height: barHeight));
         GreenSlider.UpdateColours(new Color(SelectedColour.R, 0, SelectedColour.B), new Color(SelectedColour.R, 255, SelectedColour.B));
-        GreenSlider.UpdateProgress(greenValue);
         
         BlueSlider.UpdateBarBounds(new Rectangle((int)bBar.X, (int)bBar.Y, width: barWidth, height: barHeight));
         BlueSlider.UpdateColours(new Color(SelectedColour.R, SelectedColour.G, 0), new Color(SelectedColour.R, SelectedColour.G, 255));
-        BlueSlider.UpdateProgress(blueValue);
-        
-        // RedSlider = new GradientBar(bounds: new Rectangle((int)rBar.X, (int)rBar.Y, width: barWidth, height: barHeight), colourOne: new Color(0, SelectedColour.G, SelectedColour.B), colourTwo: new Color(255, SelectedColour.G, SelectedColour.B));
-        // GreenSlider = new GradientBar(bounds: new Rectangle((int)gBar.X, (int)gBar.Y, width: barWidth, height: barHeight), colourOne: new Color(SelectedColour.R, 0, SelectedColour.B), colourTwo: new Color(SelectedColour.R, 255, SelectedColour.B));
-        // BlueSlider = new GradientBar(bounds: new Rectangle((int)bBar.X, (int)bBar.Y, width: barWidth, height: barHeight), colourOne: new Color(SelectedColour.R, SelectedColour.G, 0), colourTwo: new Color(SelectedColour.R, SelectedColour.G, 255));
         
         Vector2 hBar = new Vector2(leftEdge, bottomEdge - barHeight - (barHeight + barSpacing) * 2);
         Vector2 sBar = new Vector2(leftEdge, bottomEdge - barHeight - (barHeight + barSpacing));
         Vector2 vBar = new Vector2(leftEdge, bottomEdge - barHeight);
         
-        Vector3 hsl = ColourWheel.RGBToHSV(SelectedColour);
-        float hueValue = hsl.X / 360.0f;
-        float saturationValue = hsl.Y;
-        float valueValue = hsl.Z;
-        
         HueSlider.UpdateBarBounds(new Rectangle((int)hBar.X, (int)hBar.Y, width: barWidth, height: barHeight));
-        HueSlider.UpdateProgress(hueValue);
         
         SaturationSlider.UpdateBarBounds(new Rectangle((int)sBar.X, (int)sBar.Y, width: barWidth, height: barHeight));
         SaturationSlider.UpdateColours(Color.White, SelectedColour);
-        SaturationSlider.UpdateProgress(saturationValue);
         
         ValueSlider.UpdateBarBounds(new Rectangle((int)vBar.X, (int)vBar.Y, width: barWidth, height: barHeight));
         ValueSlider.UpdateColours(Color.Black, SelectedColour);
-        ValueSlider.UpdateProgress(valueValue);
-        
-        // HueSlider = new GradientBar(bounds: new Rectangle((int)hBar.X, (int)hBar.Y, width: barWidth, height: barHeight), isHueBar: true);
-        // SaturationSlider = new GradientBar(bounds: new Rectangle((int)sBar.X, (int)sBar.Y, width: barWidth, height: barHeight), colourOne: Color.White, colourTwo: SelectedColour);
-        // ValueSlider = new GradientBar(bounds: new Rectangle((int)vBar.X, (int)vBar.Y, width: barWidth, height: barHeight), colourOne: Color.Black, colourTwo: SelectedColour);
-    }
-
-    public void UpdateSliderGrabbers()
-    {
-        
     }
 }
