@@ -96,7 +96,7 @@ public class ColourWheel
         return new Vector3(hue, saturation, max);
     }
     
-    public static Color HUEtoRGB(float hue)
+    public static Color HUEToRGB(float hue)
     {
         float r = Math.Abs(hue * 6 - 3) - 1;
         float g = 2 - Math.Abs(hue * 6 - 2);
@@ -108,13 +108,13 @@ public class ColourWheel
         );
     }
     
-    public static Color HSVtoRGB(Vector3 hsv)
+    public static Color HSVToRGB(Vector3 hsv)
     {
         float hue = hsv.X / 360f;
         float saturation = hsv.Y;
         float value = hsv.Z;
 
-        Color rgb = HUEtoRGB(hue);
+        Color rgb = HUEToRGB(hue);
         Vector3 rgbVector = new Vector3(rgb.R, rgb.G, rgb.B) / 255f;
 
         Vector3 result = Vector3.Lerp(Vector3.One, rgbVector, saturation) * value;

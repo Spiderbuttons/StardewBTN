@@ -12,11 +12,14 @@ public class ColourSlider
     
     private readonly Func<float> _getBackingValue;
     private readonly Action<float> _setBackingValue;
-    private float Progress
+    public float Progress
     {
-        get => _getBackingValue();
+        get => Locked ? _cachedProgress : _getBackingValue();
         set => _setBackingValue(value);
     }
+
+    private float _cachedProgress = 0f;
+    public bool Locked = false;
 
     public bool IsSelected = false;
     
@@ -38,6 +41,17 @@ public class ColourSlider
     public void UpdateBarBounds(Rectangle bounds)
     {
         Bar.Bounds = bounds;
+    }
+
+    public void Lock()
+    {
+        _cachedProgress = Progress;
+        Locked = true;
+    }
+    
+    public void Unlock()
+    {
+        Locked = false;
     }
 
     public Rectangle GetGrabberBounds()

@@ -23,16 +23,16 @@ public class ColourPicker : IClickableMenu
             y: Game1.uiViewport.Height / 3f), 
         width: (int)(Game1.uiViewport.Height / 4f), 
         height: (int)(Game1.uiViewport.Height / 4f));
-
-    private float _red = 1;
-    private float _green = 1;
-    private float _blue = 1;
     
-    private float _hue => ColourWheel.RGBToHSV(ColourWithoutValue).X;
-    private float _saturation => ColourWheel.RGBToHSV(ColourWithoutValue).Y;
-    private float _value = 1;
+    private float _red => ColourWithoutValue.R;
+    private float _green => ColourWithoutValue.G;
+    private float _blue => ColourWithoutValue.B;
     
-    public Color ColourWithoutValue => new(_red, _green, _blue);
+    private float _hue = 0f;
+    private float _saturation = 0f;
+    private float _value = 1f;
+    
+    public Color ColourWithoutValue => ColourWheel.HSVToRGB(new Vector3(_hue, _saturation, 1));
     public Color SelectedColour => Color.Lerp(Color.Black, ColourWithoutValue, _value);
 
     private bool _isSelecting = false;
@@ -47,47 +47,40 @@ public class ColourPicker : IClickableMenu
     public ColourPicker(FishPond? pond)
     {
         _pond = pond;
-        RedSlider = new ColourSlider(getter: GetR, setter: SetR);
-        GreenSlider = new ColourSlider(getter: GetG, setter: SetG);
-        BlueSlider = new ColourSlider(getter: GetB, setter: SetB);
-        HueSlider = new ColourSlider(getter: GetHue, setter: SetHue, isHueBar: true);
+        RedSlider = new ColourSlider(getter: () => GetR() / 255f, setter: SetR);
+        GreenSlider = new ColourSlider(getter: () => GetG() / 255f, setter: SetG);
+        BlueSlider = new ColourSlider(getter: () => GetB() / 255f, setter: SetB);
+        HueSlider = new ColourSlider(getter: () => GetHue() / 360f, setter: SetHue, isHueBar: true);
         SaturationSlider = new ColourSlider(getter: GetSaturation, setter: SetSaturation);
         ValueSlider = new ColourSlider(getter: GetValue, setter: SetValue);
     }
 
     private void SetR(float r)
     {
-        _red = r;
+        Color newColour = new Color((byte)r, (byte)(_green), (byte)(_blue));
+        SetColourWithoutValue(newColour);
     }
     
     private void SetG(float g)
     {
-        _green = g;
+        Color newColour = new Color((byte)(_red), (byte)g, (byte)(_blue));
+        SetColourWithoutValue(newColour);
     }
     
     private void SetB(float b)
     {
-        _blue = b;
+        Color newColour = new Color((byte)(_red), (byte)(_green), (byte)b);
+        SetColourWithoutValue(newColour);
     }
     
     private void SetHue(float h)
     {
-        var hsl = ColourWheel.RGBToHSV(ColourWithoutValue);
-        hsl.X = h * 360f;
-        Color rgb = ColourWheel.HSVtoRGB(hsl);
-        _red = rgb.R / 255f;
-        _green = rgb.G / 255f;
-        _blue = rgb.B / 255f;
+        _hue = h;
     }
 
     private void SetSaturation(float s)
     {
-        var hsl = ColourWheel.RGBToHSV(ColourWithoutValue);
-        hsl.Y = s;
-        Color rgb = ColourWheel.HSVtoRGB(hsl);
-        _red = rgb.R / 255f;
-        _green = rgb.G / 255f;
-        _blue = rgb.B / 255f;
+        _saturation = s;
     }
 
     private void SetValue(float v)
@@ -97,20 +90,22 @@ public class ColourPicker : IClickableMenu
     
     public void SetColourWithoutValue(Color colour)
     {
-        _red = colour.R / 255f;
-        _green = colour.G / 255f;
-        _blue = colour.B / 255f;
+        Vector3 hsv = ColourWheel.RGBToHSV(colour);
+        SetSaturation(hsv.Y);
+        SetHue(hsv.X);
     }
     
     private float GetR() => _red;
     private float GetG() => _green;
     private float GetB() => _blue;
-    private float GetHue() => _hue / 360f;
+    private float GetHue() => _hue;
     private float GetSaturation() => _saturation;
     private float GetValue() => _value;
     
     public override void releaseLeftClick(int x, int y)
     {
+        Log.Warn($"Hue: {GetHue()}, Saturation: {GetSaturation()}, Value: {GetValue()}");
+        
         base.releaseLeftClick(x, y);
         _colourWheel.IsSelected = false;
         RedSlider.IsSelected = false;
@@ -130,26 +125,26 @@ public class ColourPicker : IClickableMenu
         {
             float progress = (x - RedSlider.Bar.Bounds.X) / (float)RedSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0f, 1f);
-            SetR(progress);
+            SetR(progress * 255f);
         }
         if (GreenSlider.IsSelected)
         {
             float progress = (x - GreenSlider.Bar.Bounds.X) / (float)GreenSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0f, 1f);
-            SetG(progress);
+            SetG(progress * 255f);
         }
         if (BlueSlider.IsSelected)
         {
             float progress = (x - BlueSlider.Bar.Bounds.X) / (float)BlueSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0f, 1f);
-            SetB(progress);
+            SetB(progress * 255f);
         }
         
         if (HueSlider.IsSelected)
         {
             float progress = (x - HueSlider.Bar.Bounds.X) / (float)HueSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0f, 1f);
-            SetHue(progress);
+            SetHue(progress * 360f);
         }
         if (SaturationSlider.IsSelected)
         {
@@ -169,6 +164,7 @@ public class ColourPicker : IClickableMenu
     {
         base.receiveLeftClick(x, y, playSound);
         _colourWheel.IsSelected = _colourWheel.Contains(new Vector2(x, y));
+        
         RedSlider.IsSelected = RedSlider.ContainsPoint(new Point(x, y));
         GreenSlider.IsSelected = GreenSlider.ContainsPoint(new Point(x, y));
         BlueSlider.IsSelected = BlueSlider.ContainsPoint(new Point(x, y));

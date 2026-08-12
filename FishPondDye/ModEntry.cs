@@ -79,7 +79,23 @@ namespace FishPondDye
         {
             if (e.Button is SButton.F2)
             {
-                //
+                const string RED = "\x1b[91m";
+                const string GREEN = "\x1b[92m";
+                const string RESET = "\x1b[0m";
+
+                Random rng = new Random();
+                Color original = new Color((byte)rng.Next(0, 256), (byte)rng.Next(0, 256), (byte)rng.Next(0, 256));
+                RgbColour rgb = RgbColour.FromXnaColor(original);
+                HsvColour hsv = rgb.ToHsv();
+                RgbColour roundtrip = RgbColour.FromHsv(hsv);
+                Color final = roundtrip.ToXnaColor();
+                bool redMatch = original.R == final.R;
+                bool greenMatch = original.G == final.G;
+                bool blueMatch = original.B == final.B;
+                Log.Debug($"\nRGB: {rgb} -> HSV: {hsv} -> RGB: {roundtrip}");
+                Log.Info($"\nR: {(redMatch ? GREEN : RED)}{final.R} {GREEN}({original.R}){RESET} " +
+                         $"G: {(greenMatch ? GREEN : RED)}{final.G} {GREEN}({original.G}){RESET} " +
+                         $"B: {(blueMatch ? GREEN : RED)}{final.B} {GREEN}({original.B}){RESET}");
             }
             
             if (!Context.IsWorldReady)
