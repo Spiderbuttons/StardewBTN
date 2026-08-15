@@ -1,4 +1,4 @@
-﻿using GenericModConfigMenu;
+﻿using FishPondDye.APIs;
 using StardewModdingAPI;
 
 namespace FishPondDye.Config;

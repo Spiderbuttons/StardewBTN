@@ -40,7 +40,7 @@ float4 PointToColour(float2 coordinates)
     float distFromCenter = length(coordinates * 2.0f);
     float saturation = clamp(distFromCenter / 1, 0.0, 1.0);
     
-    float3 rgb = lerp(hueRGB.rgb, smoothHueRGB.rgb, 1);
+    float3 rgb = lerp(hueRGB.rgb, smoothHueRGB.rgb, Smoothing);
     rgb = lerp(float3(1, 1, 1), rgb, saturation);
     
     return float4(rgb * Value, 1);

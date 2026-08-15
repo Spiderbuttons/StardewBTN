@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 
-namespace FishPondDye.Components;
+namespace FishPondDye.Menus.ColourPickerMenu.Components;
 
 public class GradientBar
 {
@@ -32,17 +32,16 @@ public class GradientBar
     }
     
     public Rectangle Bounds { get; set; }
-    public bool IsHorizontal { get; set; }
-    public bool IsHueBar  { get; set; }
+    public bool IsHorizontal { get; set; } = true;
+    public bool IsHueBar { get; set; }
+    public bool IsAlphaBar { get; set; }
     
     public Color ColourOne { get; set; }
     public Color ColourTwo { get; set; }
     
-    public GradientBar(Rectangle? bounds = null, Color? colourOne = null, Color? colourTwo = null, bool isHorizontal = true, bool isHueBar = false)
+    public GradientBar(Rectangle? bounds = null, Color? colourOne = null, Color? colourTwo = null)
     {
         Bounds = bounds ?? Rectangle.Empty;
-        IsHorizontal = isHorizontal;
-        IsHueBar = isHueBar;
         ColourOne = colourOne ?? Color.Black;
         ColourTwo = colourTwo ?? Color.White;
     }
@@ -60,18 +59,21 @@ public class GradientBar
         b.Begin(effect: GradientBarEffect);
 
         GradientBarEffect.Parameters["IsHorizontal"].SetValue(IsHorizontal);
-        if (!IsHueBar)
+        if (IsHueBar)
+            GradientBarEffect.CurrentTechnique = GradientBarEffect.Techniques["HueBar"];
+        else if (IsAlphaBar)
+            GradientBarEffect.CurrentTechnique = GradientBarEffect.Techniques["AlphaBar"];
+        else
         {
             GradientBarEffect.CurrentTechnique = GradientBarEffect.Techniques["GradientBar"];
             GradientBarEffect.Parameters["ColourOne"].SetValue(ColourOne.ToVector4());
             GradientBarEffect.Parameters["ColourTwo"].SetValue(ColourTwo.ToVector4());
         }
-        else GradientBarEffect.CurrentTechnique = GradientBarEffect.Techniques["HueBar"];
-        
+
         b.Draw(
             texture: Game1.staminaRect,
             destinationRectangle: Bounds,
-            color: Color.White
+            color: ColourTwo
         );
         
         b.End();

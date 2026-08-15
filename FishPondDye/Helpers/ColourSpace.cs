@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 
 namespace FishPondDye.Helpers;
 
-public struct RgbColour
+public struct RgbColour : IEquatable<RgbColour>
 {
     /// <summary>
     /// The red component of the colour, ranging from 0 to 255.
@@ -19,14 +19,20 @@ public struct RgbColour
     /// The blue component of the colour, ranging from 0 to 255.
     /// </summary>
     public decimal Blue;
+
+    /// <summary>
+    /// The alpha (transparency) component of the colour, ranging from 0 to 255.
+    /// </summary>
+    public decimal Alpha;
     
     public decimal R => Red;
     public decimal G => Green;
     public decimal B => Blue;
+    public decimal A => Alpha;
     
     public static bool operator==(RgbColour lhs, RgbColour rhs)
     {
-        return lhs.Red == rhs.Red && lhs.Green == rhs.Green && lhs.Blue == rhs.Blue;
+        return lhs.Red == rhs.Red && lhs.Green == rhs.Green && lhs.Blue == rhs.Blue && lhs.Alpha == rhs.Alpha;
     }
     
     public static bool operator!=(RgbColour lhs, RgbColour rhs)
@@ -34,11 +40,12 @@ public struct RgbColour
         return !(lhs == rhs);
     }
 
-    public RgbColour(decimal R, decimal G, decimal B)
+    public RgbColour(decimal R, decimal G, decimal B, decimal A = 100M)
     {
         if (R is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(R), "Red value must be between 0 and 255.");
         if (G is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(G), "Green value must be between 0 and 255.");
         if (B is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(B), "Blue value must be between 0 and 255.");
+        if (A is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(A), "Alpha value must be between 0 and 255.");
         Red = R;
         Green = G;
         Blue = B;
@@ -51,12 +58,12 @@ public struct RgbColour
 
     public static RgbColour FromXnaColor(Color color)
     {
-        return new RgbColour(color.R, color.G, color.B);
+        return new RgbColour(color.R, color.G, color.B, color.A);
     }
 
     public Color ToXnaColor()
     {
-        return new Color((int)Math.Round(Red), (int)Math.Round(Green), (int)Math.Round(Blue));
+        return new Color((int)Math.Round(Red), (int)Math.Round(Green), (int)Math.Round(Blue), (int)Math.Round(Alpha));
     }
 
     public HsvColour ToHsv()
@@ -66,6 +73,7 @@ public struct RgbColour
         decimal r = Red / 255;
         decimal g = Green / 255;
         decimal b = Blue / 255;
+        decimal a = Alpha / 255;
 
         decimal h, s, v;
 
@@ -92,8 +100,22 @@ public struct RgbColour
         return new HsvColour(
             H: h,
             S: s * 100,
-            V: v * 100
+            V: v * 100,
+            A: a * 100
         );
+    }
+
+    public string ToHexString(bool includeAlpha = true)
+    {
+        return $"#{(int)Math.Round(Red):X2}" +
+               $"{(int)Math.Round(Green):X2}" +
+               $"{(int)Math.Round(Blue):X2}" +
+               $"{(includeAlpha ? $"{(int)Math.Round(Alpha):X2}" : "")}";
+    }
+    
+    public bool Equals(RgbColour other)
+    {
+        return this == other;
     }
     
     public override bool Equals(object? obj)
@@ -107,16 +129,16 @@ public struct RgbColour
     
     public override int GetHashCode()
     {
-        return (Red + ((int)Green << 8) + ((int)Blue << 16)).GetHashCode();
+        return (Red + ((int)Green << 8) + ((int)Blue << 16) + ((int)Alpha << 24)).GetHashCode();
     }
 
     public override string ToString()
     {
-        return $"R: {Red}, G: {Green}, B: {Blue}";
+        return $"R: {Red}, G: {Green}, B: {Blue}, A: {Alpha}";
     }
 }
 
-public struct HsvColour
+public struct HsvColour : IEquatable<HsvColour>
 {
     /// <summary>
     /// The hue of the colour, ranging from 0 to 360.
@@ -132,14 +154,20 @@ public struct HsvColour
     /// The value of the colour, ranging from 0 to 100.
     /// </summary>
     public decimal Value;
+
+    /// <summary>
+    /// The alpha (transparency) of the colour, ranging from 0 to 100.
+    /// </summary>
+    public decimal Alpha;
     
     public decimal H => Hue;
     public decimal S => Saturation;
     public decimal V => Value;
+    public decimal A => Alpha;
 
     public static bool operator==(HsvColour lhs, HsvColour rhs)
     {
-        return lhs.Hue == rhs.Hue && lhs.Saturation == rhs.Saturation && lhs.Value == rhs.Value;
+        return lhs.Hue == rhs.Hue && lhs.Saturation == rhs.Saturation && lhs.Value == rhs.Value && lhs.Alpha == rhs.Alpha;
     }
     
     public static bool operator!=(HsvColour lhs, HsvColour rhs)
@@ -147,19 +175,21 @@ public struct HsvColour
         return !(lhs == rhs);
     }
     
-    public HsvColour(decimal H, decimal S, decimal V)
+    public HsvColour(decimal H, decimal S, decimal V, decimal A = 100M)
     {
         if (H is < 0 or > 360) throw new ArgumentOutOfRangeException(nameof(H), "Hue value must be between 0 and 360.");
         if (S is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(S), "Saturation value must be between 0 and 100.");
         if (V is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(V), "Value must be between 0 and 100.");
+        if (A is < 0 or > 1) throw new ArgumentOutOfRangeException(nameof(A), "Alpha must be between 0 and 100.");
         Hue = H;
         Saturation = S;
         Value = V;
+        Alpha = A;
     }
 
     public static HsvColour FromXnaColor(Color color)
     {
-        RgbColour rgb = new RgbColour(color.R, color.G, color.B);
+        RgbColour rgb = new RgbColour(color.R, color.G, color.B, color.A);
         return rgb.ToHsv();
     }
 
@@ -176,6 +206,7 @@ public struct HsvColour
         decimal h = Hue % 360;
         decimal s = Saturation / 100;
         decimal v = Value / 100;
+        decimal a = Alpha / 100;
 
         if (s is 0)
         {
@@ -235,13 +266,20 @@ public struct HsvColour
         return new RgbColour(
             R: r * 255,
             G: g * 255,
-            B: b * 255
+            B: b * 255,
+            A: a * 255
         );
     }
 
-    public override string ToString()
+    public string ToHexString(bool includeAlpha = true)
     {
-        return $"H: {Hue}, S: {Saturation}, V: {Value}";
+        RgbColour rgb = ToRgb();
+        return $"#{(int)Math.Round(rgb.Red):X2}{(int)Math.Round(rgb.Green):X2}{(int)Math.Round(rgb.Blue):X2}{(includeAlpha ? $"{(int)Math.Round(rgb.Alpha):X2}" : "")}";
+    }
+    
+    public bool Equals(HsvColour other)
+    {
+        return this == other;
     }
     
     public override bool Equals(object? obj)
@@ -255,6 +293,11 @@ public struct HsvColour
 
     public override int GetHashCode()
     {
-        return ((int)Hue + ((int)Saturation << 8) + ((int)Value << 16)).GetHashCode();
+        return (Hue + ((int)Saturation << 8) + ((int)Value << 16) + ((int)Alpha << 24)).GetHashCode();
+    }
+    
+    public override string ToString()
+    {
+        return $"H: {Hue}, S: {Saturation}, V: {Value}, A: {Alpha}";
     }
 }

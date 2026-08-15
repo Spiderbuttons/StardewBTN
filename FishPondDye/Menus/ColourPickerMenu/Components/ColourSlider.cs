@@ -3,33 +3,41 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 
-namespace FishPondDye.Components;
+namespace FishPondDye.Menus.ColourPickerMenu.Components;
 
 public class ColourSlider
 {
     private static Rectangle CapSourceRect = new(435, 463, 6, 1);
     private static Rectangle MiddleSourceRect = new(435, 464, 6, 8);
     
-    private readonly Func<float> _getBackingValue;
-    private readonly Action<float> _setBackingValue;
-    public float Progress
-    {
-        get => Locked ? _cachedProgress : _getBackingValue();
-        set => _setBackingValue(value);
-    }
-
-    private float _cachedProgress = 0f;
-    public bool Locked = false;
-
+    private readonly Func<decimal> _getBackingValue;
+    public float Progress => (float)_getBackingValue();
     public bool IsSelected = false;
+
+    public bool IsHorizontal
+    {
+        get => Bar.IsHorizontal;
+        set => Bar.IsHorizontal = value;
+    }
+    
+    public bool IsHueBar 
+    {
+        get => Bar.IsHueBar;
+        set => Bar.IsHueBar = value;
+    }
+    
+    public bool IsAlphaBar 
+    {
+        get => Bar.IsAlphaBar;
+        set => Bar.IsAlphaBar = value;
+    }
     
     public GradientBar Bar;
     
-    public ColourSlider(Func<float> getter, Action<float> setter, Rectangle? bounds = null, Color? colourOne = null, Color? colourTwo = null, bool isHorizontal = true, bool isHueBar = false)
+    public ColourSlider(Func<decimal> getter, Rectangle? bounds = null, Color? colourOne = null, Color? colourTwo = null)
     {
         _getBackingValue = getter;
-        _setBackingValue = setter;
-        Bar = new GradientBar(bounds, colourOne, colourTwo, isHorizontal, isHueBar);
+        Bar = new GradientBar(bounds, colourOne, colourTwo);
     }
 
     public void UpdateColours(Color one, Color two)
@@ -41,17 +49,6 @@ public class ColourSlider
     public void UpdateBarBounds(Rectangle bounds)
     {
         Bar.Bounds = bounds;
-    }
-
-    public void Lock()
-    {
-        _cachedProgress = Progress;
-        Locked = true;
-    }
-    
-    public void Unlock()
-    {
-        Locked = false;
     }
 
     public Rectangle GetGrabberBounds()
@@ -76,7 +73,7 @@ public class ColourSlider
         if (Bar.Bounds.IsEmpty) return;
         
         Bar.draw(b);
-        drawSliderGrabber(b);
+        if (Progress >= 0) drawSliderGrabber(b);
     }
     
     public void drawSliderGrabber(SpriteBatch b)

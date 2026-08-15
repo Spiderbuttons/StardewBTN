@@ -7,8 +7,7 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using FishPondDye.Components;
-using GenericModConfigMenu;
+using FishPondDye.APIs;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using FishPondDye.Config;
@@ -17,6 +16,8 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using FishPondDye.Helpers;
+using FishPondDye.Menus.ColourPickerMenu;
+using FishPondDye.Menus.ColourPickerMenu.Components;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace FishPondDye
@@ -84,18 +85,20 @@ namespace FishPondDye
                 const string RESET = "\x1b[0m";
 
                 Random rng = new Random();
-                Color original = new Color((byte)rng.Next(0, 256), (byte)rng.Next(0, 256), (byte)rng.Next(0, 256));
-                RgbColour rgb = RgbColour.FromXnaColor(original);
-                HsvColour hsv = rgb.ToHsv();
-                RgbColour roundtrip = RgbColour.FromHsv(hsv);
-                Color final = roundtrip.ToXnaColor();
-                bool redMatch = original.R == final.R;
-                bool greenMatch = original.G == final.G;
-                bool blueMatch = original.B == final.B;
-                Log.Debug($"\nRGB: {rgb} -> HSV: {hsv} -> RGB: {roundtrip}");
-                Log.Info($"\nR: {(redMatch ? GREEN : RED)}{final.R} {GREEN}({original.R}){RESET} " +
-                         $"G: {(greenMatch ? GREEN : RED)}{final.G} {GREEN}({original.G}){RESET} " +
-                         $"B: {(blueMatch ? GREEN : RED)}{final.B} {GREEN}({original.B}){RESET}");
+                {
+                    Color original = new Color((byte)rng.Next(0, 256), (byte)rng.Next(0, 256), (byte)rng.Next(0, 256));
+                    RgbColour rgb = RgbColour.FromXnaColor(original);
+                    HsvColour hsv = rgb.ToHsv();
+                    RgbColour roundtrip = RgbColour.FromHsv(hsv);
+                    Color final = roundtrip.ToXnaColor();
+                    bool redMatch = original.R == final.R;
+                    bool greenMatch = original.G == final.G;
+                    bool blueMatch = original.B == final.B;
+                    // Log.Debug($"\nRGB: {rgb} -> HSV: {hsv} -> RGB: {roundtrip}");
+                    Log.Info($"R: {(redMatch ? GREEN : RED)}{final.R} {GREEN}({original.R}){RESET} " +
+                             $"G: {(greenMatch ? GREEN : RED)}{final.G} {GREEN}({original.G}){RESET} " +
+                             $"B: {(blueMatch ? GREEN : RED)}{final.B} {GREEN}({original.B}){RESET}");
+                }
             }
             
             if (!Context.IsWorldReady)
