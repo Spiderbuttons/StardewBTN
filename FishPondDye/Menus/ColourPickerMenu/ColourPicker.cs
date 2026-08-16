@@ -63,15 +63,15 @@ public partial class ColourPicker : IClickableMenu
         width = Game1.uiViewport.Width / 2;
         height = Game1.uiViewport.Height / 2;
         
-        RedSlider = new ColourSlider(getter: () => GetR() / 255);
-        GreenSlider = new ColourSlider(getter: () => GetG() / 255);
-        BlueSlider = new ColourSlider(getter: () => GetB() / 255);
-        HueSlider = new ColourSlider(getter: () => GetHue() / 360) { IsHueBar = true };
-        SaturationSlider = new ColourSlider(getter: () => GetSaturation() / 100);
-        ValueSlider = new ColourSlider(getter: () => GetValue() / 100);
-        AlphaSlider = new ColourSlider(getter: GetAlpha) { IsAlphaBar = true };
-        
-        SelectedColourPreview = new ColourSlider(getter: () => -1);
+        // RedSlider = new ColourSlider(getter: () => GetR() / 255);
+        // GreenSlider = new ColourSlider(getter: () => GetG() / 255);
+        // BlueSlider = new ColourSlider(getter: () => GetB() / 255);
+        // HueSlider = new ColourSlider(getter: () => GetHue() / 360) { IsHueBar = true };
+        // SaturationSlider = new ColourSlider(getter: () => GetSaturation() / 100);
+        // ValueSlider = new ColourSlider(getter: () => GetValue() / 100);
+        // AlphaSlider = new ColourSlider(getter: GetAlpha) { IsAlphaBar = true };
+        //
+        // SelectedColourPreview = new ColourSlider(getter: () => -1);
         
         _hexInput = new HexInput(Game1.dialogueFont, Game1.textColor)
         {
@@ -152,20 +152,20 @@ public partial class ColourPicker : IClickableMenu
     public override void releaseLeftClick(int x, int y)
     {
         base.releaseLeftClick(x, y);
-        _colourWheel.IsSelected = false;
-        RedSlider.IsSelected = false;
-        GreenSlider.IsSelected = false;
-        BlueSlider.IsSelected = false;
-        HueSlider.IsSelected = false;
-        SaturationSlider.IsSelected = false;
-        ValueSlider.IsSelected = false;
-        AlphaSlider.IsSelected = false;
+        _colourWheel.Selected = false;
+        RedSlider.Selected = false;
+        GreenSlider.Selected = false;
+        BlueSlider.Selected = false;
+        HueSlider.Selected = false;
+        SaturationSlider.Selected = false;
+        ValueSlider.Selected = false;
+        AlphaSlider.Selected = false;
     }
 
     public override void leftClickHeld(int x, int y)
     {
         base.leftClickHeld(x, y);
-        if (_colourWheel.IsSelected)
+        if (_colourWheel.Selected)
         {
             RgbColour rgb = _colourWheel.GetColourAtScreenPoint(new Vector2(x, y));
             HsvColour newColour = ColourWheel.PointToHsv(_colourWheel.ScreenPointToUnitSpace(new Vector2(x, y)));
@@ -174,43 +174,43 @@ public partial class ColourPicker : IClickableMenu
             SetValue(_value);
         }
         
-        if (RedSlider.IsSelected)
+        if (RedSlider.Selected)
         {
             decimal progress = (x - RedSlider.Bar.Bounds.X) / (decimal)RedSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0, 1);
             SetR(progress * 255);
         }
-        if (GreenSlider.IsSelected)
+        if (GreenSlider.Selected)
         {
             decimal progress = (x - GreenSlider.Bar.Bounds.X) / (decimal)GreenSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0, 1);
             SetG(progress * 255);
         }
-        if (BlueSlider.IsSelected)
+        if (BlueSlider.Selected)
         {
             decimal progress = (x - BlueSlider.Bar.Bounds.X) / (decimal)BlueSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0, 1);
             SetB(progress * 255);
         }
-        if (HueSlider.IsSelected)
+        if (HueSlider.Selected)
         {
             decimal progress = (x - HueSlider.Bar.Bounds.X) / (decimal)HueSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0, 1);
             SetHue(progress * 360);
         }
-        if (SaturationSlider.IsSelected)
+        if (SaturationSlider.Selected)
         {
             decimal progress = (x - SaturationSlider.Bar.Bounds.X) / (decimal)SaturationSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0, 1);
             SetSaturation(progress * 100);
         }
-        if (ValueSlider.IsSelected)
+        if (ValueSlider.Selected)
         {
             decimal progress = (x - ValueSlider.Bar.Bounds.X) / (decimal)ValueSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0, 1);
             SetValue(progress * 100);
         }
-        if (AlphaSlider.IsSelected)
+        if (AlphaSlider.Selected)
         {
             float progress = (x - AlphaSlider.Bar.Bounds.X) / (float)AlphaSlider.Bar.Bounds.Width;
             progress = Math.Clamp(progress, 0, 1);
@@ -221,15 +221,15 @@ public partial class ColourPicker : IClickableMenu
     public override void receiveLeftClick(int x, int y, bool playSound = true)
     {
         base.receiveLeftClick(x, y, playSound);
-        _colourWheel.IsSelected = _colourWheel.Contains(new Vector2(x, y));
+        _colourWheel.Selected = _colourWheel.Contains(new Vector2(x, y));
         
-        RedSlider.IsSelected = RedSlider.ContainsPoint(new Point(x, y));
-        GreenSlider.IsSelected = GreenSlider.ContainsPoint(new Point(x, y));
-        BlueSlider.IsSelected = BlueSlider.ContainsPoint(new Point(x, y));
-        HueSlider.IsSelected = HueSlider.ContainsPoint(new Point(x, y));
-        SaturationSlider.IsSelected = SaturationSlider.ContainsPoint(new Point(x, y));
-        ValueSlider.IsSelected = ValueSlider.ContainsPoint(new Point(x, y));
-        AlphaSlider.IsSelected = AlphaSlider.ContainsPoint(new Point(x, y));
+        // RedSlider.Selected = RedSlider.Contains(new Point(x, y));
+        // GreenSlider.Selected = GreenSlider.Contains(new Point(x, y));
+        // BlueSlider.Selected = BlueSlider.Contains(new Point(x, y));
+        // HueSlider.Selected = HueSlider.Contains(new Point(x, y));
+        // SaturationSlider.Selected = SaturationSlider.Contains(new Point(x, y));
+        // ValueSlider.Selected = ValueSlider.Contains(new Point(x, y));
+        // AlphaSlider.Selected = AlphaSlider.Contains(new Point(x, y));
     }
 
     public override void receiveRightClick(int x, int y, bool playSound = true)

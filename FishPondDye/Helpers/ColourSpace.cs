@@ -180,7 +180,7 @@ public struct HsvColour : IEquatable<HsvColour>
         if (H is < 0 or > 360) throw new ArgumentOutOfRangeException(nameof(H), "Hue value must be between 0 and 360.");
         if (S is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(S), "Saturation value must be between 0 and 100.");
         if (V is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(V), "Value must be between 0 and 100.");
-        if (A is < 0 or > 1) throw new ArgumentOutOfRangeException(nameof(A), "Alpha must be between 0 and 100.");
+        if (A is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(A), "Alpha must be between 0 and 100.");
         Hue = H;
         Saturation = S;
         Value = V;

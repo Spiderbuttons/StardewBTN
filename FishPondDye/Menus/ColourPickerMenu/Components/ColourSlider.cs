@@ -2,17 +2,37 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using StardewValley.Menus;
 
 namespace FishPondDye.Menus.ColourPickerMenu.Components;
 
-public class ColourSlider
+public class ColourSlider : ClickableComponent
 {
-    private static Rectangle CapSourceRect = new(435, 463, 6, 1);
-    private static Rectangle MiddleSourceRect = new(435, 464, 6, 8);
+    private static readonly Rectangle CapSourceRect = new(435, 463, 6, 1);
+    private static readonly Rectangle MiddleSourceRect = new(435, 464, 6, 8);
+
+    private readonly decimal _min;
+    private readonly decimal _max;
     
     private readonly Func<decimal> _getBackingValue;
-    public float Progress => (float)_getBackingValue();
-    public bool IsSelected = false;
+    private readonly Action<decimal> _setBackingValue;
+    public float Progress
+    {
+        get
+        {
+            float progress = (float)((_getBackingValue() - _min) / (_max - _min));
+            return Math.Clamp(progress, 0f, 1f);
+        }
+        set
+        {
+            if (!IsHorizontal) value = 1f - value;
+            _setBackingValue(Math.Clamp(_min + (decimal)value * (_max - _min), _min, _max));
+        }
+    }
+
+    private float GrabberScale => IsHorizontal ? (float)Bar.Bounds.Height / MiddleSourceRect.Height : (float)Bar.Bounds.Width / MiddleSourceRect.Height;
+
+    public bool Selected = false;
 
     public bool IsHorizontal
     {
@@ -34,9 +54,12 @@ public class ColourSlider
     
     public GradientBar Bar;
     
-    public ColourSlider(Func<decimal> getter, Rectangle? bounds = null, Color? colourOne = null, Color? colourTwo = null)
+    public ColourSlider(string name, Func<decimal> getBackingValue, Action<decimal> setBackingValue, decimal min = 0, decimal max = 100, Rectangle? bounds = null, Color? colourOne = null, Color? colourTwo = null) : base(bounds ?? Rectangle.Empty, name)
     {
-        _getBackingValue = getter;
+        _getBackingValue = getBackingValue;
+        _setBackingValue = setBackingValue;
+        _min = min;
+        _max = max;
         Bar = new GradientBar(bounds, colourOne, colourTwo);
     }
 
@@ -51,21 +74,54 @@ public class ColourSlider
         Bar.Bounds = bounds;
     }
 
-    public Rectangle GetGrabberBounds()
+    public Vector2 GetGrabberCenter()
     {
-        Vector2 grabberPosition = new Vector2(Bar.Bounds.X + Bar.Bounds.Width * Progress, Bar.Bounds.Top - CapSourceRect.Height);
-        int grabberHeight = Bar.Bounds.Height + CapSourceRect.Height * 2;
-        return new Rectangle(
-            x: (int)(grabberPosition.X - MiddleSourceRect.Width / 2f),
-            y: (int)(grabberPosition.Y),
-            width: MiddleSourceRect.Width,
-            height: grabberHeight
-        );
+        if (Bar.Bounds.IsEmpty) return Vector2.Zero;
+
+        if (IsHorizontal)
+        {
+            float x = Bar.Bounds.Left + Progress * Bar.Bounds.Width;
+            float y = Bar.Bounds.Center.Y;
+            return new Vector2(x, y);
+        }
+        else
+        {
+            float x = Bar.Bounds.Center.X;
+            float y = Bar.Bounds.Bottom - Progress * Bar.Bounds.Height - (MiddleSourceRect.Width - CapSourceRect.Height) * GrabberScale / 2f;
+            return new Vector2(x, y);
+        }
+    }
+    
+    public Rectangle GetGrabberBounds() 
+    {
+        Vector2 grabberCenter = GetGrabberCenter();
+        if (IsHorizontal)
+        {
+            return new Rectangle(
+                (int)(grabberCenter.X - MiddleSourceRect.Width * GrabberScale / 2f),
+                (int)(grabberCenter.Y - MiddleSourceRect.Height * GrabberScale / 2f - CapSourceRect.Height * 2f),
+                (int)(MiddleSourceRect.Width * GrabberScale),
+                (int)(MiddleSourceRect.Height * GrabberScale + CapSourceRect.Height * 4f)
+            );
+        }
+        else
+        {
+            return new Rectangle(
+                (int)(grabberCenter.X - MiddleSourceRect.Height * GrabberScale / 2f - CapSourceRect.Height),
+                (int)(grabberCenter.Y - MiddleSourceRect.Width * GrabberScale / 2f),
+                (int)(MiddleSourceRect.Height * GrabberScale + CapSourceRect.Height * 2f),
+                (int)(MiddleSourceRect.Width * GrabberScale)
+            );
+        }
     }
 
-    public bool ContainsPoint(Point point)
+    public override bool containsPoint(int x, int y)
     {
-        return Bar.ContainsPoint(point) || GetGrabberBounds().Contains(point);
+        Point point = new(x, y);
+        if (Bar.Bounds.Contains(point)) return true;
+        
+        Rectangle grabberBounds = GetGrabberBounds();
+        return grabberBounds.Contains(point);
     }
 
     public void draw(SpriteBatch b)
@@ -78,42 +134,90 @@ public class ColourSlider
     
     public void drawSliderGrabber(SpriteBatch b)
     {
-        Rectangle grabberBounds = GetGrabberBounds();
-        float middleScale = (float)Bar.Bounds.Height / MiddleSourceRect.Height;
-        b.Draw(
-            texture: Game1.mouseCursors,
-            position: new Vector2(grabberBounds.X + CapSourceRect.Width / 2f, grabberBounds.Top),
-            sourceRectangle: CapSourceRect,
-            color: Color.White,
-            rotation: 0f,
-            origin: new Vector2(CapSourceRect.Width / 2f, CapSourceRect.Height / 2f),
-            scale: 2f,
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
-        
-        b.Draw(
-            texture: Game1.mouseCursors,
-            position: new Vector2(grabberBounds.X + MiddleSourceRect.Width / 2f, grabberBounds.Top + CapSourceRect.Height),
-            sourceRectangle: MiddleSourceRect,
-            color: Color.White,
-            rotation: 0f,
-            origin: new Vector2(MiddleSourceRect.Width / 2f, 0),
-            scale: new Vector2(2f, middleScale),
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
-        
-        b.Draw(
-            texture: Game1.mouseCursors,
-            position: new Vector2(grabberBounds.X + CapSourceRect.Width / 2f, grabberBounds.Bottom),
-            sourceRectangle: CapSourceRect,
-            color: Color.White,
-            rotation: MathHelper.ToRadians(180f),
-            origin: new Vector2(CapSourceRect.Width / 2f, CapSourceRect.Height / 2f),
-            scale: 2f,
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
+        Color grabberColour = Color.White;
+        Vector2 center = GetGrabberCenter();
+
+        if (IsHorizontal)
+        {
+            // Top Piece
+            b.Draw(
+                texture: Game1.mouseCursors,
+                position: center - new Vector2(0, MiddleSourceRect.Height * GrabberScale / 2f + CapSourceRect.Height * 2f),
+                sourceRectangle: CapSourceRect,
+                color: grabberColour,
+                rotation: 0f,
+                origin: new Vector2(CapSourceRect.Width / 2f, 0),
+                scale: 2f,
+                effects: SpriteEffects.None,
+                layerDepth: 1f
+            );
+            
+            // Middle Piece
+            b.Draw(
+                texture: Game1.mouseCursors,
+                position: center,
+                sourceRectangle: MiddleSourceRect,
+                color: grabberColour,
+                rotation: 0f,
+                origin: new Vector2(MiddleSourceRect.Width / 2f, MiddleSourceRect.Height / 2f),
+                scale: new Vector2(2f, GrabberScale),
+                effects: SpriteEffects.None,
+                layerDepth: 1f
+            );
+            
+            // Bottom Piece
+            b.Draw(
+                texture: Game1.mouseCursors,
+                position: center + new Vector2(0, MiddleSourceRect.Height + CapSourceRect.Height * 2f),
+                sourceRectangle: CapSourceRect,
+                color: grabberColour,
+                rotation: 0f,
+                origin: new Vector2(CapSourceRect.Width / 2f, 0),
+                scale: 2f,
+                effects: SpriteEffects.None,
+                layerDepth: 1f
+            );
+        }
+        else
+        {
+            // Left Piece
+            b.Draw(
+                texture: Game1.mouseCursors,
+                position: center - new Vector2(MiddleSourceRect.Height * GrabberScale / 2f + CapSourceRect.Height, 0),
+                sourceRectangle: CapSourceRect,
+                color: grabberColour,
+                rotation: MathHelper.ToRadians(90f),
+                origin: new Vector2(0, CapSourceRect.Height / 2f),
+                scale: 2f,
+                effects: SpriteEffects.None,
+                layerDepth: 1f
+            );
+            
+            // Middle Piece
+            b.Draw(
+                texture: Game1.mouseCursors,
+                position: center,
+                sourceRectangle: MiddleSourceRect,
+                color: grabberColour,
+                rotation: MathHelper.ToRadians(90f),
+                origin: new Vector2(0, MiddleSourceRect.Height / 2f),
+                scale: new Vector2(2f, GrabberScale),
+                effects: SpriteEffects.None,
+                layerDepth: 1f
+            );
+            
+            // Right Piece
+            b.Draw(
+                texture: Game1.mouseCursors,
+                position: center + new Vector2(MiddleSourceRect.Height * GrabberScale / 2f + CapSourceRect.Height, 0),
+                sourceRectangle: CapSourceRect,
+                color: grabberColour,
+                rotation: MathHelper.ToRadians(90f),
+                origin: new Vector2(0, CapSourceRect.Height / 2f),
+                scale: 2f,
+                effects: SpriteEffects.None,
+                layerDepth: 1f
+            );
+        }
     }
 }

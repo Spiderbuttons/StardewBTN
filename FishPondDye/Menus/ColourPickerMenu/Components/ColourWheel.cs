@@ -38,7 +38,7 @@ public class ColourWheel
         set => field = Math.Clamp(value, 0f, 1f);
     }
 
-    public bool IsSelected = false;
+    public bool Selected = false;
 
     public ColourWheel(Vector2 centerPoint, float width, float height)
     {
@@ -128,16 +128,17 @@ public class ColourWheel
         ColourWheelEffect.Parameters["Resolution"].SetValue(new Vector2(Width * 5f, Height * 5f));
         
         ColourWheelEffect.Parameters["Value"].SetValue(0.1f);
+        
         b.Draw(
             texture: Game1.staminaRect,
             destinationRectangle: new Rectangle(
                 x: (int)CenterPoint.X,
                 y: (int)CenterPoint.Y,
-                width: (int)(Width * 1.01f),
-                height: (int)(Height * 1.01f)
+                width: (int)(Width * 1.005f),
+                height: (int)(Height * 1.005f)
             ),
             sourceRectangle: null,
-            color: new Color(84, 35, 15) * 0.4f,
+            color: new Color(84, 35, 15) * 0.6f,
             rotation: 0f,
             origin: new Vector2(0.5f, 0.5f),
             effects: SpriteEffects.None,

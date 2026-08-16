@@ -109,7 +109,7 @@ namespace FishPondDye
                 if (Game1.activeClickableMenu is not null) Game1.activeClickableMenu = null;
                 else
                 {
-                    Game1.activeClickableMenu = new ColourPicker(null);
+                    Game1.activeClickableMenu = new ColourPickerMenu(null);
                 }
             }
         }
