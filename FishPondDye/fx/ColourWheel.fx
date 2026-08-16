@@ -22,7 +22,7 @@ struct VertexShaderOutput
 
 bool isTransparentAtPoint(float2 coordinates)
 {
-    return length((coordinates - 0.5) * 2) > 1.0;
+    return length((coordinates - 0.5) * 2) > 0.99; // Setting it to exactly 1 makes the bottom strangely flat.
 }
 
 float4 PointToColour(float2 coordinates)
