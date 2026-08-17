@@ -4,10 +4,11 @@ using FishPondDye.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using StardewValley.Menus;
 
 namespace FishPondDye.Menus.ColourPickerMenu.Components;
 
-public class ColourWheel
+public class ColourWheel : ClickableComponent
 {
     public static Effect ColourWheelEffect
     {
@@ -40,7 +41,7 @@ public class ColourWheel
 
     public bool Selected = false;
 
-    public ColourWheel(Vector2 centerPoint, float width, float height)
+    public ColourWheel(string name, Vector2 centerPoint, float width, float height) : base(new Rectangle((int)centerPoint.X, (int)centerPoint.Y, (int)width, (int)height), name)
     {
         CenterPoint = centerPoint;
         Width = width;
@@ -66,8 +67,9 @@ public class ColourWheel
         return direction;
     }
 
-    public bool Contains(Vector2 point)
+    public override bool containsPoint(int x, int y)
     {
+        Vector2 point = new Vector2(x, y);
         Vector2 unitSpacePoint = ScreenPointToUnitSpace(point);
         return unitSpacePoint.Length() <= 0.5f;
     }
@@ -138,7 +140,7 @@ public class ColourWheel
                 height: (int)(Height * 1.005f)
             ),
             sourceRectangle: null,
-            color: new Color(84, 35, 15) * 0.6f,
+            color: new Color(84, 35, 15) * 0.4f,
             rotation: 0f,
             origin: new Vector2(0.5f, 0.5f),
             effects: SpriteEffects.None,

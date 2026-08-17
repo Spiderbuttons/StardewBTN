@@ -20,6 +20,7 @@ public partial class ColourPicker : IClickableMenu
     public Vector2 menuCenter => new(Game1.uiViewport.Width / 2f, Game1.uiViewport.Height / 2f);
 
     private readonly ColourWheel _colourWheel = new(
+        name: "ColourWheel",
         new Vector2(
             x: Game1.uiViewport.Width / 2f,
             y: Game1.uiViewport.Height / 3f),
@@ -221,7 +222,7 @@ public partial class ColourPicker : IClickableMenu
     public override void receiveLeftClick(int x, int y, bool playSound = true)
     {
         base.receiveLeftClick(x, y, playSound);
-        _colourWheel.Selected = _colourWheel.Contains(new Vector2(x, y));
+        // _colourWheel.Selected = _colourWheel.Contains(new Vector2(x, y));
         
         // RedSlider.Selected = RedSlider.Contains(new Point(x, y));
         // GreenSlider.Selected = GreenSlider.Contains(new Point(x, y));

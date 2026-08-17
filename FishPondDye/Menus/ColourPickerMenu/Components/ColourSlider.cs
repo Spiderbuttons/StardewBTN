@@ -1,4 +1,5 @@
 ﻿using System;
+using FishPondDye.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
@@ -21,7 +22,7 @@ public class ColourSlider : ClickableComponent
         get
         {
             float progress = (float)((_getBackingValue() - _min) / (_max - _min));
-            return Math.Clamp(progress, 0f, 1f);
+            return Math.Clamp(progress, -1f, 1f);
         }
         set
         {
@@ -82,6 +83,7 @@ public class ColourSlider : ClickableComponent
         {
             float x = Bar.Bounds.Left + Progress * Bar.Bounds.Width;
             float y = Bar.Bounds.Center.Y;
+            if (Bar.Bounds.Height % 2 != 0) y += 0.5f;
             return new Vector2(x, y);
         }
         else
@@ -168,7 +170,7 @@ public class ColourSlider : ClickableComponent
             // Bottom Piece
             b.Draw(
                 texture: Game1.mouseCursors,
-                position: center + new Vector2(0, MiddleSourceRect.Height + CapSourceRect.Height * 2f),
+                position: center + new Vector2(0, MiddleSourceRect.Height * GrabberScale / 2f + CapSourceRect.Height / 2f),
                 sourceRectangle: CapSourceRect,
                 color: grabberColour,
                 rotation: 0f,

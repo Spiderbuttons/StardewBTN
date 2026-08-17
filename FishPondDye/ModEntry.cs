@@ -106,7 +106,7 @@ namespace FishPondDye
 
             if (e.Button is SButton.F3)
             {
-                if (Game1.activeClickableMenu is not null) Game1.activeClickableMenu = null;
+                if (Game1.activeClickableMenu is not null) Game1.activeClickableMenu.exitThisMenu();
                 else
                 {
                     Game1.activeClickableMenu = new ColourPickerMenu(null);

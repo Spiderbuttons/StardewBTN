@@ -49,6 +49,7 @@ public struct RgbColour : IEquatable<RgbColour>
         Red = R;
         Green = G;
         Blue = B;
+        Alpha = A;
     }
 
     public static RgbColour FromHsv(HsvColour hsv)
