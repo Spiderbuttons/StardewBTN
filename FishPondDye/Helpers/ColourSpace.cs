@@ -40,7 +40,7 @@ public struct RgbColour : IEquatable<RgbColour>
         return !(lhs == rhs);
     }
 
-    public RgbColour(decimal R, decimal G, decimal B, decimal A = 100M)
+    public RgbColour(decimal R, decimal G, decimal B, decimal A = 255M)
     {
         if (R is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(R), "Red value must be between 0 and 255.");
         if (G is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(G), "Green value must be between 0 and 255.");
@@ -60,6 +60,20 @@ public struct RgbColour : IEquatable<RgbColour>
     public static RgbColour FromXnaColor(Color color)
     {
         return new RgbColour(color.R, color.G, color.B, color.A);
+    }
+    
+    public static RgbColour FromHexString(string hex)
+    {
+        if (string.IsNullOrWhiteSpace(hex)) throw new ArgumentException("Hex string cannot be null or whitespace.", nameof(hex));
+        if (hex.StartsWith("#")) hex = hex[1..];
+        if (hex.Length is not 6 and not 8) throw new ArgumentException("Hex string must be 6 or 8 characters long.", nameof(hex));
+
+        decimal r = Convert.ToInt32(hex.Substring(0, 2), 16);
+        decimal g = Convert.ToInt32(hex.Substring(2, 2), 16);
+        decimal b = Convert.ToInt32(hex.Substring(4, 2), 16);
+        decimal a = hex.Length == 8 ? Convert.ToInt32(hex.Substring(6, 2), 16) : 255;
+
+        return new RgbColour(r, g, b, a);
     }
 
     public Color ToXnaColor()
@@ -108,7 +122,7 @@ public struct RgbColour : IEquatable<RgbColour>
 
     public string ToHexString(bool includeAlpha = true)
     {
-        return $"#{(int)Math.Round(Red):X2}" +
+        return $"{(int)Math.Round(Red):X2}" +
                $"{(int)Math.Round(Green):X2}" +
                $"{(int)Math.Round(Blue):X2}" +
                $"{(includeAlpha ? $"{(int)Math.Round(Alpha):X2}" : "")}";

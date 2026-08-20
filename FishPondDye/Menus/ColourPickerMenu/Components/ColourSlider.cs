@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Globalization;
 using FishPondDye.Helpers;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
@@ -14,6 +16,8 @@ public class ColourSlider : ClickableComponent
 
     private readonly decimal _min;
     private readonly decimal _max;
+
+    private float timeUntilNextSound = 50f;
     
     private readonly Func<decimal> _getBackingValue;
     private readonly Action<decimal> _setBackingValue;
@@ -54,6 +58,7 @@ public class ColourSlider : ClickableComponent
     }
     
     public GradientBar Bar;
+    public NumberInput Input;
     
     public ColourSlider(string name, Func<decimal> getBackingValue, Action<decimal> setBackingValue, decimal min = 0, decimal max = 100, Rectangle? bounds = null, Color? colourOne = null, Color? colourTwo = null) : base(bounds ?? Rectangle.Empty, name)
     {
@@ -62,6 +67,55 @@ public class ColourSlider : ClickableComponent
         _min = min;
         _max = max;
         Bar = new GradientBar(bounds, colourOne, colourTwo);
+        Input = new NumberInput(Game1.smallFont, Color.Black, getBackingValue, setBackingValue, (int)min, (int)max)
+        {
+            X = bounds?.Right ?? 0,
+            Y = bounds?.Y ?? 0,
+            Width = 60,
+            Height = bounds?.Height ?? 0,
+            Text = _getBackingValue().ToString(CultureInfo.InvariantCulture)
+        };
+    }
+
+    public void receiveLeftClick(int x, int y)
+    {
+        if (Bar.containsPoint(x, y))
+        {
+            Selected = true;
+            Log.Info(Game1.playSound("button_tap"));
+            timeUntilNextSound = 50f;
+        }
+        if (Input.containsPoint(x, y)) Input.receiveLeftClick(x, y);
+    }
+
+    public void leftClickHeld(int x, int y)
+    {
+        if (!Selected)
+        {
+            if (Input.containsPoint(x, y)) Input.leftClickHeld(x, y);
+            return;
+        }
+
+        float progressLastTick = Progress;
+        float progress;
+        if (IsHorizontal)
+        {
+            progress = (float)(x - Bar.Bounds.X) / Bar.Bounds.Width;
+        }
+        else
+        {
+            progress = (float)(y - Bar.Bounds.Y) / Bar.Bounds.Height;
+        }
+        float clamped = Math.Clamp(progress, 0f, 1f);
+        Progress = clamped;
+        if (timeUntilNextSound <= 0f && progressLastTick != Progress)
+        {
+            Game1.playSound("button_tap");
+            timeUntilNextSound = 50f;
+        } else if (timeUntilNextSound > 0f)
+        {
+            timeUntilNextSound -= Game1.currentGameTime.ElapsedGameTime.Milliseconds;
+        }
     }
 
     public void UpdateColours(Color one, Color two)
@@ -70,9 +124,17 @@ public class ColourSlider : ClickableComponent
         Bar.ColourTwo = two;
     }
 
-    public void UpdateBarBounds(Rectangle bounds)
+    public void UpdateBarBounds(Rectangle newBounds)
     {
-        Bar.Bounds = bounds;
+        Bar.Bounds = newBounds;
+    }
+
+    public void UpdateInputBounds(Rectangle newBounds)
+    {
+        Input.X = newBounds.Left;
+        Input.Y = newBounds.Y;
+        Input.Width = newBounds.Width;
+        Input.Height = newBounds.Height;
     }
 
     public Vector2 GetGrabberCenter()
@@ -119,11 +181,17 @@ public class ColourSlider : ClickableComponent
 
     public override bool containsPoint(int x, int y)
     {
-        Point point = new(x, y);
-        if (Bar.Bounds.Contains(point)) return true;
-        
-        Rectangle grabberBounds = GetGrabberBounds();
-        return grabberBounds.Contains(point);
+        return barContainsPoint(x, y) || inputContainsPoint(x, y);
+    }
+
+    public bool barContainsPoint(int x, int y)
+    {
+        return Bar.Bounds.Contains(x, y) || GetGrabberBounds().Contains(x, y);
+    }
+    
+    public bool inputContainsPoint(int x, int y)
+    {
+        return Input.containsPoint(x, y);
     }
 
     public void draw(SpriteBatch b)
@@ -132,6 +200,8 @@ public class ColourSlider : ClickableComponent
         
         Bar.draw(b);
         if (Progress >= 0) drawSliderGrabber(b);
+
+        Input.Draw(b);
     }
     
     public void drawSliderGrabber(SpriteBatch b)

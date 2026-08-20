@@ -14,6 +14,7 @@ struct VertexShaderOutput
     float2 TextureCoordinates : TEXCOORD0;
 };
 
+float2 Resolution;
 float4 ColourOne;
 float4 ColourTwo;
 bool IsHorizontal;
@@ -29,8 +30,8 @@ float3 HUEtoRGB(in float hue)
 float4 GradientBar(VertexShaderOutput input) : COLOR
 {
     float2 uv = input.TextureCoordinates;
-    float4 color = IsHorizontal ? lerp(ColourOne, ColourTwo, uv.x) : lerp(ColourOne, ColourTwo, uv.y);
-    return float4(color.rgb, input.Color.a);
+    float3 color = IsHorizontal ? lerp(ColourOne.rgb, ColourTwo.rgb, uv.x) : lerp(ColourOne.rgb, ColourTwo.rgb, uv.y);
+    return float4(color.rgb, ColourTwo.a);
 }
 
 // This is just a special variant of gradient bar for hue specifically since that needs to lerp through, y'know, EVERY colour and not just two.
@@ -42,20 +43,23 @@ float4 HueBar(VertexShaderOutput input) : COLOR
     return float4(rgb, 1);
 }
 
-float3 CheckerboardColourAtPoint(float2 coordinates)
+float4 CheckerboardColourAtPoint(float2 coordinates)
 {
-    float2 checkerboard = floor(coordinates * 32);
-    float checkerboardValue = fmod(checkerboard.x + checkerboard.y / 8, 2);
-    return checkerboardValue < 1 ? float3(0.6, 0.6, 0.6) : float3(0.2, 0.2, 0.2);
+    float2 checkerboard = floor(coordinates * Resolution / 8);
+    float checkerboardValue = fmod(checkerboard.x + checkerboard.y, 2);
+    float lightGrey = 0.7;
+    float darkGrey = 0.3;
+    return checkerboardValue < 1 ? float4(lightGrey, lightGrey, lightGrey, 1) : float4(darkGrey, darkGrey, darkGrey, 1);
 }
 
 float4 AlphaBar(VertexShaderOutput input) : COLOR
 {
     float2 uv = input.TextureCoordinates;
     float alpha = IsHorizontal ? uv.x : uv.y;
-    float3 checkerboard = CheckerboardColourAtPoint(uv);
-    float3 color = lerp(checkerboard, input.Color.rgb, alpha);
-    return float4(color, 1);
+    alpha *= ColourTwo.a;
+    float4 checkerboard = CheckerboardColourAtPoint(uv);
+    float4 color = lerp(checkerboard, ColourTwo, alpha);
+    return float4(color);
 }
 
 technique GradientBar

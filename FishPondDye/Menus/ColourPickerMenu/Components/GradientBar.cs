@@ -46,9 +46,9 @@ public class GradientBar
         ColourTwo = colourTwo ?? Color.White;
     }
 
-    public bool ContainsPoint(Point point)
+    public bool containsPoint(int x, int y)
     {
-        return Bounds.Contains(point);
+        return Bounds.Contains(new Point(x, y));
     }
 
     public void draw(SpriteBatch b)
@@ -59,6 +59,9 @@ public class GradientBar
         b.Begin(effect: GradientBarEffect);
 
         GradientBarEffect.Parameters["IsHorizontal"].SetValue(IsHorizontal);
+        GradientBarEffect.Parameters["ColourOne"].SetValue(ColourOne.ToVector4());
+        GradientBarEffect.Parameters["ColourTwo"].SetValue(ColourTwo.ToVector4());
+        GradientBarEffect.Parameters["Resolution"].SetValue(new Vector2(Bounds.Width, Bounds.Height));
         if (IsHueBar)
             GradientBarEffect.CurrentTechnique = GradientBarEffect.Techniques["HueBar"];
         else if (IsAlphaBar)
@@ -66,14 +69,12 @@ public class GradientBar
         else
         {
             GradientBarEffect.CurrentTechnique = GradientBarEffect.Techniques["GradientBar"];
-            GradientBarEffect.Parameters["ColourOne"].SetValue(ColourOne.ToVector4());
-            GradientBarEffect.Parameters["ColourTwo"].SetValue(ColourTwo.ToVector4());
         }
 
         b.Draw(
             texture: Game1.staminaRect,
             destinationRectangle: Bounds,
-            color: ColourTwo
+            color: Color.White
         );
         
         b.End();
