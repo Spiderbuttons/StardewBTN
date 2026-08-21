@@ -59,249 +59,96 @@ public partial class ColourPickerMenu
 
     public void drawRightMenu(SpriteBatch b)
     {
+        Rectangle rightMenuBounds = GetRightMenuBounds();
         Game1.DrawBox(
-            x: (int)_rightSectionCenter.X - width / 2 - borderWidth / 2,
-            y: (int)_rightSectionCenter.Y - width / 2,
-            width: width + borderWidth,
-            height: height
+            x: rightMenuBounds.X,
+            y: rightMenuBounds.Y,
+            width: rightMenuBounds.Width,
+            height: rightMenuBounds.Height
         );
         
-        float leftEdge = _rightSectionCenter.X - width / 2f + borderWidth * 1.125f;
-        float topEdge = _rightSectionCenter.Y - width / 2f + borderWidth / 4f;
-        Vector2 rgbSize = Game1.dialogueFont.MeasureString("RGB");
-        float individualWidth = rgbSize.X / 3f;
-        Vector2 textScale = new Vector2(
-            Math.Min(width / 6f / rgbSize.X, height / 6f / rgbSize.Y),
-            Math.Min(width / 6f / rgbSize.X, height / 6f / rgbSize.Y)
-        );
-        
-        b.DrawString(
-            spriteFont: Game1.dialogueFont,
-            text: "RGB",
-            position: new Vector2(leftEdge, topEdge),
-            color: Game1.textColor,
-            rotation: 0f,
-            origin: Vector2.Zero,
-            scale: textScale,
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
+        drawRightHeaders(b);
+        drawRightSliders(b);
+        drawRightHexInput(b);
+    }
 
-        b.Draw(
-            texture: Game1.staminaRect,
-            position: new Vector2(
-                leftEdge + rgbSize.X * textScale.X + borderWidth / 3f,
-                topEdge + (rgbSize.Y * textScale.Y) / 3f
-            ),
-            sourceRectangle: null,
-            color: Color.Black,
-            rotation: 0f,
-            origin: Vector2.Zero,
-            scale: new Vector2(
-                width - (rgbSize.X * textScale.X + borderWidth / 3f) - borderWidth * 1.125f,
-                2
-            ),
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
-        
-        int sliderHeight = (int)((height - (rgbSize.Y * textScale.Y * 3f) - borderWidth * 2f) / 10f);
-        float indentedLeftEdge = leftEdge + individualWidth * textScale.X * 0.75f;
-        float charHeight = rgbSize.Y * textScale.Y * 0.75f;
-        float barLeftEdge = indentedLeftEdge + (individualWidth * 1.25f) * textScale.X;
-        float totalWidthAvailable = width - (barLeftEdge - (_rightSectionCenter.X - width / 2f));
-        int barWidth = (int)(totalWidthAvailable * 0.7f);
-        for (var i = 0; i < 3; i++)
+    private void drawRightSliders(SpriteBatch b)
+    {
+        foreach (var (key, slider) in _sliders)
         {
-            string sliderKey = i switch
-            {
-                0 => "Red",
-                1 => "Green",
-                _ => "Blue",
-            };
-            ColourSlider slider = _sliders[sliderKey];
-            float charYPosition = topEdge + rgbSize.Y * textScale.Y + i * (sliderHeight * 1.25f) + sliderHeight / 2f - charHeight / 2.25f;
             b.DrawString(
                 spriteFont: Game1.dialogueFont,
-                text: sliderKey[0] + ":",
-                position: new Vector2(indentedLeftEdge, charYPosition),
+                text: key[0] + ":",
+                position: GetSliderPrefixOffset(slider.Bar.Bounds, key[0] + ":"),
                 color: Game1.textColor,
                 rotation: 0f,
                 origin: Vector2.Zero,
-                scale: textScale * 0.75f,
+                scale: GetBaseTextScale() * 0.75f,
                 effects: SpriteEffects.None,
                 layerDepth: 1f
             );
-            
-            Rectangle newBarBounds = new Rectangle(
-                x: (int)barLeftEdge,
-                y: (int)(topEdge + rgbSize.Y * textScale.Y) + i * (int)(sliderHeight * 1.25f),
-                width: barWidth,
-                height: sliderHeight
-            );
-            Rectangle newInputBounds = new Rectangle(
-                x: (int)(barLeftEdge + barWidth + borderWidth / 2.25f),
-                y: (int)(topEdge + rgbSize.Y * textScale.Y) + i * (int)(sliderHeight * 1.25f),
-                width: (int)(totalWidthAvailable - barWidth - borderWidth / 2.5f),
-                height: sliderHeight
-            );
-            
-            slider.UpdateBarBounds(newBarBounds);
-            slider.UpdateInputBounds(newInputBounds);
-            
             slider.draw(b);
         }
+    }
+
+    private void drawRightHexInput(SpriteBatch b)
+    {
+        Rectangle hexHeaderBounds = GetHexHeaderBounds();
+        drawHeader(b, "Hex:", hexHeaderBounds, includeLine: false);
         
-        float hsvTopEdge = topEdge + rgbSize.Y * textScale.Y + 3 * (sliderHeight * 1.25f);
-        Vector2 hsvString = Game1.dialogueFont.MeasureString("HSV");
-        b.DrawString(
-            spriteFont: Game1.dialogueFont,
-            text: "HSV",
-            position: new Vector2(leftEdge, hsvTopEdge),
-            color: Game1.textColor,
-            rotation: 0f,
-            origin: Vector2.Zero,
-            scale: textScale,
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
-        
-        b.Draw(
-            texture: Game1.staminaRect,
-            position: new Vector2(
-                leftEdge + hsvString.X * textScale.X + borderWidth / 3f,
-                hsvTopEdge + (hsvString.Y * textScale.Y) / 3f
-            ),
-            sourceRectangle: null,
-            color: Color.Black,
-            rotation: 0f,
-            origin: Vector2.Zero,
-            scale: new Vector2(
-                width - (hsvString.X * textScale.X + borderWidth / 3f) - borderWidth * 1.125f,
-                2
-            ),
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
-        
-        for (var i = 0; i < 3; i++)
-        {
-            string sliderKey = i switch
-            {
-                0 => "Hue",
-                1 => "Saturation",
-                _ => "Value",
-            };
-            ColourSlider slider = _sliders[sliderKey];
-            float charYPosition = hsvTopEdge + hsvString.Y * textScale.Y + i * (sliderHeight * 1.25f) + sliderHeight / 2f - charHeight / 2.25f;
-            b.DrawString(
-                spriteFont: Game1.dialogueFont,
-                text: sliderKey[0] + ":",
-                position: new Vector2(indentedLeftEdge, charYPosition),
-                color: Game1.textColor,
-                rotation: 0f,
-                origin: Vector2.Zero,
-                scale: textScale * 0.75f,
-                effects: SpriteEffects.None,
-                layerDepth: 1f
-            );
-            
-            Rectangle newBarBounds = new Rectangle(
-                x: (int)barLeftEdge,
-                y: (int)(hsvTopEdge + hsvString.Y * textScale.Y) + i * (int)(sliderHeight * 1.25f),
-                width: barWidth,
-                height: sliderHeight
-            );
-            Rectangle newInputBounds = new Rectangle(
-                x: (int)(barLeftEdge + barWidth + borderWidth / 2.25f),
-                y: (int)(hsvTopEdge + hsvString.Y * textScale.Y) + i * (int)(sliderHeight * 1.25f),
-                width: (int)(totalWidthAvailable - barWidth - borderWidth / 2.5f),
-                height: sliderHeight
-            );
-            
-            slider.UpdateBarBounds(newBarBounds);
-            slider.UpdateInputBounds(newInputBounds);
-            
-            slider.draw(b);
-        }
-        
-        float alphaTopEdge = hsvTopEdge + hsvString.Y * textScale.Y + 3 * (sliderHeight * 1.25f);
-        Vector2 alphaString = Game1.dialogueFont.MeasureString("Alpha");
-        b.DrawString(
-            spriteFont: Game1.dialogueFont,
-            text: "Alpha",
-            position: new Vector2(leftEdge, alphaTopEdge),
-            color: Game1.textColor,
-            rotation: 0f,
-            origin: Vector2.Zero,
-            scale: textScale,
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
-        b.Draw(
-            texture: Game1.staminaRect,
-            position: new Vector2(
-                leftEdge + alphaString.X * textScale.X + borderWidth / 3f,
-                alphaTopEdge + (alphaString.Y * textScale.Y) / 3f
-            ),
-            sourceRectangle: null,
-            color: Color.Black,
-            rotation: 0f,
-            origin: Vector2.Zero,
-            scale: new Vector2(
-                width - (alphaString.X * textScale.X + borderWidth / 3f) - borderWidth * 1.125f,
-                2
-            ),
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
-        ColourSlider alphaSlider = _sliders["Alpha"];
-        float alphaCharYPosition = alphaTopEdge + alphaString.Y * textScale.Y + sliderHeight / 2f - charHeight / 2.25f;
-        b.DrawString(
-            spriteFont: Game1.dialogueFont,
-            text: "A:",
-            position: new Vector2(indentedLeftEdge, alphaCharYPosition),
-            color: Game1.textColor,
-            rotation: 0f,
-            origin: Vector2.Zero,
-            scale: textScale * 0.75f,
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
-        Rectangle alphaBarBounds = new Rectangle(
-            x: (int)barLeftEdge,
-            y: (int)(alphaTopEdge + alphaString.Y * textScale.Y),
-            width: barWidth,
-            height: sliderHeight
-        );
-        Rectangle alphaInputBounds = new Rectangle(
-            x: (int)(barLeftEdge + barWidth + borderWidth / 2.25f),
-            y: (int)(alphaTopEdge + alphaString.Y * textScale.Y),
-            width: (int)(totalWidthAvailable - barWidth - borderWidth / 2.5f),
-            height: sliderHeight
-        );
-        alphaSlider.UpdateBarBounds(alphaBarBounds);
-        alphaSlider.UpdateInputBounds(alphaInputBounds);
-        alphaSlider.draw(b);
-        
-        Vector2 hexString = Game1.dialogueFont.MeasureString("Hex:");
-        float hexTopEdge = _rightSectionCenter.Y + height / 2f;
-        b.DrawString(
-            spriteFont: Game1.dialogueFont,
-            text: "Hex:",
-            position: new Vector2(leftEdge, hexTopEdge),
-            color: Game1.textColor,
-            rotation: 0f,
-            origin: Vector2.Zero,
-            scale: textScale,
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
-        _hexInput.X = (int)(leftEdge + hexString.X * textScale.X + borderWidth / 3f);
-        _hexInput.Y = (int)(hexTopEdge);
-        _hexInput.Width = (int)(width - (hexString.X * textScale.X + borderWidth / 3f) - borderWidth * 1.125f);
-        _hexInput.Height = (int)(hexString.Y * textScale.Y);
         _hexInput.Draw(b);
+        _randomHexButton.draw(b);
+    }
+
+    private void drawRightHeaders(SpriteBatch b)
+    {
+        Rectangle rgbHeaderBounds = GetRgbHeaderBounds();
+        drawHeader(b, "RGB", rgbHeaderBounds);
+        
+        Rectangle hsvHeaderBounds = GetHsvHeaderBounds();
+        drawHeader(b, "HSV", hsvHeaderBounds);
+        
+        Rectangle alphaHeaderBounds = GetAlphaHeaderBounds();
+        drawHeader(b, "Alpha", alphaHeaderBounds);
+    }
+
+    private void drawHeader(SpriteBatch b, string header, Rectangle bounds, bool includeLine = true)
+    {
+        Rectangle safeBounds = GetSafeRightMenuBounds();
+        Vector2 textScale = GetBaseTextScale();
+        Vector2 headerString = Game1.dialogueFont.MeasureString(header);
+        
+        b.DrawString(
+            spriteFont: Game1.dialogueFont,
+            text: header,
+            position: new Vector2(bounds.X, bounds.Y),
+            color: Game1.textColor,
+            rotation: 0f,
+            origin: Vector2.Zero,
+            scale: textScale,
+            effects: SpriteEffects.None,
+            layerDepth: 1f
+        );
+        
+        if (!includeLine) return;
+        
+        b.Draw(
+            texture: Game1.staminaRect,
+            position: new Vector2(
+                x: bounds.X + headerString.X * textScale.X * 1.125f,
+                y: bounds.Y + headerString.Y * textScale.Y / 3f
+            ),
+            sourceRectangle: null,
+            color: Color.Black,
+            rotation: 0f,
+            origin: Vector2.Zero,
+            scale: new Vector2(
+                x: safeBounds.Width - headerString.X * textScale.X * 1.125f,
+                y: 2
+            ),
+            effects: SpriteEffects.None,
+            layerDepth: 1f
+        );
     }
 
     public void drawSelectionCircle(SpriteBatch b)

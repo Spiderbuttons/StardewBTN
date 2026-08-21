@@ -72,6 +72,13 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         sourceRect: new Rectangle(80, 0, 13, 13),
         scale: 1f
     );
+
+    private ClickableTextureComponent _randomHexButton = new(
+        bounds: new Rectangle(0, 0, 10, 10),
+        texture: Game1.mouseCursors,
+        sourceRect: new Rectangle(381, 361, 10, 10),
+        scale: 1f
+    );
     
     private Vector2 _screenCenter => new(Game1.uiViewport.Width / 2f, Game1.uiViewport.Height / 2.25f);
 
@@ -80,7 +87,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     private Vector2 _rightSectionOffset = Vector2.Zero;
     private Vector2 _rightSectionCenter => _colourWheel.CenterPoint + _rightSectionOffset;
 
-    private bool _showingAdvancedControls = false;
+    private bool _showingAdvancedControls;
 
     private ColourWheel _colourWheel;
 
@@ -90,7 +97,6 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     private decimal _alpha = 100M;
 
     private readonly Dictionary<string, ColourSlider> _sliders = [];
-    private ColourSlider? _selectedSlider = null;
     
     private int _paletteSquaresPerRow = 12;
     private int _minimumPaletteSquareGap => width / 72;

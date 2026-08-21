@@ -1,6 +1,8 @@
-﻿using FishPondDye.Helpers;
+﻿using System;
+using FishPondDye.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using StardewModdingAPI;
 using StardewValley;
 
 namespace FishPondDye.Menus.ColourPickerMenu;
@@ -9,7 +11,7 @@ public partial class ColourPickerMenu
 {
     public override void receiveKeyPress(Keys key)
     {
-        if (key != Keys.None && Game1.options.doesInputListContain(Game1.options.menuButton, key))
+        if (ModEntry.ModHelper.Input.IsDown(SButton.Escape))
         {
             _hexInput.Selected = false;
         }
@@ -24,7 +26,6 @@ public partial class ColourPickerMenu
         {
             slider.Selected = false;
         }
-        _selectedSlider = null;
     }
 
     public override void leftClickHeld(int x, int y)
@@ -103,11 +104,6 @@ public partial class ColourPickerMenu
         foreach (var (_, slider) in _sliders)
         {
             slider.receiveLeftClick(x, y);
-            if (slider.Selected)
-            {
-                _selectedSlider = slider;
-                break;
-            }
         }
 
         if (_hexInput.containsPoint(x, y))
@@ -118,6 +114,18 @@ public partial class ColourPickerMenu
             Game1.playSound("dialogueCharacter");
         }
         else _hexInput.Selected = false;
+        
+        if (_randomHexButton.containsPoint(x, y))
+        {
+            _randomHexButton.scale = _randomHexButton.baseScale * 0.975f;
+            Random rng = new Random();
+            int r = rng.Next(0, 256);
+            int g = rng.Next(0, 256);
+            int b = rng.Next(0, 256);
+            Color newColour = new Color(r, g, b, PickedColourRgb.ToXnaColor().A);
+            SetColour(HsvColour.FromXnaColor(newColour));
+            Game1.playSound("drumkit6");
+        }
     }
 
     public override void receiveRightClick(int x, int y, bool playSound = true)
@@ -133,8 +141,6 @@ public partial class ColourPickerMenu
             RemoveColourFromPalette(i);
             Game1.playSound("dwoop");
         }
-        
-        Log.Info(PickedColourHsv.ToXnaColor());
     }
 
     public override void receiveScrollWheelAction(int direction)
@@ -147,5 +153,6 @@ public partial class ColourPickerMenu
         base.performHoverAction(x, y);
         _toggleAdvancedControls.tryHover(x, y);
         _togglePreviewBase.tryHover(x, y);
+        _randomHexButton.tryHover(x, y);
     }
 }

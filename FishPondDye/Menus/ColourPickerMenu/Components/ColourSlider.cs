@@ -82,7 +82,7 @@ public class ColourSlider : ClickableComponent
         if (Bar.containsPoint(x, y))
         {
             Selected = true;
-            Log.Info(Game1.playSound("button_tap"));
+            Game1.playSound("button_tap");
             timeUntilNextSound = 50f;
         }
         if (Input.containsPoint(x, y)) Input.receiveLeftClick(x, y);

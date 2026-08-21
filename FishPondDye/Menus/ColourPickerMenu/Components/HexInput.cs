@@ -28,6 +28,7 @@ public class HexInput : TextBox
         _getColour = getColour;
         _setColour = setColour;
         textLimit = 6;
+        limitWidth = false;
         Text = getColour().ToHexString();
     }
 
@@ -127,7 +128,7 @@ public class HexInput : TextBox
             size = _font.MeasureString(text: toDraw);
         }
         
-        Vector2 baseSize = _font.MeasureString("FFFFFF");
+        Vector2 baseSize = _font.MeasureString("BBBBBB");
         Vector2 hashTagSize = _font.MeasureString("#");
         float scale = Math.Min(Height / baseSize.Y, Width * 0.75f / baseSize.X);
         
