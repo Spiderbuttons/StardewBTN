@@ -29,6 +29,26 @@ public class NumberInput : TextBox
     private float timeBeforeFastInput = 500f;
     private float timeBetweenInputTicks = 35f;
     
+    private ClickableTextureComponent upButton = new ClickableTextureComponent(
+        name: "upButton",
+        bounds: new Rectangle(0, 0, 0, 0),
+        label: null,
+        hoverText: null,
+        texture: Game1.mouseCursors,
+        sourceRect: new Rectangle(184, 345, 7, 8),
+        scale: 1f
+    );
+    
+    private ClickableTextureComponent downButton = new ClickableTextureComponent(
+        name: "downButton",
+        bounds: new Rectangle(0, 0, 0, 0),
+        label: null,
+        hoverText: null,
+        texture: Game1.mouseCursors,
+        sourceRect: new Rectangle(177, 345, 7, 8),
+        scale: 1f
+    );
+    
     public NumberInput(SpriteFont font, Color textColor, Func<decimal>? getBackingValue = null, Action<decimal>? setBackingValue = null, int min = 0, int max = int.MaxValue) : base(null, null,
         font,
         textColor)
@@ -39,12 +59,31 @@ public class NumberInput : TextBox
         Min = min;
         Max = max;
     }
+    
+    public void UpdateButtonPositions()
+    {
+        upButton.scale = upButton.baseScale = GetPlusMinusScale();
+        downButton.scale = downButton.baseScale = GetPlusMinusScale();
+        
+        upButton.bounds = GetPlusMinusBounds();
+        downButton.bounds = GetPlusMinusBounds(isPlus: false);
+    }
+
+    public float GetPlusMinusScale()
+    {
+        float buttonHeight = Height / 2f;
+        return buttonHeight / upButton.sourceRect.Height;
+    }
 
     public Rectangle GetPlusMinusBounds(bool isPlus = true)
     {
         float buttonHeight = Height / 2f;
         int yCoord = isPlus ? Y : Y + (int)buttonHeight;
-        return new Rectangle(X + Width - (int)(buttonHeight * 0.875f), yCoord, (int)(buttonHeight * 0.875f), (int)buttonHeight);
+        return new Rectangle(
+            x: (int)(X + Width - upButton.sourceRect.Width * GetPlusMinusScale()),
+            y: yCoord, 
+            width: (int)(upButton.sourceRect.Width * GetPlusMinusScale()),
+            height: (int)buttonHeight);
     }
     
     public void receiveLeftClick(int x, int y)
@@ -120,20 +159,9 @@ public class NumberInput : TextBox
             sourceRectangle: rightEdgeRect,
             color: Color.White
         );
-        
-        float buttonHeight = Height / 2f;
-        spriteBatch.Draw(
-            texture: Game1.mouseCursors,
-            destinationRectangle: GetPlusMinusBounds(),
-            sourceRectangle: plusSourceRect,
-            color: Color.White
-        );
-        spriteBatch.Draw(
-            texture: Game1.mouseCursors,
-            destinationRectangle: GetPlusMinusBounds(isPlus: false),
-            sourceRectangle: minusSourceRect,
-            color: Color.White
-        );
+
+        upButton.draw(spriteBatch);
+        downButton.draw(spriteBatch);
         
         Vector2 size = _font.MeasureString(text: toDraw);
         while (size.X > Width)
@@ -156,23 +184,17 @@ public class NumberInput : TextBox
         }
         
         float scale = Math.Min(Height / size.Y, Width * 0.75f / size.X);
-        if (drawShadow)
-        {
-            Utility.drawTextWithShadow(
-                b: spriteBatch,
-                text: toDraw,
-                font: _font,
-                position: new Vector2(
-                    x: X + (Width / 14f),
-                    y: Y + (Height / 1.75f) - (size.Y * scale / 2f)
-                ),
-                color: _textColor,
-                scale: scale,
-                layerDepth: 1f
-            );
-        }
-        else {
-            
-        }
+        Utility.drawTextWithShadow(
+            b: spriteBatch,
+            text: toDraw,
+            font: _font,
+            position: new Vector2(
+                x: X + (Width / 14f),
+                y: Y + (Height / 1.75f) - (size.Y * scale / 2f)
+            ),
+            color: _textColor,
+            scale: scale,
+            layerDepth: 1f
+        );
     }
 }

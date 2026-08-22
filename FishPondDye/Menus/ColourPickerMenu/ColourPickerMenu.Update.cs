@@ -56,6 +56,7 @@ public partial class ColourPickerMenu
     public override void update(GameTime time)
     {
         base.update(time);
+        UpdateComponentIDs();
         
         UpdateSliderColours();
         
@@ -78,6 +79,14 @@ public partial class ColourPickerMenu
             UpdateSliderPositions();
             UpdateHexInputPosition();
         }
+    }
+
+    public void UpdateComponentIDs()
+    {
+        Vector2 point = ColourWheel.HsvToPoint(PickedColourHsv);
+        bool isLeft = point.X < 0;
+        _colourWheel.downNeighborID = isLeft ? 1 : 2;
+        _colourWheel.leftNeighborID = isLeft ? 1 : 2;
     }
 
     public void UpdateHexInputPosition()
@@ -123,6 +132,7 @@ public partial class ColourPickerMenu
                 _ => GetAlphaInputBounds(),
             };
             slider.UpdateInputBounds(newInputBounds);
+            slider.Input.UpdateButtonPositions();
         }
     }
 

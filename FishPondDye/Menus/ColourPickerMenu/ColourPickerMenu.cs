@@ -57,14 +57,24 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         texture: Game1.mouseCursors2,
         sourceRect: new Rectangle(80, 208, 16, 16),
         scale: 1f
-    );
-    
+    )
+    {
+        myID = 2,
+        leftNeighborID = 1,
+        upNeighborID = 0
+    };
+
     private ClickableTextureComponent _togglePreviewBase = new(
         bounds: new Rectangle(0, 0, 16, 16),
         texture: Game1.mouseCursors2,
         sourceRect: new Rectangle(64, 208, 16, 16),
         scale: 1f
-    );
+    )
+    {
+        myID = 1,
+        rightNeighborID = 2,
+        upNeighborID = 0
+    };
     
     private ClickableTextureComponent _togglePreviewIcon = new(
         bounds: new Rectangle(0, 0, 16, 16),
@@ -139,13 +149,19 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         _pond = pond;
         width = Game1.uiViewport.Width / 4;
         height = Game1.uiViewport.Width / 4;
-        
+
         _colourWheel = new ColourWheel(
             name: "ColourWheel",
             centerPoint: new Vector2(_screenCenter.X, _screenCenter.Y - height / 6f),
             width: width,
             height: width
-        );
+        )
+        {
+            myID = 0,
+            downNeighborID = 1,
+            leftNeighborID = 1,
+            rightNeighborID = 2
+        };
 
         List<Color>? savedPalette = null;
         if (Game1.player.modData.TryGetValue("Spiderbuttons.SpiderUI.ColourPickerPalette", out string? paletteString))
@@ -250,6 +266,33 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         );
         
         gameWindowSizeChanged(Rectangle.Empty, Rectangle.Empty);
+        populateClickableComponentList();
+        snapCursorToCurrentSnappedComponent();
+    }
+
+    public override void populateClickableComponentList()
+    {
+        base.populateClickableComponentList();
+        
+        AssignComponentIds();
+        
+        allClickableComponents.Add(_colourWheel);
+        allClickableComponents.Add(_toggleAdvancedControls);
+        allClickableComponents.Add(_togglePreviewBase);
+        foreach (var (_, slider) in _sliders)
+        {
+            allClickableComponents.Add(slider);
+        }
+    }
+
+    private void AssignComponentIds()
+    {
+        int sliderId = 0;
+        foreach (var (key, slider) in _sliders)
+        {
+            slider.myID = sliderId;
+            sliderId++;
+        }
     }
 
     public decimal GetRed()

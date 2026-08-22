@@ -39,6 +39,14 @@ public class GradientBar
     public Color ColourOne { get; set; }
     public Color ColourTwo { get; set; }
     
+    private static readonly BlendState SeeThroughBlendState = new()
+    {
+        ColorSourceBlend = Blend.One,
+        ColorDestinationBlend = Blend.Zero,
+        AlphaSourceBlend = Blend.One,
+        AlphaDestinationBlend = Blend.Zero
+    };
+    
     public GradientBar(Rectangle? bounds = null, Color? colourOne = null, Color? colourTwo = null)
     {
         Bounds = bounds ?? Rectangle.Empty;
@@ -51,12 +59,12 @@ public class GradientBar
         return Bounds.Contains(new Point(x, y));
     }
 
-    public void draw(SpriteBatch b)
+    public void draw(SpriteBatch b, bool seeThrough = false)
     {
         if (Bounds.IsEmpty) return;
         
         b.End();
-        b.Begin(effect: GradientBarEffect);
+        b.Begin(blendState: seeThrough ? SeeThroughBlendState : null, effect: GradientBarEffect);
 
         GradientBarEffect.Parameters["IsHorizontal"].SetValue(IsHorizontal);
         GradientBarEffect.Parameters["ColourOne"].SetValue(ColourOne.ToVector4());

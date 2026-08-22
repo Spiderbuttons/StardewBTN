@@ -194,11 +194,11 @@ public class ColourSlider : ClickableComponent
         return Input.containsPoint(x, y);
     }
 
-    public void draw(SpriteBatch b)
+    public void draw(SpriteBatch b, bool seeThrough = false)
     {
         if (Bar.Bounds.IsEmpty) return;
         
-        Bar.draw(b);
+        Bar.draw(b, seeThrough);
         if (Progress >= 0) drawSliderGrabber(b);
 
         Input.Draw(b);

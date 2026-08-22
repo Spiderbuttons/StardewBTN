@@ -20,34 +20,17 @@ public class PaletteSquare : ClickableComponent
     
     public void draw(SpriteBatch b)
     {
-        if (StoredColour.HasValue)
-        {
-            b.Draw(
-                texture: Game1.staminaRect,
-                position: new Vector2(bounds.X, bounds.Y),
-                sourceRectangle: null,
-                color: StoredColour.Value,
-                rotation: 0f,
-                scale: (int)scale,
-                origin: Vector2.Zero,
-                effects: SpriteEffects.None,
-                layerDepth: 1f
-            );
-        }
-        else
-        {
-            b.Draw(
-                texture: Game1.staminaRect,
-                position: new Vector2(bounds.X, bounds.Y),
-                sourceRectangle: null,
-                color: Color.White,
-                rotation: 0f,
-                scale: (int)scale,
-                origin: Vector2.Zero,
-                effects: SpriteEffects.None,
-                layerDepth: 1f
-            );
-        }
+        b.Draw(
+            texture: Game1.staminaRect,
+            position: new Vector2(bounds.X, bounds.Y),
+            sourceRectangle: null,
+            color: StoredColour ?? Color.White,
+            rotation: 0f,
+            scale: scale,
+            origin: Vector2.Zero,
+            effects: SpriteEffects.None,
+            layerDepth: 1f
+        );
 
         Color borderColour = new Color(104, 57, 36);
         int borderWidth = 2;

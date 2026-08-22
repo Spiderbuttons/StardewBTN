@@ -31,8 +31,8 @@ public partial class ColourPickerMenu
         _colourWheel.draw(b);
         drawSelectionCircle(b);
 
-        PickedColourBackground.draw(b);
-        PickedColourSlider.draw(b);
+        // PickedColourBackground.draw(b);
+        PickedColourSlider.draw(b, seeThrough: true);
         
         foreach (var square in _palette)
         {

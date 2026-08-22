@@ -59,6 +59,20 @@ public class ColourWheel : ClickableComponent
     {
         return PointToRgb(point);
     }
+    
+    public Vector2 ClampPointToWheel(Vector2 point, int extraMargin = 0)
+    {
+        Vector2 direction = point - CenterPoint;
+        float distance = direction.Length();
+        float radius = Width / 2f;
+        if (distance > radius + extraMargin)
+        {
+            direction.Normalize();
+            direction *= radius + extraMargin;
+            return CenterPoint + direction;
+        }
+        return point;
+    }
 
     public Vector2 ScreenPointToUnitSpace(Vector2 point)
     {
@@ -72,6 +86,13 @@ public class ColourWheel : ClickableComponent
         Vector2 point = new Vector2(x, y);
         Vector2 unitSpacePoint = ScreenPointToUnitSpace(point);
         return unitSpacePoint.Length() <= 0.5f;
+    }
+
+    public bool containsPointWithMargin(int x, int y, int extraMargin = 0)
+    {
+        Vector2 point = new Vector2(x, y);
+        Vector2 unitSpacePoint = ScreenPointToUnitSpace(point);
+        return unitSpacePoint.Length() <= 0.5f + extraMargin / Width;
     }
 
     public static RgbColour PointToRgb(Vector2 point)
