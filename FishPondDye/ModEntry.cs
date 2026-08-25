@@ -93,10 +93,11 @@ namespace FishPondDye
             float alpha = 0.5f;
             if (xnaColour == Color.White)
             {
-                xnaColour = new Color(254, 254, 254);
                 // The game has special handling for exactly white to change it to the current location's water colour.
-                // So we fudge it a little bit here so the player is still able to actually see white if they want white. 
+                // So we fudge it a little bit here so the player is still able to actually see white if they want white.
+                xnaColour = new Color(254, 254, 254);
             }
+            DummyPond.overrideWaterColor.Value = xnaColour;
             
             float scale = Math.Min(bounds.Width / 80f, bounds.Height / 80f);
             float waterScale = scale / 4f;
@@ -147,7 +148,7 @@ namespace FishPondDye
                     y: 80,
                     width: 80,
                     height: 80),
-                color: xnaColour * DummyPond.alpha,
+                color: DummyPond.overrideWaterColor.Value * DummyPond.alpha,
                 rotation: 0f,
                 origin: new Vector2(x: 40f, y: 40f),
                 scale: scale,
@@ -189,7 +190,7 @@ namespace FishPondDye
                         texture: Game1.mouseCursors,
                         position: position,
                         sourceRectangle: sourceRect,
-                        color: xnaColour * alpha,
+                        color: DummyPond.overrideWaterColor.Value * alpha,
                         rotation: 0f,
                         origin: new Vector2(0, 0),
                         scale: waterScale,
