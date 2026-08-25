@@ -3,6 +3,7 @@ using FishPondDye.Menus.ColourPickerMenu.Components;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using StardewValley.BellsAndWhistles;
 
 namespace FishPondDye.Menus.ColourPickerMenu;
 
@@ -29,9 +30,8 @@ public partial class ColourPickerMenu
         );
 
         _colourWheel.draw(b);
-        drawSelectionCircle(b);
-
-        // PickedColourBackground.draw(b);
+        _selectionCircle.draw(b);
+        
         PickedColourSlider.draw(b, seeThrough: true);
         
         foreach (var square in _palette)
@@ -48,13 +48,18 @@ public partial class ColourPickerMenu
 
     public void drawLeftMenu(SpriteBatch b)
     {
+        if (_drawPreview is null) return;
+        
+        Rectangle leftMenuBounds = GetLeftMenuBounds();
         Game1.DrawBox(
-            x: (int)_colourWheel.CenterPoint.X - width / 2 - borderWidth / 2 - (int)_leftSectionOffset.X,
-            y: (int)_colourWheel.CenterPoint.Y - width / 2 + (int)_leftSectionOffset.Y,
-            width: width + borderWidth,
-            height: height,
-            color: Color.WhiteSmoke
+            x: leftMenuBounds.X,
+            y: leftMenuBounds.Y,
+            width: leftMenuBounds.Width,
+            height: leftMenuBounds.Height
         );
+        
+        Rectangle safeLeftMenuBounds = GetSafeLeftMenuBounds();
+        _drawPreview(b, safeLeftMenuBounds, PickedColourRgb);
     }
 
     public void drawRightMenu(SpriteBatch b)
@@ -146,26 +151,6 @@ public partial class ColourPickerMenu
                 x: safeBounds.Width - headerString.X * textScale.X * 1.125f,
                 y: 2
             ),
-            effects: SpriteEffects.None,
-            layerDepth: 1f
-        );
-    }
-
-    public void drawSelectionCircle(SpriteBatch b)
-    {
-        Vector2 point = ColourWheel.HsvToPoint(PickedColourHsv);
-        Vector2 position = new Vector2(
-            x: _colourWheel.CenterPoint.X + point.X * _colourWheel.Width / 2f,
-            y: _colourWheel.CenterPoint.Y + point.Y * _colourWheel.Height / 2f
-        );
-        b.Draw(
-            texture: _selectionCircle,
-            position: position,
-            sourceRectangle: null,
-            color: Color.White,
-            rotation: 0f,
-            origin: new Vector2(4.5f, 4.5f),
-            scale: 2f,
             effects: SpriteEffects.None,
             layerDepth: 1f
         );

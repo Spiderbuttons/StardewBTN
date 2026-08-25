@@ -27,27 +27,35 @@ public class NumberInput : TextBox
     
     private float timeHeldDown = 0f;
     private float timeBeforeFastInput = 500f;
-    private float timeBetweenInputTicks = 35f;
+    private float timeBetweenInputTicks = 25f;
     
-    private ClickableTextureComponent upButton = new ClickableTextureComponent(
+    public ClickableTextureComponent upButton = new(
         name: "upButton",
-        bounds: new Rectangle(0, 0, 0, 0),
+        bounds: new Rectangle(0, 0, 7, 8),
         label: null,
         hoverText: null,
         texture: Game1.mouseCursors,
         sourceRect: new Rectangle(184, 345, 7, 8),
         scale: 1f
-    );
+    )
+    {
+        myID = 90,
+        region = 1
+    };
     
-    private ClickableTextureComponent downButton = new ClickableTextureComponent(
+    public ClickableTextureComponent downButton = new(
         name: "downButton",
-        bounds: new Rectangle(0, 0, 0, 0),
+        bounds: new Rectangle(0, 0, 7, 8),
         label: null,
         hoverText: null,
         texture: Game1.mouseCursors,
         sourceRect: new Rectangle(177, 345, 7, 8),
         scale: 1f
-    );
+    )
+    {
+        myID = 91,
+        region = 1
+    };
     
     public NumberInput(SpriteFont font, Color textColor, Func<decimal>? getBackingValue = null, Action<decimal>? setBackingValue = null, int min = 0, int max = int.MaxValue) : base(null, null,
         font,
@@ -88,7 +96,7 @@ public class NumberInput : TextBox
     
     public void receiveLeftClick(int x, int y)
     {
-        timeHeldDown = 0f;
+        timeHeldDown = 0;
         
         int amountToChange = GetPlusMinusBounds().Contains(x, y) ? 1 : GetPlusMinusBounds(isPlus: false).Contains(x, y) ? -1 : 0;
         if (isHoldingModifierKey()) amountToChange *= 10;
@@ -160,8 +168,8 @@ public class NumberInput : TextBox
             color: Color.White
         );
 
-        upButton.draw(spriteBatch);
-        downButton.draw(spriteBatch);
+        upButton?.draw(spriteBatch);
+        downButton?.draw(spriteBatch);
         
         Vector2 size = _font.MeasureString(text: toDraw);
         while (size.X > Width)

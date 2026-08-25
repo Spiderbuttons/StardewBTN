@@ -19,17 +19,21 @@ public class ColourSlider : ClickableComponent
 
     private float timeUntilNextSound = 50f;
     
-    private readonly Func<decimal> _getBackingValue;
-    private readonly Action<decimal> _setBackingValue;
+    private readonly Func<decimal>? _getBackingValue;
+    private readonly Action<decimal>? _setBackingValue;
     public float Progress
     {
         get
         {
+            if (_getBackingValue is null) return 0f;
+            
             float progress = (float)((_getBackingValue() - _min) / (_max - _min));
             return Math.Clamp(progress, -1f, 1f);
         }
         set
         {
+            if (_setBackingValue is null) return;
+            
             if (!IsHorizontal) value = 1f - value;
             _setBackingValue(Math.Clamp(_min + (decimal)value * (_max - _min), _min, _max));
         }
@@ -58,41 +62,44 @@ public class ColourSlider : ClickableComponent
     }
     
     public GradientBar Bar;
-    public NumberInput Input;
+    public NumberInput? Input;
     
-    public ColourSlider(string name, Func<decimal> getBackingValue, Action<decimal> setBackingValue, decimal min = 0, decimal max = 100, Rectangle? bounds = null, Color? colourOne = null, Color? colourTwo = null) : base(bounds ?? Rectangle.Empty, name)
+    public ColourSlider(string name, Func<decimal>? getBackingValue, Action<decimal>? setBackingValue, decimal min = 0, decimal max = 100, Rectangle? bounds = null, Color? colourOne = null, Color? colourTwo = null) : base(bounds ?? Rectangle.Empty, name)
     {
         _getBackingValue = getBackingValue;
         _setBackingValue = setBackingValue;
         _min = min;
         _max = max;
         Bar = new GradientBar(bounds, colourOne, colourTwo);
+        
+        if (getBackingValue is null || setBackingValue is null) return;
+        
         Input = new NumberInput(Game1.smallFont, Color.Black, getBackingValue, setBackingValue, (int)min, (int)max)
         {
             X = bounds?.Right ?? 0,
             Y = bounds?.Y ?? 0,
             Width = 60,
             Height = bounds?.Height ?? 0,
-            Text = _getBackingValue().ToString(CultureInfo.InvariantCulture)
+            Text = _getBackingValue?.Invoke().ToString(CultureInfo.InvariantCulture) ?? string.Empty
         };
     }
 
     public void receiveLeftClick(int x, int y)
     {
-        if (Bar.containsPoint(x, y))
+        if (Bar.containsPoint(x, y) || GetGrabberBounds().Contains(x, y))
         {
             Selected = true;
             Game1.playSound("button_tap");
             timeUntilNextSound = 50f;
         }
-        if (Input.containsPoint(x, y)) Input.receiveLeftClick(x, y);
+        if (Input?.containsPoint(x, y) == true) Input.receiveLeftClick(x, y);
     }
 
     public void leftClickHeld(int x, int y)
     {
         if (!Selected)
         {
-            if (Input.containsPoint(x, y)) Input.leftClickHeld(x, y);
+            if (Input?.containsPoint(x, y) == true) Input.leftClickHeld(x, y);
             return;
         }
 
@@ -131,6 +138,8 @@ public class ColourSlider : ClickableComponent
 
     public void UpdateInputBounds(Rectangle newBounds)
     {
+        if (Input is null) return;
+        
         Input.X = newBounds.Left;
         Input.Y = newBounds.Y;
         Input.Width = newBounds.Width;
@@ -168,15 +177,13 @@ public class ColourSlider : ClickableComponent
                 (int)(MiddleSourceRect.Height * GrabberScale + CapSourceRect.Height * 4f)
             );
         }
-        else
-        {
-            return new Rectangle(
-                (int)(grabberCenter.X - MiddleSourceRect.Height * GrabberScale / 2f - CapSourceRect.Height),
-                (int)(grabberCenter.Y - MiddleSourceRect.Width * GrabberScale / 2f),
-                (int)(MiddleSourceRect.Height * GrabberScale + CapSourceRect.Height * 2f),
-                (int)(MiddleSourceRect.Width * GrabberScale)
-            );
-        }
+
+        return new Rectangle(
+            (int)(grabberCenter.X - MiddleSourceRect.Height * GrabberScale / 2f - CapSourceRect.Height),
+            (int)(grabberCenter.Y - MiddleSourceRect.Width * GrabberScale / 2f),
+            (int)(MiddleSourceRect.Height * GrabberScale + CapSourceRect.Height * 2f),
+            (int)(MiddleSourceRect.Width * GrabberScale)
+        );
     }
 
     public override bool containsPoint(int x, int y)
@@ -191,7 +198,7 @@ public class ColourSlider : ClickableComponent
     
     public bool inputContainsPoint(int x, int y)
     {
-        return Input.containsPoint(x, y);
+        return Input?.containsPoint(x, y) == true;
     }
 
     public void draw(SpriteBatch b, bool seeThrough = false)
@@ -199,9 +206,9 @@ public class ColourSlider : ClickableComponent
         if (Bar.Bounds.IsEmpty) return;
         
         Bar.draw(b, seeThrough);
-        if (Progress >= 0) drawSliderGrabber(b);
+        if (_setBackingValue is not null) drawSliderGrabber(b);
 
-        Input.Draw(b);
+        Input?.Draw(b);
     }
     
     public void drawSliderGrabber(SpriteBatch b)

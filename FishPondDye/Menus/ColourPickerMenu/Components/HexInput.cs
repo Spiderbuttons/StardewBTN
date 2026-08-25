@@ -34,7 +34,12 @@ public class HexInput : TextBox
 
     public bool containsPoint(int x, int y)
     {
-        return new Rectangle(X, Y, Width, Height).Contains(new Point(x, y));
+        return GetBounds().Contains(new Point(x, y));
+    }
+    
+    public Rectangle GetBounds()
+    {
+        return new Rectangle(X, Y, Width, Height);
     }
 
     public override void RecieveTextInput(char inputChar)
@@ -64,7 +69,7 @@ public class HexInput : TextBox
                 break;
             case '\r':
                 Selected = false;
-                Game1.playSound("drumkit6");
+                if (!Game1.options.SnappyMenus) Game1.playSound("drumkit6");
                 break;
         }
     }

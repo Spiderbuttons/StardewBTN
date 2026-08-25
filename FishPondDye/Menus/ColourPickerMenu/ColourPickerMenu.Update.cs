@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Linq;
 using FishPondDye.Helpers;
 using FishPondDye.Menus.ColourPickerMenu.Components;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using StardewModdingAPI;
 using StardewValley;
 
 namespace FishPondDye.Menus.ColourPickerMenu;
@@ -17,11 +20,12 @@ public partial class ColourPickerMenu
         _colourWheel.CenterPoint = new Vector2(colourWheelBounds.X + colourWheelBounds.Width / 2f, colourWheelBounds.Y + colourWheelBounds.Height / 2f);
         _colourWheel.Width = _colourWheel.Height = colourWheelBounds.Width;
         
+        UpdateSelectionCircle();
+        
         PositionPaletteSquares();
 
         Rectangle pickedColourBounds = GetPickedColourBounds();
         PickedColourSlider.UpdateBarBounds(pickedColourBounds);
-        PickedColourBackground.UpdateBarBounds(pickedColourBounds);
 
         float buttonScale = GetAdvancedButtonScale();
         _toggleAdvancedControls.baseScale = _toggleAdvancedControls.scale = buttonScale;
@@ -42,7 +46,7 @@ public partial class ColourPickerMenu
         _togglePreviewIcon.bounds = previewIconBounds;
 
         _rightSectionOffset.X = _showingAdvancedControls ? width : 0;
-        _leftSectionOffset.X = _showingAdvancedControls ? -width : 0;
+        _leftSectionOffset.X = _showingPreview ? -width : 0;
         
         // This'll make the menu fit all our stuff in it, but only just. Nice n cozy size.
         (int squareSize, int gap) = GetPaletteSquareSizeAndGap();
@@ -59,6 +63,7 @@ public partial class ColourPickerMenu
         UpdateComponentIDs();
         
         UpdateSliderColours();
+        UpdateSelectionCircle();
         
         float targetRightOffsetX = _showingAdvancedControls ? width : 0f;
         _rightSectionOffset.X = MathHelper.Lerp(_rightSectionOffset.X, targetRightOffsetX, 0.15f);
@@ -67,7 +72,7 @@ public partial class ColourPickerMenu
             _rightSectionOffset.X = targetRightOffsetX;
         }
         
-        float targetLeftOffsetX = _showingAdvancedControls ? -width : 0f;
+        float targetLeftOffsetX = _showingPreview ? -width : 0f;
         _leftSectionOffset.X = MathHelper.Lerp(_leftSectionOffset.X, targetLeftOffsetX, 0.15f);
         if (Math.Abs(_leftSectionOffset.X - targetLeftOffsetX) < 0.5f)
         {
@@ -79,14 +84,126 @@ public partial class ColourPickerMenu
             UpdateSliderPositions();
             UpdateHexInputPosition();
         }
+
+        if (_colourWheel.Selected && Game1.isGamePadThumbstickInMotion())
+        {
+            ClampGamePadCursorToColourWheel();
+        }
+        ColourSlider? selectedSlider = _sliders.Values.FirstOrDefault(s => s.Selected);
+        if (selectedSlider is not null && Game1.isGamePadThumbstickInMotion())
+        {
+            ClampGamePadCursorToSlider(selectedSlider);
+        }
+    }
+
+    private void UpdateSelectionCircle()
+    {
+        Vector2 point = ColourWheel.HsvToPoint(PickedColourHsv);
+        Vector2 position = new Vector2(
+            x: _colourWheel.CenterPoint.X + point.X * _colourWheel.Width / 2f,
+            y: _colourWheel.CenterPoint.Y + point.Y * _colourWheel.Height / 2f
+        );
+        
+        _selectionCircle.setPosition(
+            (int)position.X - _selectionCircle.bounds.Width / 2,
+            (int)position.Y - _selectionCircle.bounds.Height / 2
+        );
+    }
+    
+    private void ClampGamePadCursorToColourWheel()
+    {
+        GamePadState state = Game1.input.GetGamePadState();
+        Vector2 stickMovement = new Vector2(
+            x: state.ThumbSticks.Left.X * Game1.thumbstickToMouseModifier,
+            y: -state.ThumbSticks.Left.Y * Game1.thumbstickToMouseModifier
+        );
+        Vector2 currentPosition = Game1.getMousePosition().ToVector2();
+        Vector2 nextPosition = currentPosition + stickMovement;
+        
+        if (!_colourWheel.containsPoint((int)nextPosition.X, (int)nextPosition.Y))
+        {
+            Vector2 direction = nextPosition - _colourWheel.CenterPoint;
+            direction.Normalize();
+            Vector2 clampedPosition = _colourWheel.CenterPoint + direction * (_colourWheel.Width / 2f);
+            Game1.setMousePosition((int)clampedPosition.X, (int)clampedPosition.Y);
+        }
+    }
+
+    private void ClampGamePadCursorToSlider(ColourSlider slider)
+    {
+        GamePadState state = Game1.input.GetGamePadState();
+        Point stickMovement = new Point(
+            x: (int)(state.ThumbSticks.Left.X * Game1.thumbstickToMouseModifier * 0.175f),
+            y: (int)(-state.ThumbSticks.Left.Y * Game1.thumbstickToMouseModifier * 0.175f)
+        );
+        Point currentPosition = Game1.getMousePositionRaw();
+        Point nextPosition = currentPosition + stickMovement;
+        
+        Rectangle rawSliderBounds = new Rectangle(
+            x: (int)(slider.Bar.Bounds.X * Game1.options.uiScale),
+            y: (int)(slider.Bar.Bounds.Y * Game1.options.uiScale),
+            width: (int)(slider.Bar.Bounds.Width * Game1.options.uiScale),
+            height: (int)(slider.Bar.Bounds.Height * Game1.options.uiScale)
+        );
+        
+        int grabberHalfWidth = (int)(slider.GetGrabberBounds().Width / 8f * Game1.options.uiScale);
+        if (nextPosition.X < rawSliderBounds.Left - grabberHalfWidth || nextPosition.X > rawSliderBounds.Right + grabberHalfWidth)
+        {
+            int clampedX = Math.Clamp(nextPosition.X, rawSliderBounds.Left - grabberHalfWidth, rawSliderBounds.Right + grabberHalfWidth);
+            Game1.setMousePositionRaw(
+                x: clampedX,
+                y: rawSliderBounds.Center.Y + 1
+            );
+        } else {
+            Game1.setMousePositionRaw(
+                x: nextPosition.X,
+                y: rawSliderBounds.Center.Y + 1
+            );
+        }
     }
 
     public void UpdateComponentIDs()
     {
         Vector2 point = ColourWheel.HsvToPoint(PickedColourHsv);
-        bool isLeft = point.X < 0;
-        _colourWheel.downNeighborID = isLeft ? 1 : 2;
-        _colourWheel.leftNeighborID = isLeft ? 1 : 2;
+        bool selectionCircleIsInBottomQuarter = point.Y > 0.5f;
+        switch (point.X)
+        {
+            case < -0.35f when !selectionCircleIsInBottomQuarter:
+                _selectionCircle.downNeighborID = CC_TOGGLE_PREVIEW;
+                break;
+            case > 0.35f when !selectionCircleIsInBottomQuarter:
+                _selectionCircle.downNeighborID = CC_TOGGLE_ADVANCED;
+                break;
+            default:
+                if (_selectionCircle.downNeighborID is >= CC_PALETTE_START and < CC_PALETTE_START + _paletteSquaresPerRow)
+                {
+                    break;
+                }
+                
+                float closestDistance = float.MaxValue;
+                int closestIndex = -1;
+                for (var i = 0; i < _paletteSquaresPerRow; i++)
+                {
+                    var square = _palette[i];
+                    float distance = Vector2.Distance(_selectionCircle.bounds.Center.ToVector2(), square.bounds.Center.ToVector2());
+                    if (!(distance < closestDistance)) continue;
+                    
+                    closestDistance = distance;
+                    closestIndex = i;
+                }
+                _selectionCircle.downNeighborID = CC_PALETTE_START + closestIndex;
+                break;
+        }
+
+        if (selectionCircleIsInBottomQuarter)
+        {
+            _toggleAdvancedControls.leftNeighborID = CC_SELECTION_CIRCLE;
+            _togglePreviewBase.rightNeighborID = CC_SELECTION_CIRCLE;
+        } else
+        {
+            _toggleAdvancedControls.leftNeighborID = CC_TOGGLE_PREVIEW;
+            _togglePreviewBase.rightNeighborID = CC_TOGGLE_ADVANCED;
+        }
     }
 
     public void UpdateHexInputPosition()
@@ -96,6 +213,7 @@ public partial class ColourPickerMenu
         _hexInput.Y = inputBounds.Y;
         _hexInput.Width = inputBounds.Width;
         _hexInput.Height = inputBounds.Height;
+        _hexInputCC.bounds = inputBounds;
         
         _randomHexButton.bounds = GetRandomButtonBounds();
         _randomHexButton.baseScale = _randomHexButton.scale = GetRandomButtonScale();
@@ -132,7 +250,7 @@ public partial class ColourPickerMenu
                 _ => GetAlphaInputBounds(),
             };
             slider.UpdateInputBounds(newInputBounds);
-            slider.Input.UpdateButtonPositions();
+            slider.Input?.UpdateButtonPositions();
         }
     }
 

@@ -7,6 +7,29 @@ namespace FishPondDye.Menus.ColourPickerMenu;
 
 public partial class ColourPickerMenu
 {
+    #region LeftMenu
+    // * LEFT MENU *//
+    private Rectangle GetLeftMenuBounds()
+    {
+        return new Rectangle(
+            x: (int)(_leftSectionCenter.X - width / 2f - borderWidth / 2f),
+            y: (int)(_leftSectionCenter.Y - width / 2f),
+            width: width + borderWidth,
+            height: height
+        );
+    }
+    
+    private Rectangle GetSafeLeftMenuBounds()
+    {
+        Rectangle leftMenuBounds = GetLeftMenuBounds();
+        return new Rectangle(
+            x: (int)(leftMenuBounds.X + borderWidth / 2.75f),
+            y: (int)(leftMenuBounds.Y + borderWidth / 3f),
+            width: leftMenuBounds.Width - borderWidth * 2,
+            height: (int)(leftMenuBounds.Height - borderWidth / 1.6f)
+        );
+    }
+    #endregion
     
     #region CenterMenu
     // * CENTER MENU * //
@@ -218,7 +241,7 @@ public partial class ColourPickerMenu
         return new Rectangle(
             x: (int)(safeBounds.X + prefixSize.X * textScale.X * 2f),
             y: (int)yOffset,
-            width: (int)(safeBounds.Width * 0.75f - indent),
+            width: (int)(safeBounds.Width * 0.7f - indent),
             height: sliderHeight
         );
     }
@@ -247,7 +270,7 @@ public partial class ColourPickerMenu
         return new Rectangle(
             x: (int)(sliderBounds.Right + indent / 2f),
             y: sliderBounds.Y,
-            width: (int)(safeBounds.Width * 0.25f - indent / 2f),
+            width: (int)(safeBounds.Width * 0.3f - indent / 2f),
             height: sliderBounds.Height
         );
     }
@@ -274,7 +297,7 @@ public partial class ColourPickerMenu
         float indent = prefixSize.X * textScale.X;
         return new Vector2(
             x: sliderBounds.X - indent,
-            y: sliderBounds.Y + prefixSize.Y * textScale.Y * 0.75f / 12f
+            y: sliderBounds.Y + prefixSize.Y * textScale.Y * 0.7f / 12f
         );
     }
 

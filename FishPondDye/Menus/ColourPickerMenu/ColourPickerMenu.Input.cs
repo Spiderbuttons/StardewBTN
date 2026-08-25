@@ -12,6 +12,27 @@ namespace FishPondDye.Menus.ColourPickerMenu;
 
 public partial class ColourPickerMenu
 {
+    private bool ShouldUseMouseInputFunction()
+    {
+        bool isAnySliderSelected = _sliders.Any(slider => slider.Value.Selected);
+        return !Game1.options.SnappyMenus || (!_colourWheel.Selected && !isAnySliderSelected);
+    }
+    
+    public override bool _ShouldAutoSnapPrioritizeAlignedElements()
+    {
+        return base._ShouldAutoSnapPrioritizeAlignedElements();
+    }
+
+    public override bool IsAutomaticSnapValid(int direction, ClickableComponent a, ClickableComponent b)
+    {
+        return base.IsAutomaticSnapValid(direction, a, b);
+    }
+
+    public override void actionOnRegionChange(int oldRegion, int newRegion)
+    {
+        base.actionOnRegionChange(oldRegion, newRegion);
+    }
+
     public override void applyMovementKey(int direction)
     {
         base.applyMovementKey(direction);
@@ -19,15 +40,20 @@ public partial class ColourPickerMenu
     
     public override void snapCursorToCurrentSnappedComponent()
     {
-        if (getCurrentlySnappedComponent() == _colourWheel)
+        if (currentlySnappedComponent is null) return;
+        int currentID = currentlySnappedComponent.myID;
+        
+        if (currentID == CC_SELECTION_CIRCLE)
         {
-            Vector2 point = ColourWheel.HsvToPoint(PickedColourHsv);
-            Point position = new Point(
-                x: (int)Math.Round(_colourWheel.CenterPoint.X + point.X * _colourWheel.Width / 2f),
-                y: (int)Math.Round(_colourWheel.CenterPoint.Y + point.Y * _colourWheel.Height / 2f)
-            );
-            
-            Game1.setMousePosition(position, true);
+            Game1.setMousePosition(_selectionCircle.bounds.Center, true);
+            return;
+        }
+        
+        if (currentID >= CC_SLIDERS_START && currentID <= CC_SLIDERS_START + _sliders.Count - 1)
+        {
+            var slider = _sliders.ElementAt(currentID - CC_SLIDERS_START).Value;
+            Point sliderGrabber = slider.GetGrabberCenter().ToPoint() + new Point(1, 0);
+            Game1.setMousePosition(sliderGrabber, true);
             return;
         }
         
@@ -41,6 +67,42 @@ public partial class ColourPickerMenu
 
     public override void customSnapBehavior(int direction, int oldRegion, int oldID)
     {
+        if (oldID == CC_TOGGLE_ADVANCED && direction is 1)
+        {
+            if (!_showingAdvancedControls) return;
+            setCurrentlySnappedComponentTo(CC_SLIDERS_START + _sliders.Count - 1);
+        }
+
+        if (oldID == CC_SELECTION_CIRCLE && direction is 1)
+        {
+            if (!_showingAdvancedControls) setCurrentlySnappedComponentTo(CC_TOGGLE_ADVANCED);
+            else
+            {
+                Vector2 point = ColourWheel.HsvToPoint(PickedColourHsv);
+                bool selectionCircleIsInBottomQuarter = point.Y > 0.5f;
+                
+                if (selectionCircleIsInBottomQuarter && _selectionCircle.bounds.Center.X < _toggleAdvancedControls.bounds.Left)
+                {
+                    setCurrentlySnappedComponentTo(CC_TOGGLE_ADVANCED);
+                }
+                else
+                {
+                    float closestSliderDistance = float.MaxValue;
+                    int closestSliderID = -1;
+                    foreach (var slider in _sliders.Values)
+                    {
+                        float distance = Vector2.Distance(_selectionCircle.bounds.Center.ToVector2(),
+                            slider.Bar.Bounds.Center.ToVector2());
+                        if (!(distance < closestSliderDistance)) continue;
+
+                        closestSliderDistance = distance;
+                        closestSliderID = slider.myID;
+                    }
+                    setCurrentlySnappedComponentTo(closestSliderID);
+                }
+            }
+        }
+        
         base.customSnapBehavior(direction, oldRegion, oldID);
     }
 
@@ -51,38 +113,45 @@ public partial class ColourPickerMenu
 
     public override bool areGamePadControlsImplemented()
     {
-        return true;
         return base.areGamePadControlsImplemented();
     }
 
     public override void receiveGamePadButton(Buttons button)
     {
-        Point mousePosition = Game1.getMousePosition();
-        if (_colourWheel.containsPoint(mousePosition.X, mousePosition.Y))
-        {
-            if (button.ToSButton().IsActionButton())
-            {
-                _colourWheel.Selected = true;
-                Game1.playSound("button_tap");
-            }
-        }
+        // if (getCurrentlySnappedComponent() == _selectionCircle && button.ToSButton().IsActionButton())
+        // {
+        //     _colourWheel.Selected = true;
+        //     Game1.playSound("button_tap");
+        //     timeUntilNextSound = 50f;
+        //     return;
+        // }
+        //
+        // if (getCurrentlySnappedComponent() is ColourSlider slider && button.ToSButton().IsActionButton())
+        // {
+        //     slider.Selected = true;
+        //     Game1.playSound("button_tap");
+        //     timeUntilNextSound = 50f;
+        //     return;
+        // }
+        
+        // base.receiveGamePadButton(button);
     }
 
     public override void snapToDefaultClickableComponent()
     {
-        currentlySnappedComponent = getComponentWithID(0);
+        currentlySnappedComponent = _selectionCircle;
         snapCursorToCurrentSnappedComponent();
     }
 
     public override void gamePadButtonHeld(Buttons b)
     {
-        base.gamePadButtonHeld(b);
         if (!b.ToSButton().IsActionButton()) return;
         
         Point mousePosition = Game1.getMousePosition();
         
         if (_colourWheel.Selected)
         {
+            _colourWheel.Selected = true;
             HsvColour colourBeforeChange = PickedColourHsv;
             HsvColour hsv = _colourWheel.GetColourAtScreenPoint(new Vector2(mousePosition.X, mousePosition.Y)).ToHsv();
             _hue = hsv.Hue;
@@ -95,6 +164,8 @@ public partial class ColourPickerMenu
 
             return;
         }
+        
+        if (!_showingAdvancedControls || _rightSectionOffset.X < width * 0.9f) return;
 
         foreach (var (_, slider) in _sliders)
         {
@@ -114,8 +185,8 @@ public partial class ColourPickerMenu
     
     public override bool overrideSnappyMenuCursorMovementBan()
     {
-        // return base.overrideSnappyMenuCursorMovementBan();
-        return _colourWheel.Selected;
+        return !ShouldUseMouseInputFunction();
+        return base.overrideSnappyMenuCursorMovementBan();
     }
     
     public override bool shouldClampGamePadCursor()
@@ -140,10 +211,13 @@ public partial class ColourPickerMenu
         {
             slider.Selected = false;
         }
+        UpdateComponentIDs();
     }
 
     public override void leftClickHeld(int x, int y)
     {
+        if (!ShouldUseMouseInputFunction()) return;
+        
         base.leftClickHeld(x, y);
 
         if (_colourWheel.Selected)
@@ -160,6 +234,8 @@ public partial class ColourPickerMenu
 
             return;
         }
+        
+        if (!_showingAdvancedControls || _rightSectionOffset.X < width * 0.9f) return;
 
         foreach (var (_, slider) in _sliders)
         {
@@ -169,7 +245,9 @@ public partial class ColourPickerMenu
 
     public override void receiveLeftClick(int x, int y, bool playSound = true)
     {
-        _colourWheel.Selected = _colourWheel.containsPoint(x, y);
+        if (!ShouldUseMouseInputFunction()) return;
+        
+        _colourWheel.Selected = _colourWheel.containsPoint(x, y) || _selectionCircle.containsPoint(x, y);
         if (_colourWheel.Selected)
         {
             if (_value is 0) _value = 100M;
@@ -209,6 +287,7 @@ public partial class ColourPickerMenu
         {
             _togglePreviewBase.scale = _togglePreviewBase.baseScale * 0.975f;
             _togglePreviewIcon.scale = _togglePreviewIcon.baseScale * 0.975f;
+            _showingPreview = !_showingPreview;
             Game1.playSound("drumkit6");
         }
 
@@ -223,8 +302,9 @@ public partial class ColourPickerMenu
         {
             _hexInput.Text = PickedColourRgb.ToHexString()[..6];
             _hexInput.SelectMe();
+            _hexInput.Update();
             _hexInput.caretTimer = Game1.currentGameTime.TotalGameTime.TotalMilliseconds;
-            Game1.playSound("dialogueCharacter");
+            if (!Game1.options.SnappyMenus) Game1.playSound("dialogueCharacter");
         }
         else _hexInput.Selected = false;
         
@@ -258,15 +338,6 @@ public partial class ColourPickerMenu
 
     public override void performHoverAction(int x, int y)
     {
-        if (Game1.options.SnappyMenus && !Game1.isAnyGamePadButtonBeingHeld())
-        {
-            if (_colourWheel.Selected) _colourWheel.Selected = false;
-            foreach (var slider in _sliders.Values.Where(slider => slider.Selected))
-            {
-                slider.Selected = false;
-            }
-        }
-        
         base.performHoverAction(x, y);
         _toggleAdvancedControls.tryHover(x, y);
         _togglePreviewBase.tryHover(x, y);
