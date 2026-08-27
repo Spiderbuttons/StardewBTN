@@ -1,3 +1,15 @@
 ﻿{
-  "Key": "Value"
+  "DyeBottle_Name": "Pond Dye",
+  "DyeBottle_Description": "Made with natural algae and minerals that won't harm your fish.",
+  
+  "DyeRemover_Name": "Pond Dye Remover",
+  "DyeRemover_Description": "Don't question it.",
+  
+  "Prismatic": "Prismatic",
+  "Red": "Red",
+  "Orange": "Orange",
+  "Green": "Green",
+  "Blue": "Blue",
+  "Purple": "Purple",
+  "Custom": "Custom"
 }

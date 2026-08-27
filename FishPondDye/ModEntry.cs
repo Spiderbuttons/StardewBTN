@@ -21,7 +21,10 @@ using FishPondDye.Menus.ColourPickerMenu.Components;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley.Buildings;
 using StardewValley.GameData.Buildings;
+using StardewValley.GameData.Objects;
+using StardewValley.GameData.Shops;
 using StardewValley.Menus;
+using Object = StardewValley.Object;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace FishPondDye
@@ -48,6 +51,7 @@ namespace FishPondDye
 
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
+            Helper.Events.Content.AssetRequested += OnAssetRequested;
             
             ShaderHelper.WatchShader("colourWheel", effect =>
             {
@@ -67,19 +71,100 @@ namespace FishPondDye
         
         private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
         {
-            if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/Node"))
+            if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/Objects"))
             {
-                e.LoadFromModFile<Texture2D>("assets/node.png", AssetLoadPriority.Exclusive);
+                e.LoadFromModFile<Texture2D>("assets/bottles.png", AssetLoadPriority.Medium);
             }
-            
-            if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/FloppyButton"))
+
+            if (e.NameWithoutLocale.IsEquivalentTo("Data/Objects"))
             {
-                e.LoadFromModFile<Texture2D>("assets/floppy_button.png", AssetLoadPriority.Exclusive);
+                e.Edit(asset =>
+                {
+                    string[] colours = ["Prismatic", "Red", "Orange", "Green", "Blue", "Purple", "Custom"];
+                    var data = asset.AsDictionary<string, ObjectData>().Data;
+                    for (var i = 0; i < colours.Length; i++)
+                    {
+                        var colour = colours[i];
+                        data[$"{ModManifest.UniqueID}_DyeBottle_{colour}"] = new ObjectData
+                        {
+                            Name = $"{ModManifest.UniqueID}_DyeBottle_{colour}",
+                            DisplayName = $"{i18n.DyeBottleName()} ({i18n.GetByKey(colour)})",
+                            Description = i18n.DyeBottleDescription(),
+                            Type = "Basic",
+                            Category = Object.sellAtFishShopCategory,
+                            Price = 50,
+                            Texture = $"{ModManifest.UniqueID}/Objects",
+                            SpriteIndex = i,
+                            Edibility = -50,
+                            IsDrink = true,
+                            Buffs = [
+                                new ObjectBuffData
+                                {
+                                    Id = $"{ModManifest.UniqueID}_DyeBottle_Debuff",
+                                    BuffId = "25"
+                                }
+                            ],
+                            CanBeGivenAsGift = false,
+                            ExcludeFromFishingCollection = true,
+                            ExcludeFromShippingCollection = true,
+                            ExcludeFromRandomSale = true,
+                            ContextTags = [
+                                $"color_{(colour != "Custom" ? colour.ToLowerInvariant() : "white")}",
+                                $"{ModManifest.UniqueID.ToLowerInvariant()}_dye_source"
+                            ]
+                        };
+                    }
+                    data[$"{ModManifest.UniqueID}_DyeRemover"] = new ObjectData
+                    {
+                        Name = $"{ModManifest.UniqueID}_DyeRemover",
+                        DisplayName = i18n.DyeRemoverName(),
+                        Description = i18n.DyeRemoverDescription(),
+                        Type = "Basic",
+                        Category = Object.sellAtFishShopCategory,
+                        Price = 50,
+                        Texture = $"{ModManifest.UniqueID}/Objects",
+                        SpriteIndex = 7,
+                        CanBeGivenAsGift = false,
+                        ExcludeFromFishingCollection = true,
+                        ExcludeFromShippingCollection = true,
+                        ExcludeFromRandomSale = true,
+                        ContextTags = [
+                            $"{ModManifest.UniqueID.ToLowerInvariant()}_dye_remover"
+                        ]
+                    };
+                });
             }
-            
-            if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/ResetButton"))
+
+            if (e.NameWithoutLocale.IsEquivalentTo("Data/Shops"))
             {
-                e.LoadFromModFile<Texture2D>("assets/reset_button.png", AssetLoadPriority.Exclusive);
+                e.Edit(asset =>
+                {
+                    string[] colours = ["Prismatic", "Red", "Orange", "Green", "Blue", "Purple", "Custom"];
+                    var data = asset.AsDictionary<string, ShopData>().Data["FishShop"].Items;
+                    foreach (var colour in colours)
+                    {
+                        ShopItemData item = new ShopItemData
+                        {
+                            Id = $"{ModManifest.UniqueID}_DyeBottle_{colour}",
+                            ItemId = $"(O){ModManifest.UniqueID}_DyeBottle_{colour}",
+                            Price = 50,
+                            Condition = """
+                                        BUILDINGS_CONSTRUCTED All "Fish Pond"
+                                        """
+                        };
+                        data.Add(item);
+                    }
+                    ShopItemData dyeRemover = new ShopItemData
+                    {
+                        Id = $"{ModManifest.UniqueID}_DyeRemover",
+                        ItemId = $"(O){ModManifest.UniqueID}_DyeRemover",
+                        Price = 50,
+                        Condition = """
+                                    BUILDINGS_CONSTRUCTED All "Fish Pond"
+                                    """
+                    };
+                    data.Add(dyeRemover);
+                });
             }
         }
 
@@ -148,7 +233,7 @@ namespace FishPondDye
                     y: 80,
                     width: 80,
                     height: 80),
-                color: DummyPond.overrideWaterColor.Value * DummyPond.alpha,
+                color: new Color(60, 126, 150) * DummyPond.alpha,
                 rotation: 0f,
                 origin: new Vector2(x: 40f, y: 40f),
                 scale: scale,
@@ -247,6 +332,9 @@ namespace FishPondDye
                 {
                     Game1.activeClickableMenu = new ColourPickerMenu(null, DrawPondPreview);
                 }
+
+                ModHelper.GameContent.InvalidateCache("Data/Objects");
+                ModHelper.GameContent.InvalidateCache("Data/Shops");
             }
         }
     }
