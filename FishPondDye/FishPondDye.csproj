@@ -11,10 +11,11 @@
         <EnableHarmony>true</EnableHarmony>
         <EnableModDeploy>true</EnableModDeploy>
         <EnableModZip>true</EnableModZip>
-        <ModFolderName>FishPondDye</ModFolderName>
+        <ModFolderName>Fish Pond Dye</ModFolderName>
         <Title>FishPondDye</Title>
         <Authors>Spiderbuttons</Authors>
         <Nullable>enable</Nullable>
+        <IgnoreModFilePatterns>\.pdn$</IgnoreModFilePatterns>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <OutputPath>bin\Debug</OutputPath>

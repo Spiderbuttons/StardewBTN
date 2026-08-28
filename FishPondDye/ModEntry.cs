@@ -31,6 +31,7 @@ namespace FishPondDye
 {
     internal sealed class ModEntry : Mod
     {
+        internal static string UNIQUE_ID = null!;
         internal static IModHelper ModHelper { get; set; } = null!;
         internal static IMonitor ModMonitor { get; set; } = null!;
         internal static ModConfig Config { get; set; } = null!;
@@ -41,11 +42,12 @@ namespace FishPondDye
 
         public override void Entry(IModHelper helper)
         {
+            UNIQUE_ID = ModManifest.UniqueID;
             i18n.Init(helper.Translation);
             ModHelper = helper;
             ModMonitor = Monitor;
             Config = helper.ReadConfig<ModConfig>();
-            Harmony = new Harmony(ModManifest.UniqueID);
+            Harmony = new Harmony(UNIQUE_ID);
 
             Harmony.PatchAll();
 
@@ -71,7 +73,7 @@ namespace FishPondDye
         
         private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
         {
-            if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/Objects"))
+            if (e.NameWithoutLocale.IsEquivalentTo($"{UNIQUE_ID}/Objects"))
             {
                 e.LoadFromModFile<Texture2D>("assets/bottles.png", AssetLoadPriority.Medium);
             }
@@ -85,22 +87,22 @@ namespace FishPondDye
                     for (var i = 0; i < colours.Length; i++)
                     {
                         var colour = colours[i];
-                        data[$"{ModManifest.UniqueID}_DyeBottle_{colour}"] = new ObjectData
+                        data[$"{UNIQUE_ID}_DyeBottle_{colour}"] = new ObjectData
                         {
-                            Name = $"{ModManifest.UniqueID}_DyeBottle_{colour}",
+                            Name = $"{UNIQUE_ID}_DyeBottle_{colour}",
                             DisplayName = $"{i18n.DyeBottleName()} ({i18n.GetByKey(colour)})",
                             Description = i18n.DyeBottleDescription(),
                             Type = "Basic",
                             Category = Object.sellAtFishShopCategory,
                             Price = 50,
-                            Texture = $"{ModManifest.UniqueID}/Objects",
+                            Texture = $"{UNIQUE_ID}/Objects",
                             SpriteIndex = i,
                             Edibility = -50,
                             IsDrink = true,
                             Buffs = [
                                 new ObjectBuffData
                                 {
-                                    Id = $"{ModManifest.UniqueID}_DyeBottle_Debuff",
+                                    Id = $"{UNIQUE_ID}_DyeBottle_Debuff",
                                     BuffId = "25"
                                 }
                             ],
@@ -110,26 +112,26 @@ namespace FishPondDye
                             ExcludeFromRandomSale = true,
                             ContextTags = [
                                 $"color_{(colour != "Custom" ? colour.ToLowerInvariant() : "white")}",
-                                $"{ModManifest.UniqueID.ToLowerInvariant()}_dye_source"
+                                $"{UNIQUE_ID.ToLowerInvariant()}_dye_source"
                             ]
                         };
                     }
-                    data[$"{ModManifest.UniqueID}_DyeRemover"] = new ObjectData
+                    data[$"{UNIQUE_ID}_DyeRemover"] = new ObjectData
                     {
-                        Name = $"{ModManifest.UniqueID}_DyeRemover",
+                        Name = $"{UNIQUE_ID}_DyeRemover",
                         DisplayName = i18n.DyeRemoverName(),
                         Description = i18n.DyeRemoverDescription(),
                         Type = "Basic",
                         Category = Object.sellAtFishShopCategory,
                         Price = 50,
-                        Texture = $"{ModManifest.UniqueID}/Objects",
+                        Texture = $"{UNIQUE_ID}/Objects",
                         SpriteIndex = 7,
                         CanBeGivenAsGift = false,
                         ExcludeFromFishingCollection = true,
                         ExcludeFromShippingCollection = true,
                         ExcludeFromRandomSale = true,
                         ContextTags = [
-                            $"{ModManifest.UniqueID.ToLowerInvariant()}_dye_remover"
+                            $"{UNIQUE_ID.ToLowerInvariant()}_dye_remover"
                         ]
                     };
                 });
@@ -145,8 +147,8 @@ namespace FishPondDye
                     {
                         ShopItemData item = new ShopItemData
                         {
-                            Id = $"{ModManifest.UniqueID}_DyeBottle_{colour}",
-                            ItemId = $"(O){ModManifest.UniqueID}_DyeBottle_{colour}",
+                            Id = $"{UNIQUE_ID}_DyeBottle_{colour}",
+                            ItemId = $"(O){UNIQUE_ID}_DyeBottle_{colour}",
                             Price = 50,
                             Condition = """
                                         BUILDINGS_CONSTRUCTED All "Fish Pond"
@@ -156,8 +158,8 @@ namespace FishPondDye
                     }
                     ShopItemData dyeRemover = new ShopItemData
                     {
-                        Id = $"{ModManifest.UniqueID}_DyeRemover",
-                        ItemId = $"(O){ModManifest.UniqueID}_DyeRemover",
+                        Id = $"{UNIQUE_ID}_DyeRemover",
+                        ItemId = $"(O){UNIQUE_ID}_DyeRemover",
                         Price = 50,
                         Condition = """
                                     BUILDINGS_CONSTRUCTED All "Fish Pond"
@@ -233,7 +235,7 @@ namespace FishPondDye
                     y: 80,
                     width: 80,
                     height: 80),
-                color: new Color(60, 126, 150) * DummyPond.alpha,
+                color: xnaColour * DummyPond.alpha,
                 rotation: 0f,
                 origin: new Vector2(x: 40f, y: 40f),
                 scale: scale,
