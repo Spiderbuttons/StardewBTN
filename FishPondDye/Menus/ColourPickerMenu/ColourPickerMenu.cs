@@ -16,8 +16,10 @@ namespace FishPondDye.Menus.ColourPickerMenu;
 public sealed partial class ColourPickerMenu : IClickableMenu
 {
     private const int CC_SELECTION_CIRCLE = 0;
-    private const int CC_TOGGLE_PREVIEW = 1;
-    private const int CC_TOGGLE_ADVANCED = 2;
+    private const int CC_CANCEL = 1;
+    private const int CC_CONFIRM = 2;
+    private const int CC_TOGGLE_PREVIEW = 3;
+    private const int CC_TOGGLE_ADVANCED = 4;
 
     private const int CC_PALETTE_START = 100;
     private const int CC_SLIDERS_START = 200;
@@ -76,10 +78,39 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         downNeighborID = CC_TOGGLE_PREVIEW,
         leftNeighborID = CC_TOGGLE_PREVIEW,
         rightNeighborID = ClickableComponent.CUSTOM_SNAP_BEHAVIOR,
-        upNeighborID = ClickableComponent.ID_ignore,
+        upNeighborID = CC_CONFIRM,
         upNeighborImmutable = true,
         leftNeighborImmutable = true,
         rightNeighborImmutable = true,
+    };
+    
+    private ClickableTextureComponent _cancelButton = new(
+        bounds: new Rectangle(0, 0, 64, 64),
+        texture: Game1.mouseCursors,
+        sourceRect: new Rectangle(192, 256, 64, 64),
+        scale: 1f / 4f
+    )
+    {
+        name = "CancelButton",
+        myID = CC_CANCEL,
+        downNeighborID = CC_SELECTION_CIRCLE,
+        rightNeighborID = CC_CONFIRM,
+        fullyImmutable = true
+    };
+    
+    private ClickableTextureComponent _confirmButton = new(
+        bounds: new Rectangle(0, 0, 64, 64),
+        texture: Game1.mouseCursors,
+        sourceRect: new Rectangle(128, 256, 64, 64),
+        scale: 1f / 4f
+    )
+    {
+        name = "ConfirmButton",
+        myID = CC_CONFIRM,
+        downNeighborID = CC_SELECTION_CIRCLE,
+        rightNeighborID = ClickableComponent.CUSTOM_SNAP_BEHAVIOR,
+        leftNeighborID = CC_CANCEL,
+        fullyImmutable = true
     };
 
     private ClickableTextureComponent _togglePreviewBase = new(
@@ -188,13 +219,21 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         rightNeighborID = CC_RANDOM,
         fullyImmutable = true
     };
+    
+    private readonly Action<RgbColour>? _onConfirm;
+    private readonly Action<RgbColour>? _onCancel;
+    private readonly Action<SpriteBatch, Rectangle, RgbColour>? _drawPreview;
 
-    private FishPond? _pond;
-    private Action<SpriteBatch, Rectangle, RgbColour>? _drawPreview;
-
-    public ColourPickerMenu(FishPond? pond, Action<SpriteBatch, Rectangle, RgbColour>? drawPreview)
+    /// <summary>
+    /// Opens a menu that allows a player to choose a colour from a standard colour picker.
+    /// </summary>
+    /// <param name="onConfirm">A callback that is called when the player confirms their colour choice. The chosen colour is passed as an argument.</param>
+    /// <param name="onCancel">A callback that is called when the player cancels the colour picker. The colour passed as an argument is whatever colour happens to be selected when the player cancels.</param>
+    /// <param name="drawPreview"> A callback that is called to draw a preview of whatever the player is choosing a colour for. The arguments are the sprite batch, the bounds of the preview area, and the currently selected colour.</param>
+    public ColourPickerMenu(Action<RgbColour>? onConfirm = null, Action<RgbColour>? onCancel = null, Action<SpriteBatch, Rectangle, RgbColour>? drawPreview = null)
     {
-        _pond = pond;
+        _onConfirm = onConfirm;
+        _onCancel = onCancel;
         _drawPreview = drawPreview;
         
         width = Game1.uiViewport.Width / 4;
@@ -331,6 +370,8 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         allClickableComponents.Add(_selectionCircle);
         allClickableComponents.Add(_toggleAdvancedControls);
         allClickableComponents.Add(_togglePreviewBase);
+        allClickableComponents.Add(_cancelButton);
+        allClickableComponents.Add(_confirmButton);
         
         foreach (var square in _palette)
         {
@@ -374,7 +415,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         {
             var slider = _sliders.ElementAt(i).Value;
             slider.myID = sliderId;
-            slider.leftNeighborID = i == _sliders.Count - 1 ? CC_TOGGLE_ADVANCED : CC_SELECTION_CIRCLE;
+            slider.leftNeighborID = i == _sliders.Count - 1 ? CC_TOGGLE_ADVANCED : i == 0 ? CC_CONFIRM : CC_SELECTION_CIRCLE;
             slider.downNeighborID = i < _sliders.Count - 1 ? sliderId + 1 : CC_HEX_INPUT;
             slider.upNeighborID = i > 0 ? sliderId - 1 : ClickableComponent.ID_ignore;
             slider.upNeighborImmutable = true;

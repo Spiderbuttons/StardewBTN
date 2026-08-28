@@ -73,6 +73,12 @@ public partial class ColourPickerMenu
             setCurrentlySnappedComponentTo(CC_SLIDERS_START + _sliders.Count - 1);
         }
 
+        if (oldID == CC_CONFIRM && direction is 1)
+        {
+            if (!_showingAdvancedControls) return;
+            setCurrentlySnappedComponentTo(CC_SLIDERS_START);
+        }
+
         if (oldID == CC_SELECTION_CIRCLE && direction is 1)
         {
             if (!_showingAdvancedControls) setCurrentlySnappedComponentTo(CC_TOGGLE_ADVANCED);
@@ -290,6 +296,21 @@ public partial class ColourPickerMenu
             _showingPreview = !_showingPreview;
             Game1.playSound("drumkit6");
         }
+        
+        if (_cancelButton.containsPoint(x, y))
+        {
+            _cancelButton.scale = _cancelButton.baseScale * 0.975f;
+            _onCancel?.Invoke(PickedColourRgb);
+            exitThisMenu();
+        }
+        
+        if (_confirmButton.containsPoint(x, y))
+        {
+            _confirmButton.scale = _confirmButton.baseScale * 0.975f;
+            _onConfirm?.Invoke(PickedColourRgb);
+            exitThisMenuNoSound();
+            Game1.playSound("bigSelect");
+        }
 
         if (!_showingAdvancedControls || _rightSectionOffset.X < width * 0.9f) return;
         
@@ -341,6 +362,8 @@ public partial class ColourPickerMenu
         base.performHoverAction(x, y);
         _toggleAdvancedControls.tryHover(x, y);
         _togglePreviewBase.tryHover(x, y);
+        _cancelButton.tryHover(x, y, maxScaleIncrease: 0.1f / 4f);
+        _confirmButton.tryHover(x, y, maxScaleIncrease: 0.1f / 4f);
         _randomHexButton.tryHover(x, y);
     }
 }

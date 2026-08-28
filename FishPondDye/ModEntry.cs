@@ -332,7 +332,13 @@ namespace FishPondDye
                 if (Game1.activeClickableMenu is not null) Game1.activeClickableMenu.exitThisMenu();
                 else
                 {
-                    Game1.activeClickableMenu = new ColourPickerMenu(null, DrawPondPreview);
+                    Game1.activeClickableMenu = new ColourPickerMenu(drawPreview: DrawPondPreview, onConfirm: (colour) => 
+                    {
+                        Log.Warn("Confirmed: " + colour);
+                    }, onCancel: (colour) => 
+                    {
+                        Log.Warn("Cancelled: " + colour);
+                    });
                 }
 
                 ModHelper.GameContent.InvalidateCache("Data/Objects");

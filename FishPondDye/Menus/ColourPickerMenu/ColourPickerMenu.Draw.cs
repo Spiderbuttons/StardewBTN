@@ -38,6 +38,9 @@ public partial class ColourPickerMenu
         {
             square.draw(b);
         }
+
+        _cancelButton.draw(b);
+        _confirmButton.draw(b);
         
         // This is the "Settings" esque button in the top right that opens the advanced stuff (like the sliders and hex input).
         _toggleAdvancedControls.draw(b);

@@ -31,7 +31,6 @@ public partial class ColourPickerMenu
         _toggleAdvancedControls.baseScale = _toggleAdvancedControls.scale = buttonScale;
         _togglePreviewBase.baseScale = _togglePreviewBase.scale = buttonScale;
         _togglePreviewIcon.baseScale = _togglePreviewIcon.scale = buttonScale * 0.69f;
-        
         _toggleAdvancedControls.bounds = GetAdvancedButtonBounds();
         
         Rectangle previewButtonBounds = GetPreviewButtonBounds();
@@ -44,6 +43,12 @@ public partial class ColourPickerMenu
             height: (int)(_togglePreviewIcon.sourceRect.Height * buttonScale * 0.75f)
         );
         _togglePreviewIcon.bounds = previewIconBounds;
+        
+        _cancelButton.baseScale = _cancelButton.scale = buttonScale / 4f;
+        _cancelButton.bounds = GetCancelButtonBounds();
+        
+        _confirmButton.baseScale = _confirmButton.scale = buttonScale / 4f;
+        _confirmButton.bounds = GetConfirmButtonBounds();
 
         _rightSectionOffset.X = _showingAdvancedControls ? width : 0;
         _leftSectionOffset.X = _showingPreview ? -width : 0;
@@ -166,12 +171,15 @@ public partial class ColourPickerMenu
     {
         Vector2 point = ColourWheel.HsvToPoint(PickedColourHsv);
         bool selectionCircleIsInBottomQuarter = point.Y > 0.5f;
+        bool selectionCircleIsInTopQuarter = point.Y < -0.5f;
         switch (point.X)
         {
-            case < -0.35f when !selectionCircleIsInBottomQuarter:
+            case < -0.35f:
+            case < 0 when !selectionCircleIsInBottomQuarter:
                 _selectionCircle.downNeighborID = CC_TOGGLE_PREVIEW;
                 break;
-            case > 0.35f when !selectionCircleIsInBottomQuarter:
+            case > 0.35f:
+            case >= 0 when !selectionCircleIsInBottomQuarter:
                 _selectionCircle.downNeighborID = CC_TOGGLE_ADVANCED;
                 break;
             default:
@@ -194,6 +202,10 @@ public partial class ColourPickerMenu
                 _selectionCircle.downNeighborID = CC_PALETTE_START + closestIndex;
                 break;
         }
+        
+        _selectionCircle.upNeighborID = point.X < 0 ? CC_CANCEL : CC_CONFIRM;
+        _selectionCircle.leftNeighborID = point.Y > 0 ? CC_TOGGLE_PREVIEW : CC_CANCEL;
+        _selectionCircle.rightNeighborID = point.Y > 0 ? CC_TOGGLE_ADVANCED : CC_CONFIRM;
 
         if (selectionCircleIsInBottomQuarter)
         {
@@ -203,6 +215,16 @@ public partial class ColourPickerMenu
         {
             _toggleAdvancedControls.leftNeighborID = CC_TOGGLE_PREVIEW;
             _togglePreviewBase.rightNeighborID = CC_TOGGLE_ADVANCED;
+        }
+
+        if (selectionCircleIsInTopQuarter)
+        {
+            _cancelButton.rightNeighborID = CC_SELECTION_CIRCLE;
+            _confirmButton.leftNeighborID = CC_SELECTION_CIRCLE;
+        } else 
+        {
+            _cancelButton.rightNeighborID = CC_CONFIRM;
+            _confirmButton.leftNeighborID = CC_CANCEL;
         }
     }
 

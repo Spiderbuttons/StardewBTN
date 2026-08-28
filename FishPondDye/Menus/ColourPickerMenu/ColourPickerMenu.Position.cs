@@ -143,6 +143,30 @@ public partial class ColourPickerMenu
             height: (int)(_togglePreviewBase.sourceRect.Height * buttonScale)
         );
     }
+    
+    private Rectangle GetCancelButtonBounds()
+    {
+        Rectangle colourWheelBounds = GetColourWheelBounds();
+        float buttonScale = GetAdvancedButtonScale() / 4f;
+        return new Rectangle(
+            x: (int)(colourWheelBounds.X),
+            y: (int)(colourWheelBounds.Y),
+            width: (int)(_cancelButton.sourceRect.Width * buttonScale),
+            height: (int)(_cancelButton.sourceRect.Height * buttonScale)
+        );
+    }
+    
+    private Rectangle GetConfirmButtonBounds()
+    {
+        Rectangle colourWheelBounds = GetColourWheelBounds();
+        float buttonScale = GetAdvancedButtonScale() / 4f;
+        return new Rectangle(
+            x: (int)(colourWheelBounds.X + colourWheelBounds.Width - _confirmButton.sourceRect.Width * buttonScale),
+            y: (int)(colourWheelBounds.Y),
+            width: (int)(_confirmButton.sourceRect.Width * buttonScale),
+            height: (int)(_confirmButton.sourceRect.Height * buttonScale)
+        );
+    }
     #endregion
     
     #region RightMenu
