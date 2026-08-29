@@ -11,5 +11,19 @@
   "Green": "Green",
   "Blue": "Blue",
   "Purple": "Purple",
-  "Custom": "Custom"
+  "Custom": "Custom",
+  
+  "Config.DyePrice.Name": "Dye Price",
+  "Config.DyePrice.Description": "How much fish pond dye costs at Willy's shop.",
+  
+  "Config.PrismaticSync.Name": "Prismatic Sync",
+  "Config.PrismaticSync.Description": "How different prismatically-dyed fish ponds synchronize their colours.",
+  "Config.PrismaticSync.Synchronized": "Synchronized",
+  "Config.PrismaticSync.Random": "Random",
+  "Config.PrismaticSync.HorizontalPosition": "X Coordinate",
+  "Config.PrismaticSync.VerticalPosition": "Y Coordinate",
+  "Config.PrismaticSync.HorizontalAndVerticalPosition": "X and Y Coordinate",
+  
+  "Config.PrismaticSpeed.Name": "Prismatic Speed",
+  "Config.PrismaticSpeed.Description": "How fast prismatically-dyed fish ponds change their colours."
 }

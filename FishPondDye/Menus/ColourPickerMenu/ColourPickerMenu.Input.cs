@@ -6,7 +6,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Menus;
 
 namespace FishPondDye.Menus.ColourPickerMenu;
 
@@ -16,26 +15,6 @@ public partial class ColourPickerMenu
     {
         bool isAnySliderSelected = _sliders.Any(slider => slider.Value.Selected);
         return !Game1.options.SnappyMenus || (!_colourWheel.Selected && !isAnySliderSelected);
-    }
-    
-    public override bool _ShouldAutoSnapPrioritizeAlignedElements()
-    {
-        return base._ShouldAutoSnapPrioritizeAlignedElements();
-    }
-
-    public override bool IsAutomaticSnapValid(int direction, ClickableComponent a, ClickableComponent b)
-    {
-        return base.IsAutomaticSnapValid(direction, a, b);
-    }
-
-    public override void actionOnRegionChange(int oldRegion, int newRegion)
-    {
-        base.actionOnRegionChange(oldRegion, newRegion);
-    }
-
-    public override void applyMovementKey(int direction)
-    {
-        base.applyMovementKey(direction);
     }
     
     public override void snapCursorToCurrentSnappedComponent()
@@ -58,11 +37,6 @@ public partial class ColourPickerMenu
         }
         
         base.snapCursorToCurrentSnappedComponent();
-    }
-
-    public override void noSnappedComponentFound(int direction, int oldRegion, int oldID)
-    {
-        base.noSnappedComponentFound(direction, oldRegion, oldID);
     }
 
     public override void customSnapBehavior(int direction, int oldRegion, int oldID)
@@ -112,37 +86,6 @@ public partial class ColourPickerMenu
         base.customSnapBehavior(direction, oldRegion, oldID);
     }
 
-    public override void automaticSnapBehavior(int direction, int oldRegion, int oldID)
-    {
-        base.automaticSnapBehavior(direction, oldRegion, oldID);
-    }
-
-    public override bool areGamePadControlsImplemented()
-    {
-        return base.areGamePadControlsImplemented();
-    }
-
-    public override void receiveGamePadButton(Buttons button)
-    {
-        // if (getCurrentlySnappedComponent() == _selectionCircle && button.ToSButton().IsActionButton())
-        // {
-        //     _colourWheel.Selected = true;
-        //     Game1.playSound("button_tap");
-        //     timeUntilNextSound = 50f;
-        //     return;
-        // }
-        //
-        // if (getCurrentlySnappedComponent() is ColourSlider slider && button.ToSButton().IsActionButton())
-        // {
-        //     slider.Selected = true;
-        //     Game1.playSound("button_tap");
-        //     timeUntilNextSound = 50f;
-        //     return;
-        // }
-        
-        // base.receiveGamePadButton(button);
-    }
-
     public override void snapToDefaultClickableComponent()
     {
         currentlySnappedComponent = _selectionCircle;
@@ -178,26 +121,10 @@ public partial class ColourPickerMenu
             slider.leftClickHeld(mousePosition.X, mousePosition.Y);
         }
     }
-
-    public override ClickableComponent getCurrentlySnappedComponent()
-    {
-        return base.getCurrentlySnappedComponent();
-    }
-
-    public override void receiveScrollWheelAction(int direction)
-    {
-        base.receiveScrollWheelAction(direction);
-    }
     
     public override bool overrideSnappyMenuCursorMovementBan()
     {
         return !ShouldUseMouseInputFunction();
-        return base.overrideSnappyMenuCursorMovementBan();
-    }
-    
-    public override bool shouldClampGamePadCursor()
-    {
-        return base.shouldClampGamePadCursor();
     }
     
     public override void receiveKeyPress(Keys key)
@@ -261,11 +188,8 @@ public partial class ColourPickerMenu
             timeUntilNextSound = 50f;
         }
         
-        for (var i = 0; i < _palette.Count; i++)
+        foreach (var square in _palette.Where(square => square.containsPoint(x, y)))
         {
-            var square = _palette[i];
-            if (!square.containsPoint(x, y)) continue;
-            
             if (square.IsAddSquare)
             {
                 AddColourToPalette(PickedColourHsv);
@@ -273,11 +197,9 @@ public partial class ColourPickerMenu
                 break;
             }
 
-            if (square is { StoredColour: not null })
-            {
-                SetColour(HsvColour.FromXnaColor(square.StoredColour.Value));
-            } else SetColour(HsvColour.FromXnaColor(Color.White));
-            
+            SetColour(square is { StoredColour: not null }
+                ? HsvColour.FromXnaColor(square.StoredColour.Value)
+                : HsvColour.FromXnaColor(Color.White));
 
             Game1.playSound("smallSelect");
         }
@@ -309,7 +231,6 @@ public partial class ColourPickerMenu
             _confirmButton.scale = _confirmButton.baseScale * 0.975f;
             _onConfirm?.Invoke(PickedColourRgb);
             exitThisMenuNoSound();
-            Game1.playSound("bigSelect");
         }
 
         if (!_showingAdvancedControls || _rightSectionOffset.X < width * 0.9f) return;

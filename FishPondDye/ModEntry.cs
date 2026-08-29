@@ -1,34 +1,34 @@
 ﻿using System;
-using System.Buffers.Binary;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Numerics;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using FishPondDye.APIs;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using FishPondDye.Config;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 using StardewValley;
 using FishPondDye.Helpers;
 using FishPondDye.Menus.ColourPickerMenu;
-using FishPondDye.Menus.ColourPickerMenu.Components;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley.Buildings;
-using StardewValley.GameData.Buildings;
+using StardewValley.Extensions;
 using StardewValley.GameData.Objects;
 using StardewValley.GameData.Shops;
-using StardewValley.Menus;
 using Object = StardewValley.Object;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace FishPondDye
 {
+    public enum PrismaticSynchronizationMode
+    {
+        Synchronized = 0,
+        Random = 1,
+        HorizontalPosition = 2,
+        VerticalPosition = 3,
+        HorizontalAndVerticalPosition = 4,
+    }
+    
+    [HarmonyPatch(typeof(FishPond))]
     internal sealed class ModEntry : Mod
     {
         internal static string UNIQUE_ID = null!;
@@ -54,15 +54,6 @@ namespace FishPondDye
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
             Helper.Events.Content.AssetRequested += OnAssetRequested;
-            
-            ShaderHelper.WatchShader("colourWheel", effect =>
-            {
-                ColourWheel.ColourWheelEffect = effect;
-            });
-            ShaderHelper.WatchShader("gradientBar", effect =>
-            {
-                GradientBar.GradientBarEffect = effect;
-            });
         }
 
         private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
@@ -169,6 +160,180 @@ namespace FishPondDye
                 });
             }
         }
+        
+        [HarmonyPostfix, HarmonyPatch(nameof(FishPond.performActiveObjectDropInAction))]
+        public static void FishPond_performActiveObjectDropInAction_Postfix(FishPond __instance, Farmer who, bool probe, ref bool __result)
+        {
+            if (__result) return;
+            if (who.ActiveObject is not { } heldObject) return;
+            if (!heldObject.QualifiedItemId.StartsWith($"(O){UNIQUE_ID}")) return;
+
+            if (probe)
+            {
+                __result = true;
+                return;
+            }
+        
+            who.reduceActiveItemByOne();
+
+            Color targetColour;
+            string[] idSplit = heldObject.QualifiedItemId.Split('_');
+            if (idSplit.Length < 3) targetColour = new Color(60, 126, 150);
+            else
+            {
+                string bottleColour = idSplit[2];
+                if (bottleColour is "Custom")
+                {
+                    Game1.playSound("bigSelect");
+                    Game1.activeClickableMenu = new ColourPickerMenu(drawPreview: DrawPondPreview, onConfirm: (rgb) =>
+                    {
+                        if (rgb == new RgbColour(255, 255, 255))
+                        {
+                            // The game has special handling for exactly white to change it to the current location's water colour. So we fudge it a little bit here so the player is still able to actually see white if they want white. They won't notice this very subtle difference.
+                            rgb = new RgbColour(254, 254, 254);
+                        }
+                        Color colour = rgb.ToXnaColor();
+                        __instance.showObjectThrownIntoPondAnimation(who, heldObject, () => dropDyeIntoPond(__instance, heldObject, colour));
+                    });
+                    __result = true;
+                    return;
+                }
+            
+                targetColour = bottleColour switch 
+                {
+                    "Red" => Color.Red,
+                    "Orange" => new Color(255, 128, 0),
+                    "Green" => Color.Green,
+                    "Blue" => new Color(112, 112, 255),
+                    "Purple" => new Color(255, 69, 255),
+                    "Prismatic" => Utility.GetPrismaticColor(),
+                    _ => new Color(60, 126, 150)
+                };
+            }
+        
+            __instance.showObjectThrownIntoPondAnimation(who, heldObject, () => dropDyeIntoPond(__instance, heldObject, targetColour));
+            __result = true;
+        }
+
+        [HarmonyPostfix, HarmonyPatch(nameof(FishPond.Update))]
+        public static void FishPond_Update_Postfix(FishPond __instance, GameTime time)
+        {
+            if (GetDoubleFromModData(__instance, $"{UNIQUE_ID}/DyeTime") is { } existingDyeTime && existingDyeTime > Game1.currentGameTime.TotalGameTime.TotalMilliseconds)
+            {
+                // If the existing DyeTime is more than the currentGameTime, the save must've just been loaded.
+                // Setting it to -3000 makes it so that the pond immediately becomes the colour it's supposed to be.
+                // Otherwise, the pond would be stuck at the default colour until the player played for the same amount of time
+                // that they did last time before dying the pond.
+                __instance.modData[$"{UNIQUE_ID}/DyeTime"] = $"-3000";
+            }
+            
+            if (__instance.modData.ContainsKey($"{UNIQUE_ID}/Prismatic"))
+            {
+                PrismaticSynchronizationMode syncMode = Config.PrismaticSynchronizationMode;
+                int idOffset = syncMode switch 
+                {
+                    PrismaticSynchronizationMode.Random => __instance.id.Value.ToByteArray().Sum(b => b),
+                    PrismaticSynchronizationMode.Synchronized => 0,
+                    PrismaticSynchronizationMode.HorizontalPosition => __instance.tileX.Value / __instance.tilesWide.Value,
+                    PrismaticSynchronizationMode.VerticalPosition => __instance.tileY.Value / __instance.tilesHigh.Value,
+                    PrismaticSynchronizationMode.HorizontalAndVerticalPosition => (__instance.tileX.Value / __instance.tilesWide.Value) + (__instance.tileY.Value / __instance.tilesHigh.Value),
+                    _ => 0
+                };
+                __instance.modData[$"{UNIQUE_ID}/TargetColour"] = $"{Utility.GetPrismaticColor(offset: idOffset, speedMultiplier: Config.PrismaticSpeedMultiplier).PackedValue}";
+            }
+            
+            if (GetColourFromModData(__instance, $"{UNIQUE_ID}/TargetColour") is { } targetColour)
+            {
+                Color startingColour = GetColourFromModData(__instance, $"{UNIQUE_ID}/StartingColour") ?? (__instance.GetWaterColor(Vector2.Zero) ?? __instance.GetParentLocation().waterColor.Value);
+
+                double dyeTime = GetDoubleFromModData(__instance, $"{UNIQUE_ID}/DyeTime") ?? Game1.currentGameTime.TotalGameTime.TotalMilliseconds;
+            
+                double timeSinceDye = Game1.currentGameTime.TotalGameTime.TotalMilliseconds - dyeTime - 1000;
+                double transitionDuration = 2000;
+                float transitionProgress = (float)Math.Min(timeSinceDye / transitionDuration, 1.0);
+            
+                Color newColour = Color.Lerp(startingColour, targetColour, transitionProgress);
+
+                __instance.overrideWaterColor.Value = newColour;
+                if (newColour == targetColour && targetColour == new Color(60, 126, 150))
+                {
+                    __instance.overrideWaterColor.Value = Color.White;
+                    __instance.modData.Remove($"{UNIQUE_ID}/TargetColour");
+                    __instance.modData.Remove($"{UNIQUE_ID}/CurrentColour");
+                    __instance.modData.Remove($"{UNIQUE_ID}/StartingColour");
+                    __instance.modData.Remove($"{UNIQUE_ID}/DyeTime");
+                    __instance.modData.Remove($"{UNIQUE_ID}/BubbleTimer");
+                    __instance.modData.Remove($"{UNIQUE_ID}/Prismatic");
+                    Game1.playSound("steam");
+                }
+                else
+                {
+                    if (newColour == targetColour && __instance.modData.Remove($"{UNIQUE_ID}/BubbleTimer")) Game1.playSound("steam");
+                    __instance.modData[$"{UNIQUE_ID}/CurrentColour"] = $"{newColour.PackedValue}";
+                }
+            }
+
+            if (GetColourFromModData(__instance, $"{UNIQUE_ID}/CurrentColour") is not { } currentColour) return;
+            
+            __instance.overrideWaterColor.Value = currentColour;
+            
+            if (GetDoubleFromModData(__instance, $"{UNIQUE_ID}/BubbleTimer") is not { } bubbleTimer) return;
+                
+            bubbleTimer -= time.ElapsedGameTime.TotalMilliseconds;
+            if (bubbleTimer <= 0)
+            {
+                spawnBubblesOnPond(__instance, currentColour);
+                __instance.modData[$"{UNIQUE_ID}/BubbleTimer"] = "100";
+            }
+            else
+            {
+                __instance.modData[$"{UNIQUE_ID}/BubbleTimer"] = $"{bubbleTimer}";
+            }
+        }
+    
+        private static void dropDyeIntoPond(FishPond pond, Object dye, Color color)
+        {
+            pond.modData[$"{UNIQUE_ID}/BubbleTimer"] = $"100";
+            pond.modData[$"{UNIQUE_ID}/DyeTime"] = $"{Game1.currentGameTime.TotalGameTime.TotalMilliseconds}";
+            pond.modData[$"{UNIQUE_ID}/StartingColour"] = $"{(pond.GetWaterColor(Vector2.Zero) ?? new Color(60, 126, 150)).PackedValue}";
+            pond.modData[$"{UNIQUE_ID}/TargetColour"] = $"{color.PackedValue}";
+            if (dye.QualifiedItemId.ContainsIgnoreCase("Prismatic")) pond.modData[$"{UNIQUE_ID}/Prismatic"] = "true";
+            else pond.modData.Remove($"{UNIQUE_ID}/Prismatic");
+            Game1.playSound("slosh");
+            Game1.playSound("bubbles");
+        }
+
+        private static void spawnBubblesOnPond(FishPond pond, Color color)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                Rectangle pondBounds = pond.GetBoundingBox();
+                int pondWidth = pond.tilesWide.Value;
+                int pondHeight = pond.tilesHigh.Value;
+                int bubbleX = Game1.random.Next(pondBounds.X + Game1.tileSize - 15, pondBounds.X + (pondWidth - 1) * 64 - 15);
+                int bubbleY = Game1.random.Next(pondBounds.Y + Game1.tileSize, pondBounds.Y + (pondHeight - 1) * 64);
+                float xJitter = Game1.random.Next(-10, 11) / 10f / 1.5f;
+                Vector2 bubblePosition = new Vector2(bubbleX, bubbleY);
+                var tas = new TemporaryAnimatedSprite(
+                    textureName: "LooseSprites\\Cursors",
+                    sourceRect: new Rectangle(372, 1956, 10, 10),
+                    position: bubblePosition,
+                    flipped: false,
+                    alphaFade: 0.002f,
+                    color: color
+                ) {
+                    alpha = 0.75f,
+                    motion = new Vector2(x: xJitter, y: -1.5f),
+                    acceleration = new Vector2(x: -0.002f, y: 0f),
+                    interval = 99999f,
+                    layerDepth = 1f,
+                    scale = 3f,
+                    scaleChange = 0.01f,
+                    rotationChange = Game1.random.Next(minValue: -5, maxValue: 6) * (float)Math.PI / 256f
+                };
+                pond.GetParentLocation().temporarySprites.Add(tas);
+            }
+        }
 
         private static void DrawPondPreview(SpriteBatch b, Rectangle bounds, RgbColour colour)
         {
@@ -177,7 +342,7 @@ namespace FishPondDye
                 return;
             
             Color xnaColour = colour.ToXnaColor();
-            float alpha = 0.5f;
+            const float alpha = 0.5f;
             if (xnaColour == Color.White)
             {
                 // The game has special handling for exactly white to change it to the current location's water colour.
@@ -298,32 +463,39 @@ namespace FishPondDye
                 layerDepth: 0.9f
             );
         }
+        
+        private static Color? GetColourFromModData(IHaveModData? source, string key)
+        {
+            if (source?.modData.TryGetValue(key, out var packedColourString) == true &&
+                uint.TryParse(packedColourString, out uint packedColour))
+            {
+                return new Color(packedColour);
+            }
+            return null;
+        }
+    
+        private static double? GetDoubleFromModData(IHaveModData? source, string key)
+        {
+            if (source?.modData.TryGetValue(key, out var valueString) == true &&
+                double.TryParse(valueString, out double value))
+            {
+                return value;
+            }
+            return null;
+        }
+        
+        private static int? GetIntFromModData(IHaveModData? source, string key)
+        {
+            if (source?.modData.TryGetValue(key, out var valueString) == true &&
+                int.TryParse(valueString, out int value))
+            {
+                return value;
+            }
+            return null;
+        }
 
         private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
-            if (e.Button is SButton.F2)
-            {
-                const string RED = "\x1b[91m";
-                const string GREEN = "\x1b[92m";
-                const string RESET = "\x1b[0m";
-
-                Random rng = new Random();
-                {
-                    Color original = new Color((byte)rng.Next(0, 256), (byte)rng.Next(0, 256), (byte)rng.Next(0, 256));
-                    RgbColour rgb = RgbColour.FromXnaColor(original);
-                    HsvColour hsv = rgb.ToHsv();
-                    RgbColour roundtrip = RgbColour.FromHsv(hsv);
-                    Color final = roundtrip.ToXnaColor();
-                    bool redMatch = original.R == final.R;
-                    bool greenMatch = original.G == final.G;
-                    bool blueMatch = original.B == final.B;
-                    // Log.Debug($"\nRGB: {rgb} -> HSV: {hsv} -> RGB: {roundtrip}");
-                    Log.Info($"R: {(redMatch ? GREEN : RED)}{final.R} {GREEN}({original.R}){RESET} " +
-                             $"G: {(greenMatch ? GREEN : RED)}{final.G} {GREEN}({original.G}){RESET} " +
-                             $"B: {(blueMatch ? GREEN : RED)}{final.B} {GREEN}({original.B}){RESET}");
-                }
-            }
-            
             if (!Context.IsWorldReady)
                 return;
 
@@ -340,9 +512,6 @@ namespace FishPondDye
                         Log.Warn("Cancelled: " + colour);
                     });
                 }
-
-                ModHelper.GameContent.InvalidateCache("Data/Objects");
-                ModHelper.GameContent.InvalidateCache("Data/Shops");
             }
         }
     }

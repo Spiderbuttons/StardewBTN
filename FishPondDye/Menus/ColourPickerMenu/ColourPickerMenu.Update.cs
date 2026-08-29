@@ -3,9 +3,7 @@ using System.Linq;
 using FishPondDye.Helpers;
 using FishPondDye.Menus.ColourPickerMenu.Components;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using StardewModdingAPI;
 using StardewValley;
 
 namespace FishPondDye.Menus.ColourPickerMenu;
@@ -134,7 +132,7 @@ public partial class ColourPickerMenu
         }
     }
 
-    private void ClampGamePadCursorToSlider(ColourSlider slider)
+    private static void ClampGamePadCursorToSlider(ColourSlider slider)
     {
         GamePadState state = Game1.input.GetGamePadState();
         Point stickMovement = new Point(
@@ -167,7 +165,7 @@ public partial class ColourPickerMenu
         }
     }
 
-    public void UpdateComponentIDs()
+    private void UpdateComponentIDs()
     {
         Vector2 point = ColourWheel.HsvToPoint(PickedColourHsv);
         bool selectionCircleIsInBottomQuarter = point.Y > 0.5f;
@@ -228,7 +226,7 @@ public partial class ColourPickerMenu
         }
     }
 
-    public void UpdateHexInputPosition()
+    private void UpdateHexInputPosition()
     {
         Rectangle inputBounds = GetHexInputBounds();
         _hexInput.X = inputBounds.X;
@@ -276,7 +274,7 @@ public partial class ColourPickerMenu
         }
     }
 
-    public void UpdateSliderColours()
+    private void UpdateSliderColours()
     {
         Color pickedColour = PickedColourHsv.ToXnaColor() * (float)(_alpha / 100);
         PickedColourSlider.UpdateColours(pickedColour, pickedColour);

@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using FishPondDye.Helpers;
 using FishPondDye.Menus.ColourPickerMenu.Components;
-using Microsoft.CodeAnalysis.Operations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using StardewValley;
-using StardewValley.Buildings;
 using StardewValley.Menus;
 
 namespace FishPondDye.Menus.ColourPickerMenu;
@@ -66,7 +63,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         }
     }
 
-    private ClickableTextureComponent _selectionCircle = new(
+    private readonly ClickableTextureComponent _selectionCircle = new(
         bounds: new Rectangle(0, 0, 18, 18),
         texture: _selectionCircleTexture,
         sourceRect: new Rectangle(0, 0, 9, 9),
@@ -84,7 +81,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         rightNeighborImmutable = true,
     };
     
-    private ClickableTextureComponent _cancelButton = new(
+    private readonly ClickableTextureComponent _cancelButton = new(
         bounds: new Rectangle(0, 0, 64, 64),
         texture: Game1.mouseCursors,
         sourceRect: new Rectangle(192, 256, 64, 64),
@@ -98,7 +95,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         fullyImmutable = true
     };
     
-    private ClickableTextureComponent _confirmButton = new(
+    private readonly ClickableTextureComponent _confirmButton = new(
         bounds: new Rectangle(0, 0, 64, 64),
         texture: Game1.mouseCursors,
         sourceRect: new Rectangle(128, 256, 64, 64),
@@ -113,7 +110,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         fullyImmutable = true
     };
 
-    private ClickableTextureComponent _togglePreviewBase = new(
+    private readonly ClickableTextureComponent _togglePreviewBase = new(
         bounds: new Rectangle(0, 0, 16, 16),
         texture: Game1.mouseCursors2,
         sourceRect: new Rectangle(64, 208, 16, 16),
@@ -129,7 +126,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         fullyImmutable = true
     };
 
-    private ClickableTextureComponent _togglePreviewIcon = new(
+    private readonly ClickableTextureComponent _togglePreviewIcon = new(
         bounds: new Rectangle(0, 0, 16, 16),
         texture: Game1.mouseCursors,
         sourceRect: new Rectangle(80, 0, 13, 13),
@@ -141,7 +138,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         fullyImmutable = true
     };
     
-    private ClickableTextureComponent _toggleAdvancedControls = new(
+    private readonly ClickableTextureComponent _toggleAdvancedControls = new(
         bounds: new Rectangle(0, 0, 16, 16),
         texture: Game1.mouseCursors2,
         sourceRect: new Rectangle(80, 208, 16, 16),
@@ -157,7 +154,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         fullyImmutable = true
     };
 
-    private ClickableTextureComponent _randomHexButton = new(
+    private readonly ClickableTextureComponent _randomHexButton = new(
         bounds: new Rectangle(0, 0, 10, 10),
         texture: Game1.mouseCursors,
         sourceRect: new Rectangle(381, 361, 10, 10),
@@ -170,7 +167,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         fullyImmutable = true
     };
     
-    private Vector2 _screenCenter => new(Game1.uiViewport.Width / 2f, Game1.uiViewport.Height / 2.25f);
+    private static Vector2 _screenCenter => new(Game1.uiViewport.Width / 2f, Game1.uiViewport.Height / 2.25f);
 
     private Vector2 _leftSectionOffset = Vector2.Zero;
     private Vector2 _leftSectionCenter => _colourWheel.CenterPoint + _leftSectionOffset;
@@ -181,7 +178,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     private bool _showingAdvancedControls;
     private bool _showingPreview;
 
-    private ColourWheel _colourWheel;
+    private readonly ColourWheel _colourWheel;
 
     private decimal _hue;
     private decimal _saturation;
@@ -192,13 +189,13 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     
     private const int _paletteSquaresPerRow = 12;
     private int _minimumPaletteSquareGap => width / 72;
-    private List<PaletteSquare> _palette = [];
+    private readonly List<PaletteSquare> _palette = [];
     
     public HsvColour PickedColourHsv => new(_hue, _saturation, _value, _alpha);
     public RgbColour PickedColourRgb => PickedColourHsv.ToRgb();
 
     // Reusing the ColourSlider because it already draws the border I want.
-    private ColourSlider PickedColourSlider = new(
+    private readonly ColourSlider PickedColourSlider = new(
         name: "PickedColourSlider",
         getBackingValue: null,
         setBackingValue: null,
@@ -211,8 +208,8 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     
     private float timeUntilNextSound = 50f;
 
-    private HexInput _hexInput;
-    private ClickableComponent _hexInputCC = new(bounds: Rectangle.Empty, name: "HexInput")
+    private readonly HexInput _hexInput;
+    private readonly ClickableComponent _hexInputCC = new(bounds: Rectangle.Empty, name: "HexInput")
     {
         myID = CC_HEX_INPUT,
         leftNeighborID = CC_TOGGLE_ADVANCED,
@@ -381,11 +378,10 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         foreach (var (_, slider) in _sliders)
         {
             allClickableComponents.Add(slider);
-            if (slider.Input is not null)
-            {
-                allClickableComponents.Add(slider.Input.upButton);
-                allClickableComponents.Add(slider.Input.downButton);
-            }
+            if (slider.Input is null) continue;
+            
+            allClickableComponents.Add(slider.Input.upButton);
+            allClickableComponents.Add(slider.Input.downButton);
         }
         allClickableComponents.Add(_hexInputCC);
         allClickableComponents.Add(_randomHexButton);
@@ -540,7 +536,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         _alpha = alpha;
     }
     
-    public void AddColourToPalette(HsvColour hsv)
+    private void AddColourToPalette(HsvColour hsv)
     {
         Color colour = hsv.ToXnaColor();
         for (var i = _palette.Count - 1; i > _paletteSquaresPerRow; i--)
@@ -550,7 +546,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         _palette[_paletteSquaresPerRow + 1].StoredColour = colour;
     }
     
-    public void RemoveColourFromPalette(int index)
+    private void RemoveColourFromPalette(int index)
     {
         if (index < _paletteSquaresPerRow) return;
         for (var i = index; i < _palette.Count - 1; i++)

@@ -1,9 +1,6 @@
-﻿using System;
-using FishPondDye.Menus.ColourPickerMenu.Components;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
-using StardewValley.BellsAndWhistles;
 
 namespace FishPondDye.Menus.ColourPickerMenu;
 
@@ -20,7 +17,7 @@ public partial class ColourPickerMenu
         drawMouse(b);
     }
 
-    public void drawCenterMenu(SpriteBatch b)
+    private void drawCenterMenu(SpriteBatch b)
     {
         Game1.DrawBox(
             x: (int)_colourWheel.CenterPoint.X - width / 2 - borderWidth / 2,
@@ -49,7 +46,7 @@ public partial class ColourPickerMenu
         _togglePreviewIcon.draw(b);
     }
 
-    public void drawLeftMenu(SpriteBatch b)
+    private void drawLeftMenu(SpriteBatch b)
     {
         if (_drawPreview is null) return;
         
@@ -65,7 +62,7 @@ public partial class ColourPickerMenu
         _drawPreview(b, safeLeftMenuBounds, PickedColourRgb);
     }
 
-    public void drawRightMenu(SpriteBatch b)
+    private void drawRightMenu(SpriteBatch b)
     {
         Rectangle rightMenuBounds = GetRightMenuBounds();
         Game1.DrawBox(

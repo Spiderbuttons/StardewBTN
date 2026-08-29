@@ -1,5 +1,4 @@
 ﻿using System;
-using FishPondDye.Helpers;
 using Microsoft.Xna.Framework;
 using StardewValley;
 
@@ -137,7 +136,7 @@ public partial class ColourPickerMenu
         Rectangle colourWheelBounds = GetColourWheelBounds();
         float buttonScale = GetAdvancedButtonScale();
         return new Rectangle(
-            x: (int)(colourWheelBounds.X),
+            x: colourWheelBounds.X,
             y: (int)(colourWheelBounds.Y + colourWheelBounds.Height - _togglePreviewBase.sourceRect.Height * buttonScale),
             width: (int)(_togglePreviewBase.sourceRect.Width * buttonScale),
             height: (int)(_togglePreviewBase.sourceRect.Height * buttonScale)
@@ -149,8 +148,8 @@ public partial class ColourPickerMenu
         Rectangle colourWheelBounds = GetColourWheelBounds();
         float buttonScale = GetAdvancedButtonScale() / 4f;
         return new Rectangle(
-            x: (int)(colourWheelBounds.X),
-            y: (int)(colourWheelBounds.Y),
+            x: colourWheelBounds.X,
+            y: colourWheelBounds.Y,
             width: (int)(_cancelButton.sourceRect.Width * buttonScale),
             height: (int)(_cancelButton.sourceRect.Height * buttonScale)
         );
@@ -162,7 +161,7 @@ public partial class ColourPickerMenu
         float buttonScale = GetAdvancedButtonScale() / 4f;
         return new Rectangle(
             x: (int)(colourWheelBounds.X + colourWheelBounds.Width - _confirmButton.sourceRect.Width * buttonScale),
-            y: (int)(colourWheelBounds.Y),
+            y: colourWheelBounds.Y,
             width: (int)(_confirmButton.sourceRect.Width * buttonScale),
             height: (int)(_confirmButton.sourceRect.Height * buttonScale)
         );
