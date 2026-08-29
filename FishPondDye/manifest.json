@@ -5,5 +5,5 @@
     "Description": "Dye your fish ponds whatever colour you want, regardless of which fish are living in them.",
     "UniqueID": "Spiderbuttons.FishPondDye",
     "EntryDll": "FishPondDye.dll",
-    "UpdateKeys": []
+    "UpdateKeys": [ "Nexus:51453" ]
 }
