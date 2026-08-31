@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="FishPondDye/FishPondDye.csproj" />
   <Project Path="NoRedecoratingPlease/NoRedecoratingPlease.csproj" />
+  <Project Path="TheInfinityTones/TheInfinityTones.csproj" />
   <Project Path="ThePhoneIsRinging/ThePhoneIsRinging.csproj" />
 </Solution>

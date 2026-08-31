@@ -1,0 +1,9 @@
+{
+    "Name": "The Infinity Tones",
+    "Author": "Spiderbuttons",
+    "Version": "1.0.0",
+    "Description": "Choose your skin tone from a normal colour picker, rather than from a list of 24.",
+    "UniqueID": "Spiderbuttons.TheInfinityTones",
+    "EntryDll": "TheInfinityTones.dll",
+    "UpdateKeys": []
+}
