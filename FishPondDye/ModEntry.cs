@@ -498,21 +498,6 @@ namespace FishPondDye
         {
             if (!Context.IsWorldReady)
                 return;
-
-            if (e.Button is SButton.F3)
-            {
-                if (Game1.activeClickableMenu is not null) Game1.activeClickableMenu.exitThisMenu();
-                else
-                {
-                    Game1.activeClickableMenu = new ColourPickerMenu(drawPreview: DrawPondPreview, onConfirm: (colour) => 
-                    {
-                        Log.Warn("Confirmed: " + colour);
-                    }, onCancel: (colour) => 
-                    {
-                        Log.Warn("Cancelled: " + colour);
-                    });
-                }
-            }
         }
     }
 }
