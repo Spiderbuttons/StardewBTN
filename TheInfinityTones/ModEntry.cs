@@ -74,6 +74,10 @@ namespace TheInfinityTones
                 original: AccessTools.Method(typeof(LoadGameMenu), nameof(LoadGameMenu.addSaveFiles)),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(LoadGameMenu_addSaveFiles_Postfix))
             );
+            Harmony.Patch(
+                original: AccessTools.Method(typeof(TitleMenu), nameof(TitleMenu.overrideSnappyMenuCursorMovementBan)),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(TitleMenu_overrideSnappyMenuCursorMovementBan_Postfix))
+            );
 
             Helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
             Helper.Events.Display.MenuChanged += OnMenuChanged;
@@ -127,6 +131,14 @@ namespace TheInfinityTones
             StoredSkinTone = null;
             StoredPaletteToggle = null;
             StoredDarkSkinToggle = null;
+        }
+        
+        private static void TitleMenu_overrideSnappyMenuCursorMovementBan_Postfix(TitleMenu __instance, ref bool __result)
+        {
+            if (TitleMenu.subMenu is ColourPickerMenu picker)
+            {
+                __result = picker.overrideSnappyMenuCursorMovementBan();
+            }
         }
 
         private static void LoadGameMenu_addSaveFiles_Postfix(LoadGameMenu __instance, List<Farmer> files)

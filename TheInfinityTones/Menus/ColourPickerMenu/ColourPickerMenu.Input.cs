@@ -14,7 +14,6 @@ public partial class ColourPickerMenu
     private bool ShouldUseMouseInputFunction()
     {
         bool isAnySliderSelected = _sliders.Any(slider => slider.Value.Selected);
-        Log.Warn(!Game1.options.SnappyMenus || (!_colourWheel.Selected && !isAnySliderSelected));
         return !Game1.options.SnappyMenus || (!_colourWheel.Selected && !isAnySliderSelected);
     }
     
@@ -52,6 +51,22 @@ public partial class ColourPickerMenu
             {
                 setCurrentlySnappedComponentTo(_autoPalette ? CC_TONE : CC_OUTLINE);
             }
+        }
+        
+        if (oldID == CC_AUTO_PALETTE && direction is 3)
+        {
+            setCurrentlySnappedComponentTo(_autoPalette ? CC_TOGGLE_ADVANCED : CC_OUTLINE);
+        }
+
+        if (oldID == CC_HEX_INPUT && direction is 3)
+        {
+            setCurrentlySnappedComponentTo(_autoPalette ? CC_TOGGLE_ADVANCED : CC_OUTLINE);
+        }
+
+        if (oldID == CC_OUTLINE && direction is 1)
+        {
+            if (!_showingAdvancedControls) return;
+            setCurrentlySnappedComponentTo(CC_HEX_INPUT);
         }
 
         if (oldID == CC_CONFIRM && direction is 1)
@@ -140,6 +155,7 @@ public partial class ColourPickerMenu
         {
             _hexInput.Selected = false;
         }
+        
         base.receiveKeyPress(key);
     }
 

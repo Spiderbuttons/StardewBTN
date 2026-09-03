@@ -60,6 +60,16 @@ public class ColourWheel : ClickableComponent
         return PointToRgb(point);
     }
     
+    public Rectangle GetBounds()
+    {
+        return new Rectangle(
+            x: (int)(CenterPoint.X - Width / 2f),
+            y: (int)(CenterPoint.Y - Height / 2f),
+            width: (int)Width,
+            height: (int)Height
+        );
+    }
+    
     public Vector2 ClampPointToWheel(Vector2 point, int extraMargin = 0)
     {
         Vector2 direction = point - CenterPoint;

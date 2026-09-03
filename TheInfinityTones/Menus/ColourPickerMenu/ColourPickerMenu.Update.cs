@@ -124,7 +124,7 @@ public partial class ColourPickerMenu
             UpdateAutoPaletteTogglePosition();
             UpdateDarkSkinTogglePosition();
         }
-
+        
         if (_colourWheel.Selected && Game1.isGamePadThumbstickInMotion())
         {
             ClampGamePadCursorToColourWheel();

@@ -57,7 +57,6 @@ public static class CharacterCustomizationPatches
         };
         
         __instance.randomButton.downNeighborID = _colourWheel.myID;
-        // __instance.randomButton.fullyImmutable = true;
         
         __instance.allClickableComponents ??= [];
         if (Game1.options.snappyMenus && Game1.options.gamepadControls && __instance.allClickableComponents is not null)
@@ -93,15 +92,6 @@ public static class CharacterCustomizationPatches
     [HarmonyPatch(nameof(CharacterCustomization.receiveLeftClick)), HarmonyPostfix]
     private static void receiveLeftClick_Postfix(CharacterCustomization __instance, int x, int y)
     {
-        foreach (var component in __instance.allClickableComponents ?? [])
-        {
-            Log.Info(component.name);
-            if (component.containsPoint(x, y))
-            {
-                Log.Warn(component.downNeighborID);
-            }
-        }
-        
         if (_colourWheel?.containsPoint(x, y) == true)
         {
             Game1.playSound("drumkit6");
@@ -148,6 +138,7 @@ public static class CharacterCustomizationPatches
             colourPicker.SetColour(RgbColour.FromXnaColor(backupSkinTone.Darkest), 2);
             colourPicker.ShowPreview();
             colourPicker.ShowAdvancedControls();
+            colourPicker.update(Game1.currentGameTime);
             if (Game1.options.SnappyMenus) colourPicker.snapToDefaultClickableComponent();
             TitleMenu.subMenu = colourPicker;
         }

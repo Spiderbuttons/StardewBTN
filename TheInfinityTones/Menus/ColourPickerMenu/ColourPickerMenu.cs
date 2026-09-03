@@ -211,10 +211,12 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     )
     {
         myID = CC_AUTO_PALETTE,
-        leftNeighborID = CC_TOGGLE_ADVANCED,
+        leftNeighborID = ClickableComponent.CUSTOM_SNAP_BEHAVIOR,
+        rightNeighborID = CC_RANDOM,
         upNeighborID = CC_DARK_SKIN,
         downNeighborID = CC_HEX_INPUT,
-        fullyImmutable = true
+        upNeighborImmutable = true,
+        downNeighborImmutable = true,
     };
 
     private ClickableTextureComponent _darkSkinToggle = new(
@@ -229,8 +231,10 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     {
         myID = CC_DARK_SKIN,
         leftNeighborID = CC_TOGGLE_ADVANCED,
+        rightNeighborID = CC_RANDOM,
         downNeighborID = CC_AUTO_PALETTE,
-        fullyImmutable = true
+        upNeighborImmutable = true,
+        downNeighborImmutable = true,
     };
 
     // Reusing the ColourSlider because it already draws the border I want.
@@ -293,7 +297,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     private readonly ClickableComponent _hexInputCC = new(bounds: Rectangle.Empty, name: "HexInput")
     {
         myID = CC_HEX_INPUT,
-        leftNeighborID = CC_TOGGLE_ADVANCED,
+        leftNeighborID = ClickableComponent.CUSTOM_SNAP_BEHAVIOR,
         rightNeighborID = CC_RANDOM,
         upNeighborID = CC_AUTO_PALETTE,
         fullyImmutable = true
@@ -466,6 +470,11 @@ public sealed partial class ColourPickerMenu : IClickableMenu
                 downButton.downNeighborID = i < _sliders.Count - 1 ? sliderInputId + 1 : CC_RANDOM;
                 downButton.fullyImmutable = true;
                 downButton.leftNeighborID = sliderId;
+                
+                if (i == _sliders.Count - 1)
+                {
+                    _randomHexButton.upNeighborID = sliderInputId;
+                }
                 sliderInputId++;
             }
             sliderId++;
