@@ -36,15 +36,52 @@ public static class CharacterCustomizationPatches
         Rectangle randomButtonBounds = __instance.randomButton.bounds;
         _colourWheel = new ColourWheel(
             name: "ColourWheel",
-            centerPoint: new Vector2(randomButtonBounds.Center.X, randomButtonBounds.Center.Y + randomButtonBounds.Height + 8),
+            centerPoint: new Vector2(randomButtonBounds.Center.X,
+                randomButtonBounds.Center.Y + randomButtonBounds.Height + 8),
             width: randomButtonBounds.Width,
             height: randomButtonBounds.Width
-        );
+        )
+        {
+            myID = 6769,
+            upNeighborID = 507,
+            downNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+            leftNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+            rightNeighborID = ClickableComponent.SNAP_AUTOMATIC,
+            fullyImmutable = true,
+            bounds = new Rectangle(
+                randomButtonBounds.X,
+                randomButtonBounds.Y + randomButtonBounds.Height + 8,
+                randomButtonBounds.Width,
+                randomButtonBounds.Width
+            )
+        };
         
+        __instance.randomButton.downNeighborID = _colourWheel.myID;
+        // __instance.randomButton.fullyImmutable = true;
+        
+        __instance.allClickableComponents ??= [];
         if (Game1.options.snappyMenus && Game1.options.gamepadControls && __instance.allClickableComponents is not null)
         {
             __instance.allClickableComponents.Add(_colourWheel);
         }
+    }
+
+    [HarmonyPatch(typeof(IClickableMenu), nameof(IClickableMenu.populateClickableComponentList)), HarmonyPostfix]
+    private static void populateClickableComponentList_Postfix(IClickableMenu __instance)
+    {
+        if (__instance is not CharacterCustomization customizationMenu) return;
+        if (_colourWheel is null) return;
+        customizationMenu.allClickableComponents ??= [];
+        if (!customizationMenu.allClickableComponents.Contains(_colourWheel))
+        {
+            customizationMenu.allClickableComponents.Add(_colourWheel);
+        }
+    }
+    
+    [HarmonyPatch(nameof(CharacterCustomization.update)), HarmonyPostfix]
+    private static void update_Postfix(CharacterCustomization __instance, GameTime time)
+    {
+        if (_colourWheel is null) return;
     }
 
     [HarmonyPatch(nameof(CharacterCustomization.draw)), HarmonyPostfix]
@@ -56,11 +93,20 @@ public static class CharacterCustomizationPatches
     [HarmonyPatch(nameof(CharacterCustomization.receiveLeftClick)), HarmonyPostfix]
     private static void receiveLeftClick_Postfix(CharacterCustomization __instance, int x, int y)
     {
+        foreach (var component in __instance.allClickableComponents ?? [])
+        {
+            Log.Info(component.name);
+            if (component.containsPoint(x, y))
+            {
+                Log.Warn(component.downNeighborID);
+            }
+        }
+        
         if (_colourWheel?.containsPoint(x, y) == true)
         {
             Game1.playSound("drumkit6");
             ModEntry.StoreCustomizationMenu();
-            SkinTone backupSkinTone = ModEntry.StoredSkinTone ?? ModEntry.VanillaSkinTones[Game1.player.skin.Value];
+            SkinTone backupSkinTone = ModEntry.StoredSkinTone ?? SkinTone.VanillaSkinTones[Game1.player.skin.Value];
 
             var colourPicker = new ColourPickerMenu(onConfirm: (colours) =>
             {
@@ -70,9 +116,9 @@ public static class CharacterCustomizationPatches
                     lightest: colours[0].ToXnaColor()
                 );
                 
-                for (int i = 0; i < ModEntry.VanillaSkinTones.Count; i++)
+                for (int i = 0; i < SkinTone.VanillaSkinTones.Count; i++)
                 {
-                    if (ModEntry.StoredSkinTone != ModEntry.VanillaSkinTones[i]) continue;
+                    if (ModEntry.StoredSkinTone != SkinTone.VanillaSkinTones[i]) continue;
                     
                     ModEntry.StoredSkinTone = null;
                     Game1.player.skin.Value = i;
@@ -84,9 +130,9 @@ public static class CharacterCustomizationPatches
             }, onCancel: (_) =>
             {
                 ModEntry.StoredSkinTone = backupSkinTone;
-                for (int i = 0; i < ModEntry.VanillaSkinTones.Count; i++)
+                for (int i = 0; i < SkinTone.VanillaSkinTones.Count; i++)
                 {
-                    if (backupSkinTone != ModEntry.VanillaSkinTones[i]) continue;
+                    if (backupSkinTone != SkinTone.VanillaSkinTones[i]) continue;
                     
                     ModEntry.StoredSkinTone = null;
                     Game1.player.skin.Value = i;
@@ -102,6 +148,7 @@ public static class CharacterCustomizationPatches
             colourPicker.SetColour(RgbColour.FromXnaColor(backupSkinTone.Darkest), 2);
             colourPicker.ShowPreview();
             colourPicker.ShowAdvancedControls();
+            if (Game1.options.SnappyMenus) colourPicker.snapToDefaultClickableComponent();
             TitleMenu.subMenu = colourPicker;
         }
     }

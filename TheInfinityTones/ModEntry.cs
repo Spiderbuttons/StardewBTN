@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -23,13 +24,6 @@ namespace TheInfinityTones
 {
     internal sealed class ModEntry : Mod
     {
-        // private enum SkinColourShade
-        // {
-        //     Darkest = 3,
-        //     Medium = 4,
-        //     Lightest = 5
-        // }
-
         public static Effect BlurEffect
         {
             get
@@ -43,47 +37,21 @@ namespace TheInfinityTones
             set;
         }
         
+        internal static IManifest Manifest { get; set; } = null!;
         internal static IModHelper ModHelper { get; set; } = null!;
         internal static IMonitor ModMonitor { get; set; } = null!;
         internal static Harmony Harmony { get; set; } = null!;
+        
+        public static ConditionalWeakTable<FarmerRenderer, Farmer> FarmerRendererToFarmerMap = new();
 
         public static SkinTone? StoredSkinTone;
         public static bool? StoredPaletteToggle;
         public static bool? StoredDarkSkinToggle;
 
-        public static List<SkinTone> VanillaSkinTones
-        {
-            get
-            {
-                if (field is not null) return field;
-                
-                field = [];
-                try
-                {
-                    Texture2D skinToneTexture = Game1.content.Load<Texture2D>("Characters/Farmer/skinColors");
-                    Color[] data = new Color[skinToneTexture.Width * skinToneTexture.Height];
-                    skinToneTexture.GetData(data);
-                    for (int i = 0; i < data.Length; i += 3)
-                    {
-                        Color darkest = data[i];
-                        Color medium = data[i + 1];
-                        Color lightest = data[i + 2];
-                        field.Add(new SkinTone(darkest, medium, lightest));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"Failed to load vanilla skin tones: {ex}");
-                }
-
-                return field;
-            }
-            set;
-        }
-
         public override void Entry(IModHelper helper)
         {
             i18n.Init(helper.Translation);
+            Manifest = ModManifest;
             ModHelper = helper;
             ModMonitor = Monitor;
             Harmony = new Harmony(ModManifest.UniqueID);
@@ -98,10 +66,19 @@ namespace TheInfinityTones
                 original: AccessTools.Method(typeof(FarmerRenderer), nameof(FarmerRenderer._SwapColor)),
                 prefix: new HarmonyMethod(typeof(ModEntry), nameof(FarmerRenderer_SwapColor_Prefix))
             );
+            Harmony.Patch(
+                original: AccessTools.Method(typeof(TitleMenu), nameof(TitleMenu.createdNewCharacter)),
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(TitleMenu_createdNewCharacter_Prefix))
+            );
+            Harmony.Patch(
+                original: AccessTools.Method(typeof(LoadGameMenu), nameof(LoadGameMenu.addSaveFiles)),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(LoadGameMenu_addSaveFiles_Postfix))
+            );
 
             Helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
             Helper.Events.Display.MenuChanged += OnMenuChanged;
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
             
             ShaderHelper.WatchShader("blur", shader =>
             {
@@ -113,7 +90,7 @@ namespace TheInfinityTones
         {
             if (e.NamesWithoutLocale.Any(asset => asset.IsEquivalentTo("Characters/Farmer/skinColors")))
             {
-                VanillaSkinTones = null!;
+                SkinTone.VanillaSkinTones = null!;
             }
         }
 
@@ -126,44 +103,39 @@ namespace TheInfinityTones
         {
             if (e.Button is SButton.F2)
             {
-                // Log.Warn(Game1.activeClickableMenu?.GetType().FullName ?? "No active menu");
-                // Log.Warn(Game1.activeClickableMenu?.GetChildMenu()?.GetType().FullName ?? "No child menu");
-                //
-                // if (TitleMenu.subMenu is CharacterCustomization customization)
-                // {
-                //     StoreCustomizationMenu();
-                //     var backupLightest = StoredLightest;
-                //     var backupMedium = StoredMedium;
-                //     var backupDarkest = StoredDarkest;
-                //
-                //     var colourPicker = new ColourPickerMenu(onConfirm: (colours) =>
-                //     {
-                //         StoredLightest = colours[0].ToXnaColor();
-                //         StoredMedium = colours[1].ToXnaColor();
-                //         StoredDarkest = colours[2].ToXnaColor();
-                //         GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
-                //         RestoreCustomizationMenu();
-                //     }, onCancel: (_) =>
-                //     {
-                //         StoredLightest = backupLightest;
-                //         StoredDarkest = backupDarkest;
-                //         StoredMedium = backupMedium;
-                //         GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
-                //         RestoreCustomizationMenu();
-                //     }, drawPreview: PreviewFarmer);
-                //     
-                //     colourPicker.SetColour(RgbColour.FromXnaColor(StoredLightest ?? DefaultSkinTone[0]), 0);
-                //     colourPicker.SetColour(RgbColour.FromXnaColor(StoredMedium ?? DefaultSkinTone[1]), 1);
-                //     colourPicker.SetColour(RgbColour.FromXnaColor(StoredDarkest ?? DefaultSkinTone[2]), 2);
-                //     colourPicker.ShowPreview();
-                //     colourPicker.ShowAdvancedControls();
-                //     TitleMenu.subMenu = colourPicker;
-                //
-                // }
+
             }
             
             if (!Context.IsWorldReady)
                 return;
+        }
+        
+        private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
+        {
+            FarmerRendererToFarmerMap.Clear();
+            FarmerRendererToFarmerMap.Add(Game1.player.FarmerRenderer, Game1.player);
+            Game1.player.FarmerRenderer.MarkSpriteDirty();
+        }
+
+        private static void TitleMenu_createdNewCharacter_Prefix()
+        {
+            if (StoredSkinTone is null || Game1.player is null) return;
+            
+            Game1.player.modData[$"{Manifest.UniqueID}/SkinTone"] = StoredSkinTone.ToString();
+            Game1.player.modData[$"{Manifest.UniqueID}/DarkSkin"] = StoredPaletteToggle?.ToString() ?? "false";
+            
+            StoredSkinTone = null;
+            StoredPaletteToggle = null;
+            StoredDarkSkinToggle = null;
+        }
+
+        private static void LoadGameMenu_addSaveFiles_Postfix(LoadGameMenu __instance, List<Farmer> files)
+        {
+            FarmerRendererToFarmerMap.Clear();
+            foreach (var farmer in files)
+            {
+                FarmerRendererToFarmerMap.Add(farmer.FarmerRenderer, farmer);
+            }
         }
         
         private static void Game1_ResetGameStateOnTitleScreen_Postfix()
@@ -177,24 +149,56 @@ namespace TheInfinityTones
             Color[] pixels, int color_index, ref Color color)
         {
             if (color_index is < 256 or > 262) return;
-            if (StoredSkinTone is null) return;
-
-            color = color_index switch 
+            if (StoredSkinTone is not null)
             {
-                256 or 260 => GetSkinColor(0),
-                257 or 261 => GetSkinColor(1),
-                258 or 262 => GetSkinColor(2),
-                _ => color
-            };
+
+                color = color_index switch
+                {
+                    256 or 260 => GetSkinColor(0),
+                    257 or 261 => GetSkinColor(1),
+                    258 or 262 => GetSkinColor(2),
+                    _ => color
+                };
+                return;
+            }
+
+            if (FarmerRendererToFarmerMap.TryGetValue(__instance, out var farmer))
+            {
+                SkinTone skinTone = GetSkinToneFromFarmer(farmer);
+                color = color_index switch
+                {
+                    256 or 260 => skinTone.Darkest,
+                    257 or 261 => skinTone.Medium,
+                    258 or 262 => skinTone.Lightest,
+                    _ => color
+                };
+            }
+        }
+
+        private static SkinTone GetSkinToneFromFarmer(Farmer who)
+        {
+            if (!who.modData.TryGetValue($"{Manifest.UniqueID}/SkinTone", out var skinToneString))
+            {
+                return SkinTone.VanillaSkinTones.ElementAtOrDefault(who.skin.Value);
+            }
+            try
+            {
+                return SkinTone.FromString(skinToneString);
+            }
+            catch (Exception ex)
+            {
+                ModMonitor.Log($"Failed to parse skin tone from farmer mod data: {ex}", LogLevel.Error);
+                return SkinTone.VanillaSkinTones.ElementAtOrDefault(who.skin.Value);
+            }
         }
 
         private static Color GetSkinColor(int column)
         {
             return column switch
             {
-                0 => StoredSkinTone?.Darkest ?? VanillaSkinTones[0].Darkest,
-                1 => StoredSkinTone?.Medium ?? VanillaSkinTones[0].Medium,
-                2 => StoredSkinTone?.Lightest ?? VanillaSkinTones[0].Lightest,
+                0 => StoredSkinTone?.Darkest ?? SkinTone.VanillaSkinTones[0].Darkest,
+                1 => StoredSkinTone?.Medium ?? SkinTone.VanillaSkinTones[0].Medium,
+                2 => StoredSkinTone?.Lightest ?? SkinTone.VanillaSkinTones[0].Lightest,
                 _ => throw new ArgumentOutOfRangeException(nameof(column), column, "Column must be 0, 1, or 2.")
             };
         }
