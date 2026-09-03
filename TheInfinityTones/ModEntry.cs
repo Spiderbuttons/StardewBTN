@@ -23,12 +23,12 @@ namespace TheInfinityTones
 {
     internal sealed class ModEntry : Mod
     {
-        private enum SkinColourShade
-        {
-            Darkest = 3,
-            Medium = 4,
-            Lightest = 5
-        }
+        // private enum SkinColourShade
+        // {
+        //     Darkest = 3,
+        //     Medium = 4,
+        //     Lightest = 5
+        // }
 
         public static Effect BlurEffect
         {
@@ -47,16 +47,39 @@ namespace TheInfinityTones
         internal static IMonitor ModMonitor { get; set; } = null!;
         internal static Harmony Harmony { get; set; } = null!;
 
-        public static Color? StoredLightest;
-        public static Color? StoredMedium;
-        public static Color? StoredDarkest;
+        public static SkinTone? StoredSkinTone;
+        public static bool? StoredPaletteToggle;
+        public static bool? StoredDarkSkinToggle;
 
-        public static readonly List<Color> DefaultSkinTone =
-        [
-            new Color(249, 174, 137),
-            new Color(224, 107, 101),
-            new Color(107, 0, 58)
-        ];
+        public static List<SkinTone> VanillaSkinTones
+        {
+            get
+            {
+                if (field is not null) return field;
+                
+                field = [];
+                try
+                {
+                    Texture2D skinToneTexture = Game1.content.Load<Texture2D>("Characters/Farmer/skinColors");
+                    Color[] data = new Color[skinToneTexture.Width * skinToneTexture.Height];
+                    skinToneTexture.GetData(data);
+                    for (int i = 0; i < data.Length; i += 3)
+                    {
+                        Color darkest = data[i];
+                        Color medium = data[i + 1];
+                        Color lightest = data[i + 2];
+                        field.Add(new SkinTone(darkest, medium, lightest));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Failed to load vanilla skin tones: {ex}");
+                }
+
+                return field;
+            }
+            set;
+        }
 
         public override void Entry(IModHelper helper)
         {
@@ -76,6 +99,7 @@ namespace TheInfinityTones
                 prefix: new HarmonyMethod(typeof(ModEntry), nameof(FarmerRenderer_SwapColor_Prefix))
             );
 
+            Helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
             Helper.Events.Display.MenuChanged += OnMenuChanged;
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             
@@ -83,6 +107,14 @@ namespace TheInfinityTones
             {
                 BlurEffect = shader;
             });
+        }
+        
+        private void OnAssetsInvalidated(object? sender, AssetsInvalidatedEventArgs e)
+        {
+            if (e.NamesWithoutLocale.Any(asset => asset.IsEquivalentTo("Characters/Farmer/skinColors")))
+            {
+                VanillaSkinTones = null!;
+            }
         }
 
         private void OnMenuChanged(object? sender, MenuChangedEventArgs e)
@@ -94,40 +126,40 @@ namespace TheInfinityTones
         {
             if (e.Button is SButton.F2)
             {
-                Log.Warn(Game1.activeClickableMenu?.GetType().FullName ?? "No active menu");
-                Log.Warn(Game1.activeClickableMenu?.GetChildMenu()?.GetType().FullName ?? "No child menu");
-
-                if (TitleMenu.subMenu is CharacterCustomization customization)
-                {
-                    StoreCustomizationMenu();
-                    var backupLightest = StoredLightest;
-                    var backupMedium = StoredMedium;
-                    var backupDarkest = StoredDarkest;
-
-                    var colourPicker = new ColourPickerMenu(onConfirm: (colours) =>
-                    {
-                        StoredLightest = colours[0].ToXnaColor();
-                        StoredMedium = colours[1].ToXnaColor();
-                        StoredDarkest = colours[2].ToXnaColor();
-                        GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
-                        RestoreCustomizationMenu();
-                    }, onCancel: (_) =>
-                    {
-                        StoredLightest = backupLightest;
-                        StoredDarkest = backupDarkest;
-                        StoredMedium = backupMedium;
-                        GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
-                        RestoreCustomizationMenu();
-                    }, drawPreview: PreviewFarmer);
-                    
-                    colourPicker.SetColour(RgbColour.FromXnaColor(StoredLightest ?? DefaultSkinTone[0]), 0);
-                    colourPicker.SetColour(RgbColour.FromXnaColor(StoredMedium ?? DefaultSkinTone[1]), 1);
-                    colourPicker.SetColour(RgbColour.FromXnaColor(StoredDarkest ?? DefaultSkinTone[2]), 2);
-                    colourPicker.ShowPreview();
-                    colourPicker.ShowAdvancedControls();
-                    TitleMenu.subMenu = colourPicker;
-
-                }
+                // Log.Warn(Game1.activeClickableMenu?.GetType().FullName ?? "No active menu");
+                // Log.Warn(Game1.activeClickableMenu?.GetChildMenu()?.GetType().FullName ?? "No child menu");
+                //
+                // if (TitleMenu.subMenu is CharacterCustomization customization)
+                // {
+                //     StoreCustomizationMenu();
+                //     var backupLightest = StoredLightest;
+                //     var backupMedium = StoredMedium;
+                //     var backupDarkest = StoredDarkest;
+                //
+                //     var colourPicker = new ColourPickerMenu(onConfirm: (colours) =>
+                //     {
+                //         StoredLightest = colours[0].ToXnaColor();
+                //         StoredMedium = colours[1].ToXnaColor();
+                //         StoredDarkest = colours[2].ToXnaColor();
+                //         GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
+                //         RestoreCustomizationMenu();
+                //     }, onCancel: (_) =>
+                //     {
+                //         StoredLightest = backupLightest;
+                //         StoredDarkest = backupDarkest;
+                //         StoredMedium = backupMedium;
+                //         GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
+                //         RestoreCustomizationMenu();
+                //     }, drawPreview: PreviewFarmer);
+                //     
+                //     colourPicker.SetColour(RgbColour.FromXnaColor(StoredLightest ?? DefaultSkinTone[0]), 0);
+                //     colourPicker.SetColour(RgbColour.FromXnaColor(StoredMedium ?? DefaultSkinTone[1]), 1);
+                //     colourPicker.SetColour(RgbColour.FromXnaColor(StoredDarkest ?? DefaultSkinTone[2]), 2);
+                //     colourPicker.ShowPreview();
+                //     colourPicker.ShowAdvancedControls();
+                //     TitleMenu.subMenu = colourPicker;
+                //
+                // }
             }
             
             if (!Context.IsWorldReady)
@@ -136,36 +168,34 @@ namespace TheInfinityTones
         
         private static void Game1_ResetGameStateOnTitleScreen_Postfix()
         {
-            Log.Warn("huh");
-            
-            StoredLightest = null;
-            StoredMedium = null;
-            StoredDarkest = null;
+            StoredSkinTone = null;
+            StoredPaletteToggle = null;
+            StoredDarkSkinToggle = null;
         }
 
         private static void FarmerRenderer_SwapColor_Prefix(FarmerRenderer __instance, string texture_name,
             Color[] pixels, int color_index, ref Color color)
         {
             if (color_index is < 256 or > 262) return;
-            if (StoredLightest is null || StoredMedium is null || StoredDarkest is null) return;
+            if (StoredSkinTone is null) return;
 
             color = color_index switch 
             {
-                256 or 260 => GetSkinColor(SkinColourShade.Darkest),
-                257 or 261 => GetSkinColor(SkinColourShade.Medium),
-                258 or 262 => GetSkinColor(SkinColourShade.Lightest),
+                256 or 260 => GetSkinColor(0),
+                257 or 261 => GetSkinColor(1),
+                258 or 262 => GetSkinColor(2),
                 _ => color
             };
         }
 
-        private static Color GetSkinColor(SkinColourShade tone)
+        private static Color GetSkinColor(int column)
         {
-            return tone switch
+            return column switch
             {
-                SkinColourShade.Darkest => StoredDarkest ?? DefaultSkinTone[2],
-                SkinColourShade.Medium => StoredMedium ?? DefaultSkinTone[1],
-                SkinColourShade.Lightest => StoredLightest ?? DefaultSkinTone[0],
-                _ => throw new ArgumentOutOfRangeException(nameof(tone), tone, null)
+                0 => StoredSkinTone?.Darkest ?? VanillaSkinTones[0].Darkest,
+                1 => StoredSkinTone?.Medium ?? VanillaSkinTones[0].Medium,
+                2 => StoredSkinTone?.Lightest ?? VanillaSkinTones[0].Lightest,
+                _ => throw new ArgumentOutOfRangeException(nameof(column), column, "Column must be 0, 1, or 2.")
             };
         }
         
@@ -175,8 +205,10 @@ namespace TheInfinityTones
         {
             if (_storedCustomizationMenu is not null)
             {
-                _storedCustomizationMenu.RemoveDependency();
                 TitleMenu.subMenu = _storedCustomizationMenu;
+                _storedCustomizationMenu.RemoveDependency();
+                _storedCustomizationMenu.ResetComponents();
+                _storedCustomizationMenu.populateClickableComponentList();
                 _storedCustomizationMenu = null;
             }
         }
@@ -205,9 +237,8 @@ namespace TheInfinityTones
             HsvColour lightest = colours[0].ToHsv();
             HsvColour medium = colours[1].ToHsv();
             HsvColour darkest = colours[2].ToHsv();
-            StoredLightest = lightest.ToXnaColor();
-            StoredMedium = medium.ToXnaColor();
-            StoredDarkest = darkest.ToXnaColor();
+            
+            StoredSkinTone = new SkinTone(darkest.ToXnaColor(), medium.ToXnaColor(), lightest.ToXnaColor());
             
             // StoredMedium = new HsvColour(lightest.H, lightest.S * 0.8M, lightest.V * 0.8M).ToXnaColor();
             // StoredDarkest = new HsvColour(lightest.H, lightest.S * 0.9M, lightest.V * 0.3M).ToXnaColor();

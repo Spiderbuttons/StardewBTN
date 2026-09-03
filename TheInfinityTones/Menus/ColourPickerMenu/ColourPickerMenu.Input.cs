@@ -245,8 +245,17 @@ public partial class ColourPickerMenu
         if (_autoPaletteToggle.containsPoint(x, y))
         {
             _autoPalette = !_autoPalette;
+            ModEntry.StoredPaletteToggle = _autoPalette;
             _autoPaletteToggle.sourceRect.X = (_autoPalette ? 236 : 227);
             if (_autoPalette) _activeColourIndex = 0;
+            Game1.playSound("drumkit6");
+        }
+        
+        if (_darkSkinToggle.containsPoint(x, y))
+        {
+            _darkSkin = !_darkSkin;
+            ModEntry.StoredDarkSkinToggle = _darkSkin;
+            _darkSkinToggle.sourceRect.X = (_darkSkin ? 236 : 227);
             Game1.playSound("drumkit6");
         }
 

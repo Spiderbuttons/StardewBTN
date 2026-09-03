@@ -372,6 +372,33 @@ public partial class ColourPickerMenu
         );
     }
 
+    private Rectangle GetDarkSkinToggleBounds()
+    {
+        // above the auto palette bounds
+        Rectangle autoPaletteBounds = GetAutoPaletteBounds();
+        int toggleHeight = autoPaletteBounds.Height;
+        return new Rectangle(
+            x: autoPaletteBounds.X,
+            y: (int)(autoPaletteBounds.Y - toggleHeight * 1.25f),
+            width: autoPaletteBounds.Width,
+            height: toggleHeight
+        );
+    }
+
+    private Rectangle GetDarkSkinCheckboxBounds()
+    {
+        Rectangle darkSkinToggleBounds = GetDarkSkinToggleBounds();
+        int checkboxSize = darkSkinToggleBounds.Height;
+        float headerWidth = Game1.dialogueFont.MeasureString("Hex:").X * GetBaseTextScale().X;
+        
+        return new Rectangle(
+            x: darkSkinToggleBounds.X + (int)(headerWidth / 4 * 0.7f),
+            y: darkSkinToggleBounds.Y,
+            width: checkboxSize,
+            height: checkboxSize
+        );
+    }
+
     private float GetAutoPaletteCheckboxScale()
     {
         Rectangle checkboxBounds = GetAutoPaletteCheckboxBounds();

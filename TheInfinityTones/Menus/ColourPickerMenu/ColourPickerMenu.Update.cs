@@ -56,6 +56,7 @@ public partial class ColourPickerMenu
         height = (int)totalHeight;
 
         UpdateAutoPaletteTogglePosition();
+        UpdateDarkSkinTogglePosition();
         UpdateSliderPositions();
         UpdateHexInputPosition();
     }
@@ -120,6 +121,7 @@ public partial class ColourPickerMenu
             UpdateSliderPositions();
             UpdateHexInputPosition();
             UpdateAutoPaletteTogglePosition();
+            UpdateDarkSkinTogglePosition();
         }
 
         if (_colourWheel.Selected && Game1.isGamePadThumbstickInMotion())
@@ -251,6 +253,14 @@ public partial class ColourPickerMenu
         float toggleScale = GetAutoPaletteCheckboxScale();
         _autoPaletteToggle.bounds = toggleBounds;
         _autoPaletteToggle.baseScale = _autoPaletteToggle.scale = toggleScale;
+    }
+    
+    private void UpdateDarkSkinTogglePosition()
+    {
+        Rectangle toggleBounds = GetDarkSkinCheckboxBounds();
+        float toggleScale = GetAutoPaletteCheckboxScale();
+        _darkSkinToggle.bounds = toggleBounds;
+        _darkSkinToggle.baseScale = _darkSkinToggle.scale = toggleScale;
     }
 
     private void UpdateHexInputPosition()

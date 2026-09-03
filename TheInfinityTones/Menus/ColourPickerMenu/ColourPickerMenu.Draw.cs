@@ -172,6 +172,7 @@ public partial class ColourPickerMenu
         drawRightSliders(b);
         drawRightHexInput(b);
         drawRightAutoPaletteToggle(b);
+        drawRightDarkSkinToggle(b);
     }
 
     private void drawRightSliders(SpriteBatch b)
@@ -215,6 +216,24 @@ public partial class ColourPickerMenu
                 y: autoPaletteHeaderBounds.Y + 2,
                 width: autoPaletteHeaderBounds.Width - _autoPaletteToggle.bounds.Width - 8,
                 height: autoPaletteHeaderBounds.Height
+            ),
+            includeLine: false
+        );
+    }
+    
+    private void drawRightDarkSkinToggle(SpriteBatch b)
+    {
+        Rectangle darkSkinHeaderBounds = GetDarkSkinCheckboxBounds();
+        _darkSkinToggle.draw(b);
+        Rectangle hexInputBounds = GetHexInputBounds();
+        drawHeader(
+            b: b,
+            header: "Dark Skin",
+            bounds: new Rectangle(
+                x: hexInputBounds.X,
+                y: darkSkinHeaderBounds.Y + 2,
+                width: darkSkinHeaderBounds.Width - _darkSkinToggle.bounds.Width - 8,
+                height: darkSkinHeaderBounds.Height
             ),
             includeLine: false
         );

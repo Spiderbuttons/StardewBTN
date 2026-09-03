@@ -192,9 +192,20 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     public RgbColour PickedColourRgb => PickedColourHsv.ToRgb();
 
     private bool _autoPalette;
+    private bool _darkSkin;
 
     private ClickableTextureComponent _autoPaletteToggle = new(
         name: "AutoPaletteToggle",
+        bounds: Rectangle.Empty,
+        label: null,
+        hoverText: null,
+        texture: Game1.mouseCursors,
+        sourceRect: new Rectangle(227, 425, 9, 9),
+        scale: 1f
+    );
+    
+    private ClickableTextureComponent _darkSkinToggle = new(
+        name: "DarkSkinToggle",
         bounds: Rectangle.Empty,
         label: null,
         hoverText: null,
@@ -323,6 +334,18 @@ public sealed partial class ColourPickerMenu : IClickableMenu
             getColour: () => PickedColourRgb,
             setColour: (colour) => SetColour(colour)
         );
+
+        if (ModEntry.StoredPaletteToggle is true)
+        {
+            _autoPalette = true;
+            _autoPaletteToggle.sourceRect.X = 236;
+        }
+
+        if (ModEntry.StoredDarkSkinToggle is true)
+        {
+            _darkSkin = true;
+            _darkSkinToggle.sourceRect.X = 236;
+        }
         
         gameWindowSizeChanged(Rectangle.Empty, Rectangle.Empty);
         populateClickableComponentList();

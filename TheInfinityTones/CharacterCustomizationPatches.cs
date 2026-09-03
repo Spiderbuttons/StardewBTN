@@ -6,10 +6,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Characters;
-using StardewValley.GameData.Pets;
 using StardewValley.Menus;
 using TheInfinityTones.Helpers;
 using TheInfinityTones.Menus.ColourPickerMenu;
@@ -63,29 +60,46 @@ public static class CharacterCustomizationPatches
         {
             Game1.playSound("drumkit6");
             ModEntry.StoreCustomizationMenu();
-            var backupLightest = ModEntry.StoredLightest;
-            var backupMedium = ModEntry.StoredMedium;
-            var backupDarkest = ModEntry.StoredDarkest;
+            SkinTone backupSkinTone = ModEntry.StoredSkinTone ?? ModEntry.VanillaSkinTones[Game1.player.skin.Value];
 
             var colourPicker = new ColourPickerMenu(onConfirm: (colours) =>
             {
-                ModEntry.StoredLightest = colours[0].ToXnaColor();
-                ModEntry.StoredMedium = colours[1].ToXnaColor();
-                ModEntry.StoredDarkest = colours[2].ToXnaColor();
+                ModEntry.StoredSkinTone = new SkinTone(
+                    darkest: colours[2].ToXnaColor(),
+                    medium: colours[1].ToXnaColor(),
+                    lightest: colours[0].ToXnaColor()
+                );
+                
+                for (int i = 0; i < ModEntry.VanillaSkinTones.Count; i++)
+                {
+                    if (ModEntry.StoredSkinTone != ModEntry.VanillaSkinTones[i]) continue;
+                    
+                    ModEntry.StoredSkinTone = null;
+                    Game1.player.skin.Value = i;
+                    break;
+                }
+                
                 ModEntry.GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
                 ModEntry.RestoreCustomizationMenu();
             }, onCancel: (_) =>
             {
-                ModEntry.StoredLightest = backupLightest;
-                ModEntry.StoredDarkest = backupDarkest;
-                ModEntry.StoredMedium = backupMedium;
+                ModEntry.StoredSkinTone = backupSkinTone;
+                for (int i = 0; i < ModEntry.VanillaSkinTones.Count; i++)
+                {
+                    if (backupSkinTone != ModEntry.VanillaSkinTones[i]) continue;
+                    
+                    ModEntry.StoredSkinTone = null;
+                    Game1.player.skin.Value = i;
+                    break;
+                }
+                
                 ModEntry.GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
                 ModEntry.RestoreCustomizationMenu();
             }, drawPreview: ModEntry.PreviewFarmer);
                     
-            colourPicker.SetColour(RgbColour.FromXnaColor(ModEntry.StoredLightest ?? ModEntry.DefaultSkinTone[0]), 0);
-            colourPicker.SetColour(RgbColour.FromXnaColor(ModEntry.StoredMedium ?? ModEntry.DefaultSkinTone[1]), 1);
-            colourPicker.SetColour(RgbColour.FromXnaColor(ModEntry.StoredDarkest ?? ModEntry.DefaultSkinTone[2]), 2);
+            colourPicker.SetColour(RgbColour.FromXnaColor(backupSkinTone.Lightest), 0);
+            colourPicker.SetColour(RgbColour.FromXnaColor(backupSkinTone.Medium), 1);
+            colourPicker.SetColour(RgbColour.FromXnaColor(backupSkinTone.Darkest), 2);
             colourPicker.ShowPreview();
             colourPicker.ShowAdvancedControls();
             TitleMenu.subMenu = colourPicker;
@@ -96,9 +110,9 @@ public static class CharacterCustomizationPatches
     private static void selectionClick_Postfix(CharacterCustomization __instance, string name, int change)
     {
         if (name is not "Skin") return;
-        ModEntry.StoredLightest = null;
-        ModEntry.StoredMedium = null;
-        ModEntry.StoredDarkest = null;
+        ModEntry.StoredSkinTone = null;
+        ModEntry.StoredPaletteToggle = null;
+        ModEntry.StoredDarkSkinToggle = null;
     }
 
     [HarmonyPatch(nameof(CharacterCustomization.performHoverAction)), HarmonyPostfix]
@@ -113,11 +127,6 @@ public static class CharacterCustomizationPatches
         {
             _colourWheel?.Width = (int)MathHelper.Lerp(_colourWheel.Width, __instance.randomButton.bounds.Width, 0.1f);
             _colourWheel?.Height = _colourWheel.Width;
-        }
-
-        if (x is 4 && ModEntry.StoredLightest is not null)
-        {
-            Log.Warn("thing");
         }
     }
     
@@ -150,7 +159,7 @@ public static class CharacterCustomizationPatches
             matcher.CreateLabel(out Label afterSubBranch);
 
             matcher.Insert(
-	            new CodeInstruction(OpCodes.Ldsflda, AccessTools.Field(typeof(ModEntry), nameof(ModEntry.StoredLightest))),
+	            new CodeInstruction(OpCodes.Ldsflda, AccessTools.Field(typeof(ModEntry), nameof(ModEntry.StoredSkinTone))),
 	            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(Color?), nameof(Nullable<>.HasValue))),
 	            new CodeInstruction(OpCodes.Brfalse, afterSubBranch),
 	            new CodeInstruction(OpCodes.Ldstr, "Custom"),
