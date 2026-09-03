@@ -140,7 +140,9 @@ public static class CharacterCustomizationPatches
             colourPicker.ShowAdvancedControls();
             colourPicker.update(Game1.currentGameTime);
             if (Game1.options.SnappyMenus) colourPicker.snapToDefaultClickableComponent();
-            TitleMenu.subMenu = colourPicker;
+            
+            if (Game1.activeClickableMenu is TitleMenu) TitleMenu.subMenu = colourPicker;
+            else Game1.activeClickableMenu = colourPicker;
         }
     }
 

@@ -89,9 +89,6 @@ public partial class ColourPickerMenu
 
         if (_autoPalette)
         {
-            // StoredMedium = new HsvColour(lightest.H, lightest.S * 0.8M, lightest.V * 0.8M).ToXnaColor();
-            // StoredDarkest = new HsvColour(lightest.H, lightest.S * 0.9M, lightest.V * 0.3M).ToXnaColor();
-            
             SetColour(GetShadingForTone(PickedColourHsv), 1);
             SetColour(GetOutlineForTone(PickedColourHsv), 2);
         }
@@ -207,6 +204,7 @@ public partial class ColourPickerMenu
         Vector2 point = ColourWheel.HsvToPoint(PickedColourHsv);
         bool selectionCircleIsInBottomQuarter = point.Y > 0.5f;
         bool selectionCircleIsInTopQuarter = point.Y < -0.5f;
+        bool selectionCircleIsOnRightSide = point.X > 0.35f;
         switch (point.X)
         {
             case < -0.35f:
@@ -225,6 +223,7 @@ public partial class ColourPickerMenu
         _selectionCircle.upNeighborID = point.X < 0 ? CC_CANCEL : CC_CONFIRM;
         _selectionCircle.leftNeighborID = point.Y > 0 ? CC_TOGGLE_PREVIEW : CC_CANCEL;
         _selectionCircle.rightNeighborID = point.Y > 0 ? CC_TOGGLE_ADVANCED : CC_CONFIRM;
+        if (selectionCircleIsOnRightSide) _selectionCircle.rightNeighborID = CC_SLIDERS_START;
 
         if (selectionCircleIsInBottomQuarter)
         {

@@ -221,7 +221,9 @@ namespace TheInfinityTones
         {
             if (_storedCustomizationMenu is not null)
             {
-                TitleMenu.subMenu = _storedCustomizationMenu;
+                if (Game1.activeClickableMenu is TitleMenu) TitleMenu.subMenu = _storedCustomizationMenu;
+                else Game1.activeClickableMenu = _storedCustomizationMenu;
+                
                 _storedCustomizationMenu.RemoveDependency();
                 _storedCustomizationMenu.ResetComponents();
                 _storedCustomizationMenu.populateClickableComponentList();
@@ -231,11 +233,8 @@ namespace TheInfinityTones
 
         public static void StoreCustomizationMenu()
         {
-            if (TitleMenu.subMenu is CharacterCustomization customization)
-            {
-                _storedCustomizationMenu = customization;
-                _storedCustomizationMenu.AddDependency();
-            }
+            _storedCustomizationMenu = Game1.activeClickableMenu is TitleMenu ? TitleMenu.subMenu as CharacterCustomization : Game1.activeClickableMenu as CharacterCustomization;
+            _storedCustomizationMenu?.AddDependency();
         }
         
         public static CharacterCustomization? GetStoredCustomizationMenu()
