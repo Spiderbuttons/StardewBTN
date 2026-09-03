@@ -17,12 +17,18 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     private const int CC_CONFIRM = 2;
     private const int CC_TOGGLE_PREVIEW = 3;
     private const int CC_TOGGLE_ADVANCED = 4;
+
+    private const int CC_TONE = 10;
+    private const int CC_SHADING = 11;
+    private const int CC_OUTLINE = 12;
     
     private const int CC_SLIDERS_START = 200;
     private const int CC_SLIDERS_INPUT_START = 300;
     
     private const int CC_HEX_INPUT = 400;
     private const int CC_RANDOM = 401;
+    private const int CC_AUTO_PALETTE = 402;
+    private const int CC_DARK_SKIN = 403;
     
     private static Texture2D _selectionCircleTexture
     {
@@ -121,7 +127,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         myID = CC_TOGGLE_PREVIEW,
         rightNeighborID = CC_TOGGLE_ADVANCED,
         upNeighborID = CC_SELECTION_CIRCLE,
-        // downNeighborID = CC_PALETTE_START,
+        downNeighborID = CC_TONE,
         fullyImmutable = true
     };
 
@@ -148,7 +154,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         myID = CC_TOGGLE_ADVANCED,
         leftNeighborID = CC_TOGGLE_PREVIEW,
         upNeighborID = CC_SELECTION_CIRCLE,
-        // downNeighborID = CC_PALETTE_START + _paletteSquaresPerRow - 1,
+        downNeighborID = ClickableComponent.CUSTOM_SNAP_BEHAVIOR,
         rightNeighborID = ClickableComponent.CUSTOM_SNAP_BEHAVIOR,
         fullyImmutable = true
     };
@@ -202,8 +208,15 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         texture: Game1.mouseCursors,
         sourceRect: new Rectangle(227, 425, 9, 9),
         scale: 1f
-    );
-    
+    )
+    {
+        myID = CC_AUTO_PALETTE,
+        leftNeighborID = CC_TOGGLE_ADVANCED,
+        upNeighborID = CC_DARK_SKIN,
+        downNeighborID = CC_HEX_INPUT,
+        fullyImmutable = true
+    };
+
     private ClickableTextureComponent _darkSkinToggle = new(
         name: "DarkSkinToggle",
         bounds: Rectangle.Empty,
@@ -212,7 +225,13 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         texture: Game1.mouseCursors,
         sourceRect: new Rectangle(227, 425, 9, 9),
         scale: 1f
-    );
+    )
+    {
+        myID = CC_DARK_SKIN,
+        leftNeighborID = CC_TOGGLE_ADVANCED,
+        downNeighborID = CC_AUTO_PALETTE,
+        fullyImmutable = true
+    };
 
     // Reusing the ColourSlider because it already draws the border I want.
     private readonly ColourSlider ToneSlider = new(
@@ -224,7 +243,13 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         bounds: new Rectangle(0, 0, 0, 0),
         colourOne: Color.White,
         colourTwo: Color.White
-    ) { IsHorizontal = true };
+    )
+    {
+        myID = CC_TONE,
+        upNeighborID = CC_TOGGLE_PREVIEW,
+        rightNeighborID = CC_SHADING,
+        IsHorizontal = true
+    };
     
     private readonly ColourSlider ShadingSlider = new(
         name: "PickedColourSlider",
@@ -235,7 +260,14 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         bounds: new Rectangle(0, 0, 0, 0),
         colourOne: Color.White,
         colourTwo: Color.White
-    ) { IsHorizontal = true };
+    )
+    {
+        myID = CC_SHADING,
+        upNeighborID = CC_SELECTION_CIRCLE,
+        leftNeighborID = CC_TONE,
+        rightNeighborID = CC_OUTLINE,
+        IsHorizontal = true
+    };
     
     private readonly ColourSlider OutlineSlider = new(
         name: "PickedColourSlider",
@@ -246,7 +278,14 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         bounds: new Rectangle(0, 0, 0, 0),
         colourOne: Color.White,
         colourTwo: Color.White
-    ) { IsHorizontal = true };
+    )
+    {
+        myID = CC_OUTLINE,
+        upNeighborID = CC_TOGGLE_ADVANCED,
+        leftNeighborID = CC_SHADING,
+        rightNeighborID = ClickableComponent.CUSTOM_SNAP_BEHAVIOR,
+        IsHorizontal = true
+    };
     
     private float timeUntilNextSound = 50f;
 
@@ -256,6 +295,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         myID = CC_HEX_INPUT,
         leftNeighborID = CC_TOGGLE_ADVANCED,
         rightNeighborID = CC_RANDOM,
+        upNeighborID = CC_AUTO_PALETTE,
         fullyImmutable = true
     };
     
@@ -374,8 +414,15 @@ public sealed partial class ColourPickerMenu : IClickableMenu
             allClickableComponents.Add(slider.Input.upButton);
             allClickableComponents.Add(slider.Input.downButton);
         }
+        
+        allClickableComponents.Add(ToneSlider);
+        allClickableComponents.Add(ShadingSlider);
+        allClickableComponents.Add(OutlineSlider);
+        
         allClickableComponents.Add(_hexInputCC);
         allClickableComponents.Add(_randomHexButton);
+        allClickableComponents.Add(_autoPaletteToggle);
+        allClickableComponents.Add(_darkSkinToggle);
     }
 
     private void AssignComponentIds()
@@ -388,7 +435,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
             var slider = _sliders.ElementAt(i).Value;
             slider.myID = sliderId;
             slider.leftNeighborID = i == _sliders.Count - 1 ? CC_TOGGLE_ADVANCED : i == 0 ? CC_CONFIRM : CC_SELECTION_CIRCLE;
-            slider.downNeighborID = i < _sliders.Count - 1 ? sliderId + 1 : CC_HEX_INPUT;
+            slider.downNeighborID = i < _sliders.Count - 1 ? sliderId + 1 : CC_DARK_SKIN;
             slider.upNeighborID = i > 0 ? sliderId - 1 : ClickableComponent.ID_ignore;
             slider.upNeighborImmutable = true;
             slider.downNeighborImmutable = true;
@@ -396,7 +443,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
             
             if (i == _sliders.Count - 1)
             {
-                _hexInputCC.upNeighborID = sliderId;
+                _darkSkinToggle.upNeighborID = sliderId;
             }
             
             var input = slider.Input;

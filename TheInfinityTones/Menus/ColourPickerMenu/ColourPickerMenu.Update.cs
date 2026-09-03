@@ -5,6 +5,7 @@ using TheInfinityTones.Menus.ColourPickerMenu.Components;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using StardewValley;
+using StardewValley.Menus;
 
 namespace TheInfinityTones.Menus.ColourPickerMenu;
 
@@ -217,8 +218,7 @@ public partial class ColourPickerMenu
                 _selectionCircle.downNeighborID = CC_TOGGLE_ADVANCED;
                 break;
             default:
-                // TODO: Fix this.
-                // _selectionCircle.downNeighborID =
+                _selectionCircle.downNeighborID = _autoPalette ? CC_TONE : CC_SHADING;
                 break;
         }
         
@@ -245,6 +245,8 @@ public partial class ColourPickerMenu
             _cancelButton.rightNeighborID = CC_CONFIRM;
             _confirmButton.leftNeighborID = CC_CANCEL;
         }
+
+        ToneSlider.rightNeighborID = _autoPalette ? ClickableComponent.ID_ignore : CC_SHADING;
     }
 
     private void UpdateAutoPaletteTogglePosition()

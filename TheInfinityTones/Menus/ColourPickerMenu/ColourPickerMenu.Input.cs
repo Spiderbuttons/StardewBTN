@@ -14,6 +14,7 @@ public partial class ColourPickerMenu
     private bool ShouldUseMouseInputFunction()
     {
         bool isAnySliderSelected = _sliders.Any(slider => slider.Value.Selected);
+        Log.Warn(!Game1.options.SnappyMenus || (!_colourWheel.Selected && !isAnySliderSelected));
         return !Game1.options.SnappyMenus || (!_colourWheel.Selected && !isAnySliderSelected);
     }
     
@@ -41,10 +42,16 @@ public partial class ColourPickerMenu
 
     public override void customSnapBehavior(int direction, int oldRegion, int oldID)
     {
-        if (oldID == CC_TOGGLE_ADVANCED && direction is 1)
+        if (oldID == CC_TOGGLE_ADVANCED)
         {
-            if (!_showingAdvancedControls) return;
-            setCurrentlySnappedComponentTo(CC_SLIDERS_START + _sliders.Count - 1);
+            if (direction is 1)
+            {
+                if (!_showingAdvancedControls) return;
+                setCurrentlySnappedComponentTo(CC_DARK_SKIN);
+            } else if (direction is 2)
+            {
+                setCurrentlySnappedComponentTo(_autoPalette ? CC_TONE : CC_OUTLINE);
+            }
         }
 
         if (oldID == CC_CONFIRM && direction is 1)

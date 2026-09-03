@@ -134,6 +134,7 @@ public class ColourSlider : ClickableComponent
     public void UpdateBarBounds(Rectangle newBounds)
     {
         Bar.Bounds = newBounds;
+        bounds = newBounds;
     }
 
     public void UpdateInputBounds(Rectangle newBounds)
