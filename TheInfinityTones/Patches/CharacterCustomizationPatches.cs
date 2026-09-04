@@ -124,13 +124,9 @@ public static class CharacterCustomizationPatches
             
             SkinTone backupSkinTone = ModEntry.StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[Game1.player.skin.Value];
 
-            var colourPicker = new ColourPickerMenu(onConfirm: (colours) =>
+            var colourPicker = new ColourPickerMenu(onConfirm: (skinTone) =>
             {
-                ModEntry.StoredSkinTone.Value = new SkinTone(
-                    darkest: colours[2].ToXnaColor(),
-                    medium: colours[1].ToXnaColor(),
-                    lightest: colours[0].ToXnaColor()
-                );
+                ModEntry.StoredSkinTone.Value = skinTone;
                 
                 for (int i = 0; i < SkinTone.VanillaSkinTones.Count; i++)
                 {

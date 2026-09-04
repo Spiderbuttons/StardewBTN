@@ -303,9 +303,9 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         fullyImmutable = true
     };
     
-    private readonly Action<List<RgbColour>>? _onConfirm;
-    private readonly Action<List<RgbColour>>? _onCancel;
-    private readonly Action<SpriteBatch, Rectangle, List<RgbColour>, bool>? _drawPreview;
+    private readonly Action<SkinTone>? _onConfirm;
+    private readonly Action<SkinTone>? _onCancel;
+    private readonly Action<SpriteBatch, Rectangle, SkinTone, bool>? _drawPreview;
 
     /// <summary>
     /// Opens a menu that allows a player to choose a colour from a standard colour picker.
@@ -313,7 +313,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     /// <param name="onConfirm">A callback that is called when the player confirms their colour choice. The chosen colour is passed as an argument.</param>
     /// <param name="onCancel">A callback that is called when the player cancels the colour picker. The colour passed as an argument is whatever colour happens to be selected when the player cancels.</param>
     /// <param name="drawPreview"> A callback that is called to draw a preview of whatever the player is choosing a colour for. The arguments are the sprite batch, the bounds of the preview area, and the currently selected colour.</param>
-    public ColourPickerMenu(Action<List<RgbColour>>? onConfirm = null, Action<List<RgbColour>>? onCancel = null, Action<SpriteBatch, Rectangle, List<RgbColour>, bool>? drawPreview = null)
+    public ColourPickerMenu(Action<SkinTone>? onConfirm = null, Action<SkinTone>? onCancel = null, Action<SpriteBatch, Rectangle, SkinTone, bool>? drawPreview = null)
     {
         _onConfirm = onConfirm;
         _onCancel = onCancel;
@@ -481,15 +481,19 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         }
     }
     
-    public List<RgbColour> GetPickedColours()
+    public SkinTone GetPickedSkinTone()
     {
-        List<RgbColour> pickedColours = [];
-        for (int i = 0; i < _hue.Count; i++)
+        List<HsvColour> pickedColours = [];
+        for (int i = _hue.Count - 1; i >= 0; i--)
         {
-            HsvColour hsv = new(_hue[i], _saturation[i], _value[i], _alpha[i]);
-            pickedColours.Add(hsv.ToRgb());
+            pickedColours.Add(new HsvColour(_hue[i], _saturation[i], _value[i], _alpha[i]));
         }
-        return pickedColours;
+        return new SkinTone(
+            darkest: pickedColours[0].ToXnaColor(),
+            medium: pickedColours[1].ToXnaColor(),
+            lightest: pickedColours[2].ToXnaColor(),
+            isDark: _darkSkin
+        );
     }
 
     public void ShowPreview()

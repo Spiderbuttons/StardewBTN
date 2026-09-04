@@ -247,14 +247,14 @@ public partial class ColourPickerMenu
         if (_cancelButton.containsPoint(x, y))
         {
             _cancelButton.scale = _cancelButton.baseScale * 0.975f;
-            _onCancel?.Invoke(GetPickedColours());
+            _onCancel?.Invoke(GetPickedSkinTone());
             exitThisMenu();
         }
         
         if (_confirmButton.containsPoint(x, y))
         {
             _confirmButton.scale = _confirmButton.baseScale * 0.975f;
-            _onConfirm?.Invoke(GetPickedColours());
+            _onConfirm?.Invoke(GetPickedSkinTone());
             exitThisMenu();
         }
 

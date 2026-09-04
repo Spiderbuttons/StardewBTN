@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
-using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Menus;
 
 namespace TheInfinityTones.Patches;
 
 [HarmonyPatch]
-public static class FarmerRendererPatches
+public static class FarmerPatches
 {
     [HarmonyPatch(typeof(FarmerRenderer), nameof(FarmerRenderer.ApplySkinColor)), HarmonyPostfix]
     private static void FarmerRenderer_ApplySkinColor_Postfix(FarmerRenderer __instance, string texture_name, Color[] pixels)
@@ -30,5 +26,14 @@ public static class FarmerRendererPatches
         __instance._SwapColor(texture_name, pixels, 260, skinTone.Darkest);
         __instance._SwapColor(texture_name, pixels, 261, skinTone.Medium);
         __instance._SwapColor(texture_name, pixels, 262, skinTone.Lightest);
+    }
+    
+    [HarmonyPatch(typeof(Farmer), nameof(Farmer.hasDarkSkin)), HarmonyPostfix]
+    private static void Farmer_hasDarkSkin_Postfix(Farmer __instance, ref bool __result)
+    {
+        if (!__instance.modData.TryGetValue($"{ModEntry.Manifest.UniqueID}/SkinTone", out var skinToneString)) return;
+        
+        SkinTone skinTone = SkinTone.FromString(skinToneString);
+        __result = skinTone.IsDarkSkin;
     }
 }

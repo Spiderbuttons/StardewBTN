@@ -89,6 +89,11 @@ namespace TheInfinityTones
         {
             if (!Context.IsWorldReady)
                 return;
+
+            if (e.Button is SButton.F2)
+            {
+                //
+            }
         }
         
         private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
@@ -219,18 +224,14 @@ namespace TheInfinityTones
             return _storedCustomizationMenu;
         }
         
-        public static void PreviewFarmer(SpriteBatch b, Rectangle bounds, List<RgbColour> colours, bool autoPalette)
+        public static void PreviewFarmer(SpriteBatch b, Rectangle bounds, SkinTone skinTone, bool autoPalette)
         {
             if (GetStoredCustomizationMenu()?.GetOrCreateDisplayFarmer() is not { } farmer) return;
             
             b.End();
             b.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, SamplerState.PointClamp);
             
-            HsvColour lightest = colours[0].ToHsv();
-            HsvColour medium = colours[1].ToHsv();
-            HsvColour darkest = colours[2].ToHsv();
-            
-            StoredSkinTone.Value = new SkinTone(darkest.ToXnaColor(), medium.ToXnaColor(), lightest.ToXnaColor());
+            StoredSkinTone.Value = skinTone;
             farmer.FarmerRenderer.MarkSpriteDirty();
             float scale = Math.Min(bounds.Width / 72f, bounds.Height / 144f);
             drawFarmer(

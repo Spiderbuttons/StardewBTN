@@ -8,7 +8,7 @@ using TheInfinityTones.Helpers;
 
 namespace TheInfinityTones;
 
-public struct SkinTone(Color darkest, Color medium, Color lightest) : IEquatable<SkinTone>
+public struct SkinTone(Color darkest, Color medium, Color lightest, bool isDark) : IEquatable<SkinTone>
 {
     public static List<SkinTone> VanillaSkinTones
     {
@@ -22,12 +22,15 @@ public struct SkinTone(Color darkest, Color medium, Color lightest) : IEquatable
                 Texture2D skinToneTexture = Game1.content.Load<Texture2D>("Characters/Farmer/skinColors");
                 Color[] data = new Color[skinToneTexture.Width * skinToneTexture.Height];
                 skinToneTexture.GetData(data);
+                int[] darkSkinIndices = [4, 5, 6, 8, 14];
                 for (int i = 0; i < data.Length; i += 3)
                 {
                     Color darkest = data[i];
                     Color medium = data[i + 1];
                     Color lightest = data[i + 2];
-                    field.Add(new SkinTone(darkest, medium, lightest));
+                    int skinIndex = i / 3;
+                    bool isDark = darkSkinIndices.Contains(skinIndex);
+                    field.Add(new SkinTone(darkest, medium, lightest, isDark));
                 }
             }
             catch (Exception ex)
@@ -43,36 +46,38 @@ public struct SkinTone(Color darkest, Color medium, Color lightest) : IEquatable
     public Color Darkest = darkest;
     public Color Medium = medium;
     public Color Lightest = lightest;
+    public readonly bool IsDarkSkin = isDark;
     
     public static SkinTone GetSkinToneFromFarmer(Farmer who)
     {
         if (!who.modData.TryGetValue($"{ModEntry.Manifest.UniqueID}/SkinTone", out var skinToneString))
         {
-            return SkinTone.VanillaSkinTones.ElementAtOrDefault(who.skin.Value);
+            return VanillaSkinTones.ElementAtOrDefault(who.skin.Value);
         }
-        return SkinTone.FromString(skinToneString);
+        return FromString(skinToneString);
     }
 
     public override string ToString()
     {
-        return $"{Darkest.PackedValue} {Medium.PackedValue} {Lightest.PackedValue}";
+        return $"{Darkest.PackedValue} {Medium.PackedValue} {Lightest.PackedValue} {IsDarkSkin}";
     }
     
     public static SkinTone FromString(string str)
     {
         string[] parts = str.Split(' ');
-        if (parts.Length != 3) throw new ArgumentException("Invalid skin tone string format.");
+        if (parts.Length < 3) throw new ArgumentException("Invalid skin tone string format.");
         
         Color darkest = new Color(uint.Parse(parts[0]));
         Color medium = new Color(uint.Parse(parts[1]));
         Color lightest = new Color(uint.Parse(parts[2]));
+        bool isDark = parts.Length > 3 && bool.Parse(parts[3]);
         
-        return new SkinTone(darkest, medium, lightest);
+        return new SkinTone(darkest, medium, lightest, isDark);
     }
 
     public bool Equals(SkinTone other)
     {
-        return Darkest.Equals(other.Darkest) && Medium.Equals(other.Medium) && Lightest.Equals(other.Lightest);
+        return Darkest.Equals(other.Darkest) && Medium.Equals(other.Medium) && Lightest.Equals(other.Lightest) && IsDarkSkin == other.IsDarkSkin;
     }
 
     public override bool Equals(object? obj)
@@ -82,7 +87,7 @@ public struct SkinTone(Color darkest, Color medium, Color lightest) : IEquatable
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Darkest, Medium, Lightest);
+        return HashCode.Combine(Darkest, Medium, Lightest, IsDarkSkin);
     }
 
     public static bool operator ==(SkinTone left, SkinTone right)

@@ -155,7 +155,7 @@ public partial class ColourPickerMenu
         );
         
         Rectangle safeLeftMenuBounds = GetSafeLeftMenuBounds();
-        _drawPreview(b, safeLeftMenuBounds, GetPickedColours(), _autoPalette);
+        _drawPreview(b, safeLeftMenuBounds, GetPickedSkinTone(), _autoPalette);
     }
 
     private void drawRightMenu(SpriteBatch b)

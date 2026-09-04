@@ -313,7 +313,6 @@ public partial class ColourPickerMenu
 
     private void UpdateSliderColours()
     {
-        // Color tone = PickedColourHsv.ToXnaColor() * (float)(_alpha[_activeColourIndex] / 100);
         Color tone = new HsvColour(_hue[0], _saturation[0], _value[0], _alpha[0]).ToXnaColor();
         ToneSlider.UpdateColours(tone, tone);
         
