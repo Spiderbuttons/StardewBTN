@@ -14,6 +14,7 @@ using StardewValley;
 using StardewValley.Menus;
 using TheInfinityTones.Helpers;
 using TheInfinityTones.Menus.ColourPickerMenu;
+using TheInfinityTones.Patches;
 
 namespace TheInfinityTones
 {
@@ -73,11 +74,20 @@ namespace TheInfinityTones
             Helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
             Helper.Events.Multiplayer.PeerConnected += OnPeerConnected;
             Helper.Events.GameLoop.OneSecondUpdateTicked += OnOneSecondUpdateTicked;
+            Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
             
             ShaderHelper.WatchShader("blur", shader =>
             {
                 BlurEffect = shader;
             });
+        }
+        
+        private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+        {
+            if (ModHelper.ModRegistry.IsLoaded("PeacefulEnd.FashionSense"))
+            {
+                FashionSensePatches.Patch(Harmony);
+            }
         }
         
         private void OnAssetsInvalidated(object? sender, AssetsInvalidatedEventArgs e)
