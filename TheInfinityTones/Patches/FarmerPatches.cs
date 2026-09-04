@@ -21,7 +21,7 @@ public static class FarmerPatches
         }
             
         Farmer? farmer = ModEntry.GetContextualFarmers().FirstOrDefault(f => f.FarmerRenderer == __instance);
-        if (farmer is null) return;
+        if (farmer is null || (farmer.modData.TryGetValue("FashionSense.CustomBody.Id", out var val) && val == "Override Body Color")) return;
             
         SkinTone skinTone = SkinTone.GetSkinToneFromFarmer(farmer);
         __instance._SwapColor(texture_name, pixels, 260, skinTone.Darkest);
