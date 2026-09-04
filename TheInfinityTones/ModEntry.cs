@@ -42,6 +42,8 @@ namespace TheInfinityTones
         public static readonly PerScreen<SkinTone?> StoredSkinTone = new(createNewState: () => null);
         public static readonly PerScreen<bool?> StoredPaletteToggle = new(createNewState: () => null);
         public static readonly PerScreen<bool?> StoredDarkSkinToggle = new(createNewState: () => null);
+        
+        private static CharacterCustomization? _storedCustomizationMenu;
 
         public override void Entry(IModHelper helper)
         {
@@ -56,10 +58,6 @@ namespace TheInfinityTones
             Harmony.Patch(
                 original: AccessTools.Method(typeof(Game1), nameof(Game1.ResetGameStateOnTitleScreen)),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(Game1_ResetGameStateOnTitleScreen_Postfix))
-            );
-            Harmony.Patch(
-                original: AccessTools.Method(typeof(FarmerRenderer), nameof(FarmerRenderer.ApplySkinColor)),
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(FarmerRenderer_ApplySkinColor_Postfix))
             );
             Harmony.Patch(
                 original: AccessTools.Method(typeof(TitleMenu), nameof(TitleMenu.overrideSnappyMenuCursorMovementBan)),
@@ -165,74 +163,36 @@ namespace TheInfinityTones
             StoredPaletteToggle.Value = null;
             StoredDarkSkinToggle.Value = null;
         }
-
-        private static void FarmerRenderer_ApplySkinColor_Postfix(FarmerRenderer __instance, string texture_name, Color[] pixels)
+        
+        public static IEnumerable<Farmer> GetContextualFarmers()
         {
-            if (StoredSkinTone.Value is not null)
+            foreach (var slot in (TitleMenu.subMenu as LoadGameMenu)?.MenuSlots ?? [])
             {
-                __instance._SwapColor(texture_name, pixels, 260, GetStoredSkinColor(0));
-                __instance._SwapColor(texture_name, pixels, 261, GetStoredSkinColor(1));
-                __instance._SwapColor(texture_name, pixels, 262, GetStoredSkinColor(2));
-                return;
+                if (slot is LoadGameMenu.SaveFileSlot { Farmer: not null } save) yield return save.Farmer;
             }
-            
-            Farmer? farmer = GetContextualFarmers().FirstOrDefault(f => f.FarmerRenderer == __instance);
-            if (farmer is null) return;
-            
-            SkinTone skinTone = GetSkinToneFromFarmer(farmer);
-            __instance._SwapColor(texture_name, pixels, 260, skinTone.Darkest);
-            __instance._SwapColor(texture_name, pixels, 261, skinTone.Medium);
-            __instance._SwapColor(texture_name, pixels, 262, skinTone.Lightest);
-        }
-
-        private static IEnumerable<Farmer> GetContextualFarmers()
-        {
-            if (Game1.activeClickableMenu is TitleMenu && TitleMenu.subMenu is LoadGameMenu menu)
+        
+            foreach (var slot in (Game1.activeClickableMenu as FarmhandMenu)?.MenuSlots ?? [])
             {
-                foreach (var slot in menu.MenuSlots)
-                {
-                    if (slot is LoadGameMenu.SaveFileSlot { Farmer: not null } save) yield return save.Farmer;
-                }
-            }
-            
-            if (Game1.activeClickableMenu is FarmhandMenu farmhandMenu)
-            {
-                foreach (var slot in farmhandMenu.MenuSlots)
-                {
-                    if (slot is LoadGameMenu.SaveFileSlot { Farmer: not null } save) yield return save.Farmer;
-                }
+                if (slot is LoadGameMenu.SaveFileSlot { Farmer: not null } save) yield return save.Farmer;
             }
 
-            if (Context.IsWorldReady)
+            if (!Context.IsWorldReady) yield break;
+            foreach (var farmer in Game1.getOnlineFarmers().OfType<Farmer>())
             {
-                foreach (var farmer in Game1.getOnlineFarmers())
-                {
-                    yield return farmer;
-                }
+                yield return farmer;
             }
         }
-
-        private static SkinTone GetSkinToneFromFarmer(Farmer who)
-        {
-            if (!who.modData.TryGetValue($"{Manifest.UniqueID}/SkinTone", out var skinToneString))
-            {
-                return SkinTone.VanillaSkinTones.ElementAtOrDefault(who.skin.Value);
-            }
-            return SkinTone.FromString(skinToneString);
-        }
-
-        private static Color GetStoredSkinColor(int column)
+        
+        public static Color GetStoredSkinColor(int column)
         {
             return column switch
             {
-                0 => (StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Darkest,
-                1 => (StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Medium,
-                2 => (StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Lightest,
+                0 => (ModEntry.StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Darkest,
+                1 => (ModEntry.StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Medium,
+                2 => (ModEntry.StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Lightest,
                 _ => throw new ArgumentOutOfRangeException(nameof(column), column, "Column must be 0, 1, or 2.")
             };
         }
-        
-        private static CharacterCustomization? _storedCustomizationMenu;
         
         public static void RestoreCustomizationMenu()
         {

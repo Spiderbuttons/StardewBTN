@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
@@ -42,6 +43,15 @@ public struct SkinTone(Color darkest, Color medium, Color lightest) : IEquatable
     public Color Darkest = darkest;
     public Color Medium = medium;
     public Color Lightest = lightest;
+    
+    public static SkinTone GetSkinToneFromFarmer(Farmer who)
+    {
+        if (!who.modData.TryGetValue($"{ModEntry.Manifest.UniqueID}/SkinTone", out var skinToneString))
+        {
+            return SkinTone.VanillaSkinTones.ElementAtOrDefault(who.skin.Value);
+        }
+        return SkinTone.FromString(skinToneString);
+    }
 
     public override string ToString()
     {

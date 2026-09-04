@@ -14,7 +14,7 @@ using TheInfinityTones.Helpers;
 using TheInfinityTones.Menus.ColourPickerMenu;
 using TheInfinityTones.Menus.ColourPickerMenu.Components;
 
-namespace TheInfinityTones;
+namespace TheInfinityTones.Patches;
 
 [HarmonyPatch(typeof(CharacterCustomization))]
 public static class CharacterCustomizationPatches
