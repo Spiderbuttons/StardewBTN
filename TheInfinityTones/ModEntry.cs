@@ -32,6 +32,9 @@ namespace TheInfinityTones
             set;
         }
         
+        internal static string UNIQUE_ID => Manifest.UniqueID;
+        internal static string MOD_DATA_KEY => $"{UNIQUE_ID}/SkinTone";
+        
         internal static IManifest Manifest { get; set; } = null!;
         internal static IModHelper ModHelper { get; set; } = null!;
         internal static IMonitor ModMonitor { get; set; } = null!;
@@ -98,7 +101,7 @@ namespace TheInfinityTones
         
         private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
-            if (Game1.player.modData.TryGetValue($"{Manifest.UniqueID}/SkinTone", out var skinToneString))
+            if (Game1.player.modData.TryGetValue(MOD_DATA_KEY, out var skinToneString))
             {
                 SkinTone tone = SkinTone.FromString(skinToneString);
                 BroadcastSkinChange(tone);
@@ -108,7 +111,7 @@ namespace TheInfinityTones
 
         private void OnPeerConnected(object? sender, PeerConnectedEventArgs e)
         {
-            if (Game1.player.modData.TryGetValue($"{Manifest.UniqueID}/SkinTone", out var skinToneString))
+            if (Game1.player.modData.TryGetValue(MOD_DATA_KEY, out var skinToneString))
             {
                 SkinTone tone = SkinTone.FromString(skinToneString);
                 BroadcastSkinChange(tone);
@@ -144,7 +147,7 @@ namespace TheInfinityTones
                 
                 // We gotta wait until the modData gets synced up again but rather than wait 3-4 ticks I'm opting to just wait until we see
                 // the tone that we expect to see. I figured this might work better in case the connection is laggier and takes longer to sync.
-                if (!farmer.modData.TryGetValue($"{Manifest.UniqueID}/SkinTone", out var skinToneString) || skinToneString != tone.ToString())
+                if (!farmer.modData.TryGetValue(MOD_DATA_KEY, out var skinToneString) || skinToneString != tone.ToString())
                 {
                     continue;
                 }

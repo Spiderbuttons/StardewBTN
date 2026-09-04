@@ -98,8 +98,7 @@ public static class CharacterCustomizationPatches
         if (name is not "OK" || !__instance.canLeaveMenu()) return;
         if (ModEntry.StoredSkinTone.Value is null || Game1.player is null) return;
             
-        Game1.player.modData[$"{ModEntry.Manifest.UniqueID}/SkinTone"] = ModEntry.StoredSkinTone.Value.ToString();
-        Game1.player.modData[$"{ModEntry.Manifest.UniqueID}/DarkSkin"] = ModEntry.StoredPaletteToggle.Value?.ToString() ?? "false";
+        Game1.player.modData[ModEntry.MOD_DATA_KEY] = ModEntry.StoredSkinTone.Value.ToString();
         Game1.player.FarmerRenderer.MarkSpriteDirty();
         
         ModEntry.BroadcastSkinChange(ModEntry.StoredSkinTone.Value);
@@ -117,7 +116,7 @@ public static class CharacterCustomizationPatches
             Game1.playSound("drumkit6");
             ModEntry.StoreCustomizationMenu();
             
-            if (Game1.player.modData.TryGetValue($"{ModEntry.Manifest.UniqueID}/SkinTone", out string? skinToneString))
+            if (Game1.player.modData.TryGetValue(ModEntry.MOD_DATA_KEY, out string? skinToneString))
             {
                 ModEntry.StoredSkinTone.Value = SkinTone.FromString(skinToneString);
             }
@@ -175,8 +174,7 @@ public static class CharacterCustomizationPatches
         ModEntry.StoredSkinTone.Value = null;
         ModEntry.StoredPaletteToggle.Value = null;
         ModEntry.StoredDarkSkinToggle.Value = null;
-        Game1.player.modData.Remove($"{ModEntry.Manifest.UniqueID}/SkinTone");
-        Game1.player.modData.Remove($"{ModEntry.Manifest.UniqueID}/DarkSkin");
+        Game1.player.modData.Remove(ModEntry.MOD_DATA_KEY);
     }
 
     [HarmonyPatch(nameof(CharacterCustomization.performHoverAction)), HarmonyPostfix]
@@ -233,7 +231,7 @@ public static class CharacterCustomizationPatches
 	            new CodeInstruction(OpCodes.Brtrue, customLabel),
                 new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(Game1), nameof(Game1.player))),
                 new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Farmer), nameof(Farmer.modData))),
-                new CodeInstruction(OpCodes.Ldstr, $"{ModEntry.Manifest.UniqueID}/SkinTone"),
+                new CodeInstruction(OpCodes.Ldstr, ModEntry.MOD_DATA_KEY),
                 new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(ModDataDictionary), nameof(ModDataDictionary.ContainsKey))),
                 new CodeInstruction(OpCodes.Brfalse, afterSubBranch),
 	            new CodeInstruction(OpCodes.Ldstr, "Custom").WithLabels(customLabel),

@@ -50,7 +50,7 @@ public struct SkinTone(Color darkest, Color medium, Color lightest, bool isDark)
     
     public static SkinTone GetSkinToneFromFarmer(Farmer who)
     {
-        if (!who.modData.TryGetValue($"{ModEntry.Manifest.UniqueID}/SkinTone", out var skinToneString))
+        if (!who.modData.TryGetValue(ModEntry.MOD_DATA_KEY, out var skinToneString))
         {
             return VanillaSkinTones.ElementAtOrDefault(who.skin.Value);
         }

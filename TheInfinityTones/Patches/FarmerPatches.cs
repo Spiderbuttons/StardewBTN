@@ -31,7 +31,7 @@ public static class FarmerPatches
     [HarmonyPatch(typeof(Farmer), nameof(Farmer.hasDarkSkin)), HarmonyPostfix]
     private static void Farmer_hasDarkSkin_Postfix(Farmer __instance, ref bool __result)
     {
-        if (!__instance.modData.TryGetValue($"{ModEntry.Manifest.UniqueID}/SkinTone", out var skinToneString)) return;
+        if (!__instance.modData.TryGetValue(ModEntry.MOD_DATA_KEY, out var skinToneString)) return;
         
         SkinTone skinTone = SkinTone.FromString(skinToneString);
         __result = skinTone.IsDarkSkin;
