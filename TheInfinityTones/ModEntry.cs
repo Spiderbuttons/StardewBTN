@@ -2,23 +2,18 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
-using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
-using StardewValley.Objects;
-using StardewValley.Tools;
 using TheInfinityTones.Helpers;
 using TheInfinityTones.Menus.ColourPickerMenu;
-using TheInfinityTones.Menus.ColourPickerMenu.Components;
 
 namespace TheInfinityTones
 {
@@ -41,12 +36,13 @@ namespace TheInfinityTones
         internal static IModHelper ModHelper { get; set; } = null!;
         internal static IMonitor ModMonitor { get; set; } = null!;
         internal static Harmony Harmony { get; set; } = null!;
-        
-        public static ConditionalWeakTable<FarmerRenderer, Farmer> FarmerRendererToFarmerMap = new();
 
-        public static SkinTone? StoredSkinTone;
-        public static bool? StoredPaletteToggle;
-        public static bool? StoredDarkSkinToggle;
+        public static readonly ConditionalWeakTable<Farmer, FarmerRenderer> FarmerToRendererMap = [];
+        public static readonly PerScreen<Dictionary<long, SkinTone>> QueuedSkinUpdates = new(createNewState: () => new Dictionary<long, SkinTone>());
+
+        public static readonly PerScreen<SkinTone?> StoredSkinTone = new(createNewState: () => null);
+        public static readonly PerScreen<bool?> StoredPaletteToggle = new(createNewState: () => null);
+        public static readonly PerScreen<bool?> StoredDarkSkinToggle = new(createNewState: () => null);
 
         public override void Entry(IModHelper helper)
         {
@@ -63,8 +59,8 @@ namespace TheInfinityTones
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(Game1_ResetGameStateOnTitleScreen_Postfix))
             );
             Harmony.Patch(
-                original: AccessTools.Method(typeof(FarmerRenderer), nameof(FarmerRenderer._SwapColor)),
-                prefix: new HarmonyMethod(typeof(ModEntry), nameof(FarmerRenderer_SwapColor_Prefix))
+                original: AccessTools.Method(typeof(FarmerRenderer), nameof(FarmerRenderer.ApplySkinColor)),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(FarmerRenderer_ApplySkinColor_Postfix))
             );
             Harmony.Patch(
                 original: AccessTools.Method(typeof(TitleMenu), nameof(TitleMenu.createdNewCharacter)),
@@ -78,11 +74,21 @@ namespace TheInfinityTones
                 original: AccessTools.Method(typeof(TitleMenu), nameof(TitleMenu.overrideSnappyMenuCursorMovementBan)),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(TitleMenu_overrideSnappyMenuCursorMovementBan_Postfix))
             );
+            Harmony.Patch(
+                original: AccessTools.Method(typeof(Farmer), nameof(Farmer.farmerInit)),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(Farmer_farmerInit_Postfix))
+            );
+            Harmony.Patch(
+                original: AccessTools.Method(typeof(SaveGame), nameof(SaveGame.loadDataToFarmer)),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(SaveGame_loadDataToFarmer_Postfix))
+            );
 
             Helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
             Helper.Events.Display.MenuChanged += OnMenuChanged;
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
+            Helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
+            Helper.Events.GameLoop.OneSecondUpdateTicked += OnOneSecondUpdateTicked;
             
             ShaderHelper.WatchShader("blur", shader =>
             {
@@ -105,9 +111,13 @@ namespace TheInfinityTones
         
         private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
-            if (e.Button is SButton.F2)
+            if (e.Button is SButton.F2 or SButton.LeftStick && Context.IsMainPlayer)
             {
-
+                foreach (var (farmer, renderer) in FarmerToRendererMap)
+                {
+                    Log.Alert($"FarmerRenderer: {renderer}, Farmer: {farmer.Name}");
+                    renderer.MarkSpriteDirty();
+                }
             }
             
             if (!Context.IsWorldReady)
@@ -116,21 +126,99 @@ namespace TheInfinityTones
         
         private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
-            FarmerRendererToFarmerMap.Clear();
-            FarmerRendererToFarmerMap.Add(Game1.player.FarmerRenderer, Game1.player);
-            Game1.player.FarmerRenderer.MarkSpriteDirty();
+            Log.Alert("Save loaded");
+            FarmerToRendererMap.Clear();
+            foreach (var farmer in Game1.getOnlineFarmers())
+            {
+                FarmerToRendererMap.AddOrUpdate(farmer, farmer.FarmerRenderer);
+                farmer.FarmerRenderer.MarkSpriteDirty();
+            }
+        }
+
+        public static void BroadcastSkinChange(SkinTone? newTone)
+        {
+            ModHelper.Multiplayer.SendMessage(newTone.ToString() ?? "", "SkinChange");
+        }
+
+        private void OnModMessageReceived(object? sender, ModMessageReceivedEventArgs e)
+        {
+            if (e.FromModID != Manifest.UniqueID || e.Type != "SkinChange" || e.FromPlayerID == Game1.player.UniqueMultiplayerID)
+                return;
+
+            Log.Alert("Received skin change message");
+            SkinTone tone = SkinTone.FromString(e.ReadAs<string>());
+            foreach (var farmer in Game1.getOnlineFarmers())
+            {
+                if (farmer.UniqueMultiplayerID != e.FromPlayerID) continue;
+                FarmerToRendererMap.AddOrUpdate(farmer, farmer.FarmerRenderer);
+                QueuedSkinUpdates.Value[farmer.UniqueMultiplayerID] = tone;
+            }
+        }
+
+        private void OnOneSecondUpdateTicked(object? sender, OneSecondUpdateTickedEventArgs e)
+        {
+            return;
+            foreach (var (playerId, tone) in QueuedSkinUpdates.Value)
+            {
+                Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == playerId);
+                if (farmer is null) continue;
+                
+                // We gotta wait until the modData gets synced up again but rather than wait 3-4 ticks I'm opting to just wait until we see
+                // the tone that we expect to see. I figured this might work better in case of laggier connections.
+                if (!farmer.modData.TryGetValue($"{Manifest.UniqueID}/SkinTone", out var skinToneString) || skinToneString != tone.ToString())
+                {
+                    Log.Info($"Farmer {farmer.Name} has not yet synced skin tone. Expected: {tone}, Actual: {skinToneString}. Waiting...");
+                    continue;
+                }
+                
+                Log.Alert($"Farmer {farmer.Name} has synced skin tone. Expected: {tone}, Actual: {skinToneString}. Updating renderer...");
+                FarmerToRendererMap.AddOrUpdate(farmer, farmer.FarmerRenderer);
+                farmer.FarmerRenderer.MarkSpriteDirty();
+                QueuedSkinUpdates.Value.Remove(playerId);
+            }
+        }
+        
+        private static void Farmer_farmerInit_Postfix(Farmer __instance)
+        {
+            // Log.Warn($"Farmer {__instance.Name} initialized. Adding to FarmerToRendererMap.");
+            // // find the farmer with the same uniqueID and update that entry
+            // foreach (var (farmer, renderer) in FarmerToRendererMap)
+            // {
+            //     if (farmer.UniqueMultiplayerID == __instance.UniqueMultiplayerID)
+            //     {
+            //         Log.Warn($"Found existing farmer {farmer.Name} with same UniqueMultiplayerID. Updating entry.");
+            //         FarmerToRendererMap.Remove(farmer);
+            //         break;
+            //     }
+            // }
+            // FarmerToRendererMap.AddOrUpdate(__instance, __instance.FarmerRenderer);
+        }
+
+        private static void SaveGame_loadDataToFarmer_Postfix(Farmer target)
+        {
+            Log.Info($"Loaded data to farmer {target.Name}. Updating FarmerToRendererMap.");
+            foreach (var (farmer, renderer) in FarmerToRendererMap)
+            {
+                if (farmer.UniqueMultiplayerID == target.UniqueMultiplayerID)
+                {
+                    Log.Warn($"Found existing farmer {farmer.Name} with same UniqueMultiplayerID. Updating entry.");
+                    FarmerToRendererMap.Remove(farmer);
+                    break;
+                }
+            }
+            FarmerToRendererMap.AddOrUpdate(target, target.FarmerRenderer);
         }
 
         private static void TitleMenu_createdNewCharacter_Prefix()
         {
-            if (StoredSkinTone is null || Game1.player is null) return;
-            
-            Game1.player.modData[$"{Manifest.UniqueID}/SkinTone"] = StoredSkinTone.ToString();
-            Game1.player.modData[$"{Manifest.UniqueID}/DarkSkin"] = StoredPaletteToggle?.ToString() ?? "false";
-            
-            StoredSkinTone = null;
-            StoredPaletteToggle = null;
-            StoredDarkSkinToggle = null;
+            // if (StoredSkinTone.Value is null || Game1.player is null) return;
+            //
+            // Game1.player.modData[$"{Manifest.UniqueID}/SkinTone"] = StoredSkinTone.Value.ToString();
+            // Game1.player.modData[$"{Manifest.UniqueID}/DarkSkin"] = StoredPaletteToggle.Value?.ToString() ?? "false";
+            //
+            // StoredSkinTone.Value = null;
+            // StoredPaletteToggle.Value = null;
+            // StoredDarkSkinToggle.Value = null;
         }
         
         private static void TitleMenu_overrideSnappyMenuCursorMovementBan_Postfix(TitleMenu __instance, ref bool __result)
@@ -143,47 +231,64 @@ namespace TheInfinityTones
 
         private static void LoadGameMenu_addSaveFiles_Postfix(LoadGameMenu __instance, List<Farmer> files)
         {
-            FarmerRendererToFarmerMap.Clear();
+            FarmerToRendererMap.Clear();
             foreach (var farmer in files)
             {
-                FarmerRendererToFarmerMap.Add(farmer.FarmerRenderer, farmer);
+                FarmerToRendererMap.AddOrUpdate(farmer, farmer.FarmerRenderer);
             }
         }
         
         private static void Game1_ResetGameStateOnTitleScreen_Postfix()
         {
-            StoredSkinTone = null;
-            StoredPaletteToggle = null;
-            StoredDarkSkinToggle = null;
+            StoredSkinTone.Value = null;
+            StoredPaletteToggle.Value = null;
+            StoredDarkSkinToggle.Value = null;
         }
 
-        private static void FarmerRenderer_SwapColor_Prefix(FarmerRenderer __instance, string texture_name,
-            Color[] pixels, int color_index, ref Color color)
+        private static void FarmerRenderer_ApplySkinColor_Postfix(FarmerRenderer __instance, string texture_name,
+            Color[] pixels)
         {
-            if (color_index is < 256 or > 262) return;
-            if (StoredSkinTone is not null)
+            if (StoredSkinTone.Value is not null)
             {
-
-                color = color_index switch
-                {
-                    256 or 260 => GetSkinColor(0),
-                    257 or 261 => GetSkinColor(1),
-                    258 or 262 => GetSkinColor(2),
-                    _ => color
-                };
+                __instance._SwapColor(texture_name, pixels, 260, GetSkinColor(0));
+                __instance._SwapColor(texture_name, pixels, 261, GetSkinColor(1));
+                __instance._SwapColor(texture_name, pixels, 262, GetSkinColor(2));
                 return;
             }
+            
+            Farmer? farmer = GetFarmersToCheck().FirstOrDefault(f => f.FarmerRenderer == __instance);
+            if (farmer is null) return;
+            
+            SkinTone skinTone = GetSkinToneFromFarmer(farmer);
+            __instance._SwapColor(texture_name, pixels, 260, skinTone.Darkest);
+            __instance._SwapColor(texture_name, pixels, 261, skinTone.Medium);
+            __instance._SwapColor(texture_name, pixels, 262, skinTone.Lightest);
+        }
 
-            if (FarmerRendererToFarmerMap.TryGetValue(__instance, out var farmer))
+        private static IEnumerable<Farmer> GetFarmersToCheck()
+        {
+            if (Game1.activeClickableMenu is TitleMenu && TitleMenu.subMenu is LoadGameMenu menu)
             {
-                SkinTone skinTone = GetSkinToneFromFarmer(farmer);
-                color = color_index switch
+                foreach (var slot in menu.MenuSlots)
                 {
-                    256 or 260 => skinTone.Darkest,
-                    257 or 261 => skinTone.Medium,
-                    258 or 262 => skinTone.Lightest,
-                    _ => color
-                };
+                    if (slot is LoadGameMenu.SaveFileSlot { Farmer: not null } save) yield return save.Farmer;
+                }
+            }
+            
+            if (Game1.activeClickableMenu is FarmhandMenu farmhandMenu)
+            {
+                foreach (var slot in farmhandMenu.MenuSlots)
+                {
+                    if (slot is LoadGameMenu.SaveFileSlot { Farmer: not null } save) yield return save.Farmer;
+                }
+            }
+
+            if (Context.IsWorldReady)
+            {
+                foreach (var farmer in Game1.getOnlineFarmers())
+                {
+                    yield return farmer;
+                }
             }
         }
 
@@ -191,10 +296,12 @@ namespace TheInfinityTones
         {
             if (!who.modData.TryGetValue($"{Manifest.UniqueID}/SkinTone", out var skinToneString))
             {
+                Log.Debug("Farmer has no skin tone mod data, using vanilla skin tone.");
                 return SkinTone.VanillaSkinTones.ElementAtOrDefault(who.skin.Value);
             }
             try
             {
+                Log.Debug($"Farmer has skin tone mod data: {skinToneString}, parsing...");
                 return SkinTone.FromString(skinToneString);
             }
             catch (Exception ex)
@@ -208,9 +315,9 @@ namespace TheInfinityTones
         {
             return column switch
             {
-                0 => StoredSkinTone?.Darkest ?? SkinTone.VanillaSkinTones[0].Darkest,
-                1 => StoredSkinTone?.Medium ?? SkinTone.VanillaSkinTones[0].Medium,
-                2 => StoredSkinTone?.Lightest ?? SkinTone.VanillaSkinTones[0].Lightest,
+                0 => StoredSkinTone.Value?.Darkest ?? SkinTone.VanillaSkinTones[0].Darkest,
+                1 => StoredSkinTone.Value?.Medium ?? SkinTone.VanillaSkinTones[0].Medium,
+                2 => StoredSkinTone.Value?.Lightest ?? SkinTone.VanillaSkinTones[0].Lightest,
                 _ => throw new ArgumentOutOfRangeException(nameof(column), column, "Column must be 0, 1, or 2.")
             };
         }
@@ -253,7 +360,7 @@ namespace TheInfinityTones
             HsvColour medium = colours[1].ToHsv();
             HsvColour darkest = colours[2].ToHsv();
             
-            StoredSkinTone = new SkinTone(darkest.ToXnaColor(), medium.ToXnaColor(), lightest.ToXnaColor());
+            StoredSkinTone.Value = new SkinTone(darkest.ToXnaColor(), medium.ToXnaColor(), lightest.ToXnaColor());
             
             // StoredMedium = new HsvColour(lightest.H, lightest.S * 0.8M, lightest.V * 0.8M).ToXnaColor();
             // StoredDarkest = new HsvColour(lightest.H, lightest.S * 0.9M, lightest.V * 0.3M).ToXnaColor();

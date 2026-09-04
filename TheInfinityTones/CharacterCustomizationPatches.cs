@@ -6,8 +6,10 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Menus;
+using StardewValley.Mods;
 using TheInfinityTones.Helpers;
 using TheInfinityTones.Menus.ColourPickerMenu;
 using TheInfinityTones.Menus.ColourPickerMenu.Components;
@@ -87,6 +89,25 @@ public static class CharacterCustomizationPatches
     private static void draw_Postfix(CharacterCustomization __instance, SpriteBatch b)
     {
         _colourWheel?.draw(b, includeOutline: true);
+        __instance.drawMouse(b);
+    }
+
+    [HarmonyPatch(nameof(CharacterCustomization.optionButtonClick)), HarmonyPostfix]
+    private static void optionButtonClick_Postfix(CharacterCustomization __instance, string name)
+    {
+        if (name is not "OK" || !__instance.canLeaveMenu()) return;
+        if (ModEntry.StoredSkinTone.Value is null || Game1.player is null) return;
+            
+        Game1.player.modData[$"{ModEntry.Manifest.UniqueID}/SkinTone"] = ModEntry.StoredSkinTone.Value.ToString();
+        Game1.player.modData[$"{ModEntry.Manifest.UniqueID}/DarkSkin"] = ModEntry.StoredPaletteToggle.Value?.ToString() ?? "false";
+        Game1.player.FarmerRenderer.MarkSpriteDirty();
+        ModEntry.FarmerToRendererMap.AddOrUpdate(Game1.player, Game1.player.FarmerRenderer);
+        
+        ModEntry.BroadcastSkinChange(ModEntry.StoredSkinTone.Value);
+            
+        ModEntry.StoredSkinTone.Value = null;
+        ModEntry.StoredPaletteToggle.Value = null;
+        ModEntry.StoredDarkSkinToggle.Value = null;
     }
     
     [HarmonyPatch(nameof(CharacterCustomization.receiveLeftClick)), HarmonyPostfix]
@@ -96,11 +117,17 @@ public static class CharacterCustomizationPatches
         {
             Game1.playSound("drumkit6");
             ModEntry.StoreCustomizationMenu();
-            SkinTone backupSkinTone = ModEntry.StoredSkinTone ?? SkinTone.VanillaSkinTones[Game1.player.skin.Value];
+            
+            if (Game1.player.modData.TryGetValue($"{ModEntry.Manifest.UniqueID}/SkinTone", out string? skinToneString))
+            {
+                ModEntry.StoredSkinTone.Value = SkinTone.FromString(skinToneString);
+            }
+            
+            SkinTone backupSkinTone = ModEntry.StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[Game1.player.skin.Value];
 
             var colourPicker = new ColourPickerMenu(onConfirm: (colours) =>
             {
-                ModEntry.StoredSkinTone = new SkinTone(
+                ModEntry.StoredSkinTone.Value = new SkinTone(
                     darkest: colours[2].ToXnaColor(),
                     medium: colours[1].ToXnaColor(),
                     lightest: colours[0].ToXnaColor()
@@ -108,9 +135,9 @@ public static class CharacterCustomizationPatches
                 
                 for (int i = 0; i < SkinTone.VanillaSkinTones.Count; i++)
                 {
-                    if (ModEntry.StoredSkinTone != SkinTone.VanillaSkinTones[i]) continue;
+                    if (ModEntry.StoredSkinTone.Value != SkinTone.VanillaSkinTones[i]) continue;
                     
-                    ModEntry.StoredSkinTone = null;
+                    ModEntry.StoredSkinTone.Value = null;
                     Game1.player.skin.Value = i;
                     break;
                 }
@@ -119,12 +146,12 @@ public static class CharacterCustomizationPatches
                 ModEntry.RestoreCustomizationMenu();
             }, onCancel: (_) =>
             {
-                ModEntry.StoredSkinTone = backupSkinTone;
+                ModEntry.StoredSkinTone.Value = backupSkinTone;
                 for (int i = 0; i < SkinTone.VanillaSkinTones.Count; i++)
                 {
                     if (backupSkinTone != SkinTone.VanillaSkinTones[i]) continue;
                     
-                    ModEntry.StoredSkinTone = null;
+                    ModEntry.StoredSkinTone.Value = null;
                     Game1.player.skin.Value = i;
                     break;
                 }
@@ -150,9 +177,11 @@ public static class CharacterCustomizationPatches
     private static void selectionClick_Postfix(CharacterCustomization __instance, string name, int change)
     {
         if (name is not "Skin") return;
-        ModEntry.StoredSkinTone = null;
-        ModEntry.StoredPaletteToggle = null;
-        ModEntry.StoredDarkSkinToggle = null;
+        ModEntry.StoredSkinTone.Value = null;
+        ModEntry.StoredPaletteToggle.Value = null;
+        ModEntry.StoredDarkSkinToggle.Value = null;
+        Game1.player.modData.Remove($"{ModEntry.Manifest.UniqueID}/SkinTone");
+        Game1.player.modData.Remove($"{ModEntry.Manifest.UniqueID}/DarkSkin");
     }
 
     [HarmonyPatch(nameof(CharacterCustomization.performHoverAction)), HarmonyPostfix]
@@ -198,12 +227,22 @@ public static class CharacterCustomizationPatches
             matcher.Advance(1);
             matcher.CreateLabel(out Label afterSubBranch);
 
+            LocalBuilder perScreenLocal = il.DeclareLocal(typeof(SkinTone?));
+            Label customLabel = il.DefineLabel();
             matcher.Insert(
-	            new CodeInstruction(OpCodes.Ldsflda, AccessTools.Field(typeof(ModEntry), nameof(ModEntry.StoredSkinTone))),
-	            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(Color?), nameof(Nullable<>.HasValue))),
-	            new CodeInstruction(OpCodes.Brfalse, afterSubBranch),
-	            new CodeInstruction(OpCodes.Ldstr, "Custom"),
-	            new CodeInstruction(OpCodes.Stloc_S, stLoc)
+	            new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(ModEntry), nameof(ModEntry.StoredSkinTone))),
+                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(PerScreen<SkinTone?>), nameof(PerScreen<>.Value))),
+                new CodeInstruction(OpCodes.Stloc, perScreenLocal),
+                new CodeInstruction(OpCodes.Ldloca, perScreenLocal),
+	            new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(SkinTone?), nameof(Nullable<>.HasValue))),
+	            new CodeInstruction(OpCodes.Brtrue, customLabel),
+                new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(Game1), nameof(Game1.player))),
+                new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(Farmer), nameof(Farmer.modData))),
+                new CodeInstruction(OpCodes.Ldstr, $"{ModEntry.Manifest.UniqueID}/SkinTone"),
+                new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(ModDataDictionary), nameof(ModDataDictionary.ContainsKey))),
+                new CodeInstruction(OpCodes.Brfalse, afterSubBranch),
+	            new CodeInstruction(OpCodes.Ldstr, "Custom").WithLabels(customLabel),
+	            new CodeInstruction(OpCodes.Stloc, stLoc)
             );
 
             return matcher.InstructionEnumeration();

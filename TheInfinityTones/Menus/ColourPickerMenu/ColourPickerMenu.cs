@@ -379,13 +379,13 @@ public sealed partial class ColourPickerMenu : IClickableMenu
             setColour: (colour) => SetColour(colour)
         );
 
-        if (ModEntry.StoredPaletteToggle is true)
+        if (ModEntry.StoredPaletteToggle.Value is true)
         {
             _autoPalette = true;
             _autoPaletteToggle.sourceRect.X = 236;
         }
 
-        if (ModEntry.StoredDarkSkinToggle is true)
+        if (ModEntry.StoredDarkSkinToggle.Value is true)
         {
             _darkSkin = true;
             _darkSkinToggle.sourceRect.X = 236;
