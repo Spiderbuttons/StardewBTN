@@ -52,7 +52,7 @@ public partial class ColourPickerMenu
         _leftSectionOffset.X = _showingPreview ? -width : 0;
         
         // This'll make the menu fit all our stuff in it, but only just. Nice n cozy size.
-        (int squareSize, int gap) = (12, 12); // TODO: Fix this too.
+        (int squareSize, int gap) = (12, 12);
         float totalHeight = _colourWheel.Height + gap * 2 + squareSize * 3 + gap * 3;
         height = (int)totalHeight;
 

@@ -56,7 +56,7 @@ public partial class ColourPickerMenu
 
     private Rectangle GetPickedColourBounds(int colourIndex = 0)
     {
-        (int barHeight, int gap) = (24, 16); // TODO: Fix this.
+        (int barHeight, int gap) = (24, 16);
         int barWidth = width / 3 - gap;
         
         int x = colourIndex switch {

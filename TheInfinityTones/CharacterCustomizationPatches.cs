@@ -101,7 +101,6 @@ public static class CharacterCustomizationPatches
         Game1.player.modData[$"{ModEntry.Manifest.UniqueID}/SkinTone"] = ModEntry.StoredSkinTone.Value.ToString();
         Game1.player.modData[$"{ModEntry.Manifest.UniqueID}/DarkSkin"] = ModEntry.StoredPaletteToggle.Value?.ToString() ?? "false";
         Game1.player.FarmerRenderer.MarkSpriteDirty();
-        ModEntry.FarmerToRendererMap.AddOrUpdate(Game1.player, Game1.player.FarmerRenderer);
         
         ModEntry.BroadcastSkinChange(ModEntry.StoredSkinTone.Value);
             
