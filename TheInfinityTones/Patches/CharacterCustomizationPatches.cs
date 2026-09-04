@@ -13,6 +13,7 @@ using StardewValley.Mods;
 using TheInfinityTones.Helpers;
 using TheInfinityTones.Menus.ColourPickerMenu;
 using TheInfinityTones.Menus.ColourPickerMenu.Components;
+// ReSharper disable UnusedMember.Local
 
 namespace TheInfinityTones.Patches;
 
@@ -78,12 +79,6 @@ public static class CharacterCustomizationPatches
             customizationMenu.allClickableComponents.Add(_colourWheel);
         }
     }
-    
-    [HarmonyPatch(nameof(CharacterCustomization.update)), HarmonyPostfix]
-    private static void update_Postfix(CharacterCustomization __instance, GameTime time)
-    {
-        if (_colourWheel is null) return;
-    }
 
     [HarmonyPatch(nameof(CharacterCustomization.draw)), HarmonyPostfix]
     private static void draw_Postfix(CharacterCustomization __instance, SpriteBatch b)
@@ -109,7 +104,7 @@ public static class CharacterCustomizationPatches
     }
     
     [HarmonyPatch(nameof(CharacterCustomization.receiveLeftClick)), HarmonyPostfix]
-    private static void receiveLeftClick_Postfix(CharacterCustomization __instance, int x, int y)
+    private static void receiveLeftClick_Postfix(int x, int y)
     {
         if (_colourWheel?.containsPoint(x, y) == true)
         {
@@ -168,7 +163,7 @@ public static class CharacterCustomizationPatches
     }
 
     [HarmonyPatch(nameof(CharacterCustomization.selectionClick)), HarmonyPostfix]
-    private static void selectionClick_Postfix(CharacterCustomization __instance, string name, int change)
+    private static void selectionClick_Postfix(string name)
     {
         if (name is not "Skin") return;
         ModEntry.StoredSkinTone.Value = null;

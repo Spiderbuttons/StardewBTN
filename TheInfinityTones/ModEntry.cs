@@ -2,17 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Menus;
-using TheInfinityTones.Helpers;
 using TheInfinityTones.Menus.ColourPickerMenu;
 using TheInfinityTones.Patches;
 
@@ -35,13 +32,13 @@ namespace TheInfinityTones
         
         internal static string UNIQUE_ID => Manifest.UniqueID;
         internal static string MOD_DATA_KEY => $"{UNIQUE_ID}/SkinTone";
-        
-        internal static IManifest Manifest { get; set; } = null!;
-        internal static IModHelper ModHelper { get; set; } = null!;
-        internal static IMonitor ModMonitor { get; set; } = null!;
-        internal static Harmony Harmony { get; set; } = null!;
-        
-        public static readonly PerScreen<Dictionary<long, SkinTone>> QueuedSkinUpdates = new(createNewState: () => new Dictionary<long, SkinTone>());
+
+        private static IManifest Manifest { get; set; } = null!;
+        internal static IModHelper ModHelper { get; private set; } = null!;
+        internal static IMonitor ModMonitor { get; private set; } = null!;
+        private static Harmony Harmony { get; set; } = null!;
+
+        private static readonly PerScreen<Dictionary<long, SkinTone>> QueuedSkinUpdates = new(createNewState: () => new Dictionary<long, SkinTone>());
 
         public static readonly PerScreen<SkinTone?> StoredSkinTone = new(createNewState: () => null);
         public static readonly PerScreen<bool?> StoredPaletteToggle = new(createNewState: () => null);
@@ -68,37 +65,16 @@ namespace TheInfinityTones
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(TitleMenu_overrideSnappyMenuCursorMovementBan_Postfix))
             );
 
-            Helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
-            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
-            Helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
-            Helper.Events.Multiplayer.PeerConnected += OnPeerConnected;
-            Helper.Events.GameLoop.OneSecondUpdateTicked += OnOneSecondUpdateTicked;
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
-            
-            ShaderHelper.WatchShader("blur", shader =>
-            {
-                BlurEffect = shader;
-            });
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
+            Helper.Events.GameLoop.OneSecondUpdateTicked += OnOneSecondUpdateTicked;
+            Helper.Events.Multiplayer.PeerConnected += OnPeerConnected;
+            Helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
+            Helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
         }
-        
-        private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
-        {
-            if (ModHelper.ModRegistry.IsLoaded("PeacefulEnd.FashionSense"))
-            {
-                FashionSensePatches.Patch(Harmony);
-            }
-        }
-        
-        private void OnAssetsInvalidated(object? sender, AssetsInvalidatedEventArgs e)
-        {
-            if (e.NamesWithoutLocale.Any(asset => asset.IsEquivalentTo("Characters/Farmer/skinColors")))
-            {
-                SkinTone.VanillaSkinTones = null!;
-            }
-        }
-        
-        private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
+
+        private static void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
             if (!Context.IsWorldReady)
                 return;
@@ -108,8 +84,16 @@ namespace TheInfinityTones
                 //
             }
         }
-        
-        private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
+
+        private static void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+        {
+            if (ModHelper.ModRegistry.IsLoaded("PeacefulEnd.FashionSense"))
+            {
+                FashionSensePatches.Patch(Harmony);
+            }
+        }
+
+        private static void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
             if (Game1.player.modData.TryGetValue(MOD_DATA_KEY, out var skinToneString))
             {
@@ -119,36 +103,7 @@ namespace TheInfinityTones
             }
         }
 
-        private void OnPeerConnected(object? sender, PeerConnectedEventArgs e)
-        {
-            if (Game1.player.modData.TryGetValue(MOD_DATA_KEY, out var skinToneString))
-            {
-                SkinTone tone = SkinTone.FromString(skinToneString);
-                BroadcastSkinChange(tone);
-            }
-        }
-
-        public static void BroadcastSkinChange(SkinTone? newTone)
-        {
-            ModHelper.Multiplayer.SendMessage(newTone.ToString() ?? "", "SkinChange");
-        }
-
-        private void OnModMessageReceived(object? sender, ModMessageReceivedEventArgs e)
-        {
-            if (e.FromModID != Manifest.UniqueID || e.Type != "SkinChange" || e.FromPlayerID == Game1.player.UniqueMultiplayerID)
-                return;
-            
-            string toneString = e.ReadAs<string>();
-            if (string.IsNullOrEmpty(toneString)) return;
-            
-            SkinTone tone = SkinTone.FromString(toneString);
-            foreach (var farmer in Game1.getOnlineFarmers().Where(farmer => farmer.UniqueMultiplayerID == e.FromPlayerID))
-            {
-                QueuedSkinUpdates.Value[farmer.UniqueMultiplayerID] = tone;
-            }
-        }
-
-        private void OnOneSecondUpdateTicked(object? sender, OneSecondUpdateTickedEventArgs e)
+        private static void OnOneSecondUpdateTicked(object? sender, OneSecondUpdateTickedEventArgs e)
         {
             foreach (var (playerId, tone) in QueuedSkinUpdates.Value)
             {
@@ -166,8 +121,45 @@ namespace TheInfinityTones
                 QueuedSkinUpdates.Value.Remove(playerId);
             }
         }
-        
-        private static void TitleMenu_overrideSnappyMenuCursorMovementBan_Postfix(TitleMenu __instance, ref bool __result)
+
+        private static void OnPeerConnected(object? sender, PeerConnectedEventArgs e)
+        {
+            if (Game1.player.modData.TryGetValue(MOD_DATA_KEY, out var skinToneString))
+            {
+                SkinTone tone = SkinTone.FromString(skinToneString);
+                BroadcastSkinChange(tone);
+            }
+        }
+
+        private static void OnModMessageReceived(object? sender, ModMessageReceivedEventArgs e)
+        {
+            if (e.FromModID != Manifest.UniqueID || e.Type != "SkinChange" || e.FromPlayerID == Game1.player.UniqueMultiplayerID)
+                return;
+            
+            string toneString = e.ReadAs<string>();
+            if (string.IsNullOrEmpty(toneString)) return;
+            
+            SkinTone tone = SkinTone.FromString(toneString);
+            foreach (var farmer in Game1.getOnlineFarmers().Where(farmer => farmer.UniqueMultiplayerID == e.FromPlayerID))
+            {
+                QueuedSkinUpdates.Value[farmer.UniqueMultiplayerID] = tone;
+            }
+        }
+
+        public static void BroadcastSkinChange(SkinTone? newTone)
+        {
+            ModHelper.Multiplayer.SendMessage(newTone.ToString() ?? "", "SkinChange");
+        }
+
+        private static void OnAssetsInvalidated(object? sender, AssetsInvalidatedEventArgs e)
+        {
+            if (e.NamesWithoutLocale.Any(asset => asset.IsEquivalentTo("Characters/Farmer/skinColors")))
+            {
+                SkinTone.VanillaSkinTones = null!;
+            }
+        }
+
+        private static void TitleMenu_overrideSnappyMenuCursorMovementBan_Postfix(ref bool __result)
         {
             if (TitleMenu.subMenu is ColourPickerMenu picker)
             {
@@ -205,9 +197,9 @@ namespace TheInfinityTones
         {
             return column switch
             {
-                0 => (ModEntry.StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Darkest,
-                1 => (ModEntry.StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Medium,
-                2 => (ModEntry.StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Lightest,
+                0 => (StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Darkest,
+                1 => (StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Medium,
+                2 => (StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Lightest,
                 _ => throw new ArgumentOutOfRangeException(nameof(column), column, "Column must be 0, 1, or 2.")
             };
         }
@@ -265,7 +257,7 @@ namespace TheInfinityTones
         // I need my own farmer drawing functions because of a bug in the vanilla game right now where drawing them at
         // different scales leads to the shirt being misplaced... but ONLY in the downward facing direction, which is
         // the one I use... I'd rather not have to just copy these functions but oh well. TODO for 1.6.16/1.7 I guess.
-        public static void drawFarmer(SpriteBatch b, FarmerRenderer renderer, Rectangle sourceRect, Vector2 position, float layerDepth, float rotation, float scale, Farmer who)
+        private static void drawFarmer(SpriteBatch b, FarmerRenderer renderer, Rectangle sourceRect, Vector2 position, float layerDepth, float rotation, float scale, Farmer who)
         {
             float scaledPixelZoom = 4f * scale;
             var animationFrame = new FarmerSprite.AnimationFrame(0, 100, 0, secondaryArm: false, flip: false);
@@ -288,7 +280,7 @@ namespace TheInfinityTones
             }
             if (renderer.skin.Value != -12345 || who.pantsItem.Value != null)
             {
-                b.Draw(texture, position + renderer.positionOffset, pantsRect, Utility.MakeCompletelyOpaque(who.GetPantsColor()), rotation, Vector2.Zero, scaledPixelZoom, animationFrame.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, FarmerRenderer.GetLayerDepth(layerDepth, (who.FarmerSprite.CurrentAnimationFrame.frame == 5) ? FarmerRenderer.FarmerSpriteLayers.PantsPassedOut : FarmerRenderer.FarmerSpriteLayers.Pants));
+                b.Draw(texture, position + renderer.positionOffset, pantsRect, Utility.MakeCompletelyOpaque(who.GetPantsColor()), rotation, Vector2.Zero, scaledPixelZoom, animationFrame.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, FarmerRenderer.GetLayerDepth(layerDepth, who.FarmerSprite.CurrentAnimationFrame.frame == 5 ? FarmerRenderer.FarmerSpriteLayers.PantsPassedOut : FarmerRenderer.FarmerSpriteLayers.Pants));
             }
             
             sourceRect.Offset(288, 0);
@@ -299,7 +291,7 @@ namespace TheInfinityTones
             b.Draw(renderer.baseTexture, position + renderer.positionOffset + who.armOffset, sourceRect, Color.White, rotation, Vector2.Zero, scaledPixelZoom, animationFrame.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, FarmerRenderer.GetLayerDepth(layerDepth, FarmerRenderer.FarmerSpriteLayers.Arms));
         }
 
-        public static void drawFarmerHairAndAccessories(SpriteBatch b, FarmerRenderer renderer, Farmer who, Vector2 position, float scale, float rotation, float layerDepth)
+        private static void drawFarmerHairAndAccessories(SpriteBatch b, FarmerRenderer renderer, Farmer who, Vector2 position, float scale, float rotation, float layerDepth)
         {
             int hairStyle = who.getHair();
             float scaledPixelZoom = 4f * scale;
@@ -315,14 +307,14 @@ namespace TheInfinityTones
             Rectangle dyedShirtSourceRect = renderer.shirtSourceRect;
             dyedShirtSourceRect.Offset(128, 0);
             
-            Color hairColor = (who.prismaticHair.Value ? Utility.GetPrismaticColor() : who.hairstyleColor.Value);
+            Color hairColor = who.prismaticHair.Value ? Utility.GetPrismaticColor() : who.hairstyleColor.Value;
             Texture2D hairTexture = hairMetadata?.texture ?? FarmerRenderer.hairStylesTexture;
-            renderer.hairstyleSourceRect = ((hairMetadata != null) ? new Rectangle(hairMetadata.tileX * 16, hairMetadata.tileY * 16, 16, 32) : new Rectangle(hairStyle * 16 % FarmerRenderer.hairStylesTexture.Width, hairStyle * 16 / FarmerRenderer.hairStylesTexture.Width * 96, 16, 32));
+            renderer.hairstyleSourceRect = hairMetadata != null ? new Rectangle(hairMetadata.tileX * 16, hairMetadata.tileY * 16, 16, 32) : new Rectangle(hairStyle * 16 % FarmerRenderer.hairStylesTexture.Width, hairStyle * 16 / FarmerRenderer.hairStylesTexture.Width * 96, 16, 32);
             
-            Vector2 shirtPosition2 = position + renderer.positionOffset + new Vector2(16 * scale + frameXOffset * 4, (float)(56 + frameYOffset * 4) * scale + (float)renderer.heightOffset.Value * scale);
+            Vector2 shirtPosition2 = position + renderer.positionOffset + new Vector2(16 * scale + frameXOffset * 4, (56 + frameYOffset * 4) * scale + renderer.heightOffset.Value * scale);
             b.Draw(shirtTexture, shirtPosition2, renderer.shirtSourceRect, Color.White, rotation, Vector2.Zero, scaledPixelZoom, SpriteEffects.None, FarmerRenderer.GetLayerDepth(layerDepth, FarmerRenderer.FarmerSpriteLayers.Shirt));
 
-            b.Draw(hairTexture, position + renderer.positionOffset + new Vector2(frameXOffset * 4, frameYOffset * 4 + ((who.IsMale && who.hair.Value >= 16) ? (-4) : ((!who.IsMale && who.hair.Value < 16) ? 4 : 0))), renderer.hairstyleSourceRect, hairColor, rotation, Vector2.Zero, scaledPixelZoom, SpriteEffects.None, FarmerRenderer.GetLayerDepth(layerDepth, FarmerRenderer.FarmerSpriteLayers.Hair));
+            b.Draw(hairTexture, position + renderer.positionOffset + new Vector2(frameXOffset * 4, frameYOffset * 4 + (who.IsMale && who.hair.Value >= 16 ? -4 : !who.IsMale && who.hair.Value < 16 ? 4 : 0)), renderer.hairstyleSourceRect, hairColor, rotation, Vector2.Zero, scaledPixelZoom, SpriteEffects.None, FarmerRenderer.GetLayerDepth(layerDepth, FarmerRenderer.FarmerSpriteLayers.Hair));
             
         }
     }

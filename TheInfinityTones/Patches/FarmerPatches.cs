@@ -2,6 +2,7 @@
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewValley;
+// ReSharper disable UnusedMember.Local
 
 namespace TheInfinityTones.Patches;
 
