@@ -42,21 +42,27 @@ public readonly struct XyzColour : IEquatable<XyzColour>
     public decimal A => Alpha;
 
     /// <summary>
-    /// Initializes a new instance of an <see cref="XyzColour"/> struct with the specified <paramref name="X"/>, <paramref name="Y"/>, <paramref name="Z"/>, and optional <paramref name="A"/> values.
+    /// Initializes a new instance of an <see cref="XyzColour"/> struct with the specified <paramref name="X"/>, <paramref name="Y"/>, <paramref name="Z"/>, and optional <paramref name="Alpha"/> values.
     /// </summary>
     /// <param name="X">The X component of the colour, ranging from 0 to 95.0489.</param>
     /// <param name="Y">The Y component of the colour, ranging from 0 to 100.</param>
     /// <param name="Z">The Z component of the colour, ranging from 0 to 108.884.</param>
-    /// <param name="A">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
-    /// <remarks>The X, Y, and Z components will be clamped if out of range rather than throw an exception, as the exact ranges may differ depending on the reference illuminant.</remarks>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when the alpha component is outside its valid range.</exception>
-    public XyzColour(decimal X, decimal Y, decimal Z, decimal A = MAX_ALPHA)
+    /// <param name="Alpha">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
+    /// <remarks>
+    ///     <para>
+    ///         The <paramref name="X"/>, <paramref name="Y"/>, <paramref name="Z"/>, and <paramref name="Alpha"/> components will be clamped to the following ranges:
+    ///         <br/><paramref name="X"/>: [0, 95.047]<br/>
+    ///         <paramref name="Y"/>: [0, 100]<br/>
+    ///         <paramref name="Z"/>: [0, 108.883]<br/>
+    ///         <paramref name="Alpha"/>: [0, 100]
+    ///     </para>
+    /// </remarks>
+    public XyzColour(decimal X, decimal Y, decimal Z, decimal Alpha = MAX_ALPHA)
     {
-        this.X = Math.Clamp(X, 0, MAX_X);
-        this.Y = Math.Clamp(Y, 0, MAX_Y);
-        this.Z = Math.Clamp(Z, 0, MAX_Z);
-        if (A is < 0 or > MAX_ALPHA) throw new ArgumentOutOfRangeException(nameof(A), $"Alpha value must be between 0 and {MAX_ALPHA}.");
-        Alpha = A;
+        this.X = Math.Clamp(X, 0M, MAX_X);
+        this.Y = Math.Clamp(Y, 0M, MAX_Y);
+        this.Z = Math.Clamp(Z, 0M, MAX_Z);
+        this.Alpha = Math.Clamp(Alpha, 0M, MAX_ALPHA);
     }
 
     /// <summary>

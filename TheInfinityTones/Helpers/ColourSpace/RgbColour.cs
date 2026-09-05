@@ -57,17 +57,13 @@ public readonly struct RgbColour : IEquatable<RgbColour>
     /// <param name="G">The green component of the colour, ranging from 0 to 255.</param>
     /// <param name="B">The blue component of the colour, ranging from 0 to 255.</param>
     /// <param name="A">The alpha (transparency) component of the colour, ranging from 0 to 255. Defaults to 255 (fully opaque).</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when any of the colour components are outside their valid ranges.</exception>
+    /// <remarks>The <paramref name="R"/>, <paramref name="G"/>, <paramref name="B"/>, and <paramref name="A"/> components will be clamped to the range [0, 255].</remarks>
     public RgbColour(decimal R, decimal G, decimal B, decimal A = MAX_ALPHA)
     {
-        if (R is < 0 or > MAX_RED) throw new ArgumentOutOfRangeException(nameof(R), $"Red value must be between 0 and {MAX_RED}.");
-        if (G is < 0 or > MAX_GREEN) throw new ArgumentOutOfRangeException(nameof(G), $"Green value must be between 0 and {MAX_GREEN}.");
-        if (B is < 0 or > MAX_BLUE) throw new ArgumentOutOfRangeException(nameof(B), $"Blue value must be between 0 and {MAX_BLUE}.");
-        if (A is < 0 or > MAX_ALPHA) throw new ArgumentOutOfRangeException(nameof(A), $"Alpha value must be between 0 and {MAX_ALPHA}.");
-        Red = R;
-        Green = G;
-        Blue = B;
-        Alpha = A;
+        Red = Math.Clamp(R, 0M, MAX_RED);
+        Green = Math.Clamp(G, 0M, MAX_GREEN);
+        Blue = Math.Clamp(B, 0M, MAX_BLUE);
+        Alpha = Math.Clamp(A, 0M, MAX_ALPHA);
     }
 
     /// <summary>
@@ -166,7 +162,7 @@ public readonly struct RgbColour : IEquatable<RgbColour>
             H: h,
             S: s * 100,
             V: max * 100,
-            A: a * 100
+            Alpha: a * 100
         );
     }
 
@@ -191,7 +187,7 @@ public readonly struct RgbColour : IEquatable<RgbColour>
             X: x * 100,
             Y: y * 100,
             Z: z * 100,
-            A: a * 100
+            Alpha: a * 100
         );
     }
 

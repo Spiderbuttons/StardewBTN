@@ -51,23 +51,27 @@ public readonly struct HsvColour : IEquatable<HsvColour>
     public decimal A => Alpha;
 
     /// <summary>
-    /// Initializes a new instance of an <see cref="HsvColour"/> struct with the specified <paramref name="H"/>, <paramref name="S"/>, <paramref name="V"/>, and optional <paramref name="A"/> values.
+    /// Initializes a new instance of an <see cref="HsvColour"/> struct with the specified <paramref name="H"/>, <paramref name="S"/>, <paramref name="V"/>, and optional <paramref name="Alpha"/> values.
     /// </summary>
     /// <param name="H">The hue component of the colour, ranging from 0 to 360.</param>
     /// <param name="S">The saturation component of the colour, ranging from 0 to 100.</param>
     /// <param name="V">The value component of the colour, ranging from 0 to 100.</param>
-    /// <param name="A">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when any of the colour components are outside their valid ranges.</exception>
-    public HsvColour(decimal H, decimal S, decimal V, decimal A = MAX_ALPHA)
+    /// <param name="Alpha">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
+    /// <remarks>
+    ///     <para>
+    ///         The <paramref name="H"/>, <paramref name="S"/>, <paramref name="V"/>, and <paramref name="Alpha"/> components will be clamped to the following ranges:
+    ///         <br/><paramref name="H"/>: [0, 360]<br/>
+    ///         <paramref name="S"/>: [0, 100]<br/>
+    ///         <paramref name="V"/>: [0, 100]<br/>
+    ///         <paramref name="Alpha"/>: [0, 100]
+    ///     </para>
+    /// </remarks>
+    public HsvColour(decimal H, decimal S, decimal V, decimal Alpha = MAX_ALPHA)
     {
-        if (H is < 0 or > MAX_HUE) throw new ArgumentOutOfRangeException(nameof(H), $"Hue value must be between 0 and {MAX_HUE}.");
-        if (S is < 0 or > MAX_SATURATION) throw new ArgumentOutOfRangeException(nameof(S), $"Saturation value must be between 0 and {MAX_SATURATION}.");
-        if (V is < 0 or > MAX_VALUE) throw new ArgumentOutOfRangeException(nameof(V), $"Value must be between 0 and {MAX_VALUE}.");
-        if (A is < 0 or > MAX_ALPHA) throw new ArgumentOutOfRangeException(nameof(A), $"Alpha must be between 0 and {MAX_ALPHA}.");
-        Hue = H;
-        Saturation = S;
-        Value = V;
-        Alpha = A;
+        Hue = Math.Clamp(H, 0M, MAX_HUE);
+        Saturation = Math.Clamp(S, 0M, MAX_SATURATION);
+        Value = Math.Clamp(V, 0M, MAX_VALUE);
+        this.Alpha = Math.Clamp(Alpha, 0M, MAX_ALPHA);
     }
 
     /// <summary>

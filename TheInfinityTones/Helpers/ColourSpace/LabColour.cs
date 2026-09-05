@@ -41,15 +41,13 @@ public readonly struct LabColour : IEquatable<LabColour>
     /// <param name="A">The A component of the colour.</param>
     /// <param name="B">The B component of the colour.</param>
     /// <param name="Alpha">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when the L or Alpha component is outside its valid range.</exception>
+    /// <remarks>The <paramref name="L"/> and <paramref name="Alpha"/> components will be clamped to the range [0, 100].</remarks>
     public LabColour(decimal L, decimal A, decimal B, decimal Alpha = MAX_ALPHA)
     {
-        if (L is < 0 or > MAX_L) throw new ArgumentOutOfRangeException(nameof(L), $"L value must be between 0 and {MAX_L}.");
-        this.L = L;
+        this.L = Math.Clamp(L, 0M, MAX_L);
         this.A = A;
         this.B = B;
-        if (Alpha is < 0 or > MAX_ALPHA) throw new ArgumentOutOfRangeException(nameof(Alpha), $"Alpha value must be between 0 and {MAX_ALPHA}.");
-        this.Alpha = Alpha;
+        this.Alpha = Math.Clamp(Alpha, 0M, MAX_ALPHA);
     }
 
     /// <summary>
@@ -143,7 +141,7 @@ public readonly struct LabColour : IEquatable<LabColour>
             X: x * XyzColour.MAX_X,
             Y: y * XyzColour.MAX_Y,
             Z: z * XyzColour.MAX_Z,
-            A: Alpha
+            Alpha: Alpha
         );
     }
 
