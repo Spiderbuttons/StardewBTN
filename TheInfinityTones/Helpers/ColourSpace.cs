@@ -3,6 +3,9 @@ using Microsoft.Xna.Framework;
 
 namespace TheInfinityTones.Helpers;
 
+/// <summary>
+/// Represents a colour in the RGB colour space, with red, green, blue, and alpha components.
+/// </summary>
 public struct RgbColour : IEquatable<RgbColour>
 {
     /// <summary>
@@ -24,22 +27,27 @@ public struct RgbColour : IEquatable<RgbColour>
     /// The alpha (transparency) component of the colour, ranging from 0 to 255.
     /// </summary>
     public decimal Alpha;
-    
-    public decimal R => Red;
-    public decimal G => Green;
-    public decimal B => Blue;
-    public decimal A => Alpha;
-    
-    public static bool operator==(RgbColour lhs, RgbColour rhs)
-    {
-        return lhs.Red == rhs.Red && lhs.Green == rhs.Green && lhs.Blue == rhs.Blue && lhs.Alpha == rhs.Alpha;
-    }
-    
-    public static bool operator!=(RgbColour lhs, RgbColour rhs)
-    {
-        return !(lhs == rhs);
-    }
 
+    /// <inheritdoc cref="Red" />
+    public decimal R => Red;
+    
+    /// <inheritdoc cref="Green" />
+    public decimal G => Green;
+    
+    /// <inheritdoc cref="Blue" />
+    public decimal B => Blue;
+    
+    /// <inheritdoc cref="Alpha" />
+    public decimal A => Alpha;
+
+    /// <summary>
+    /// Initializes a new instance of an <see cref="RgbColour"/> struct with the specified <paramref name="R"/>, <paramref name="G"/>, <paramref name="B"/>, and optional <paramref name="A"/> values.
+    /// </summary>
+    /// <param name="R">The red component of the colour, ranging from 0 to 255.</param>
+    /// <param name="G">The green component of the colour, ranging from 0 to 255.</param>
+    /// <param name="B">The blue component of the colour, ranging from 0 to 255.</param>
+    /// <param name="A">The alpha (transparency) component of the colour, ranging from 0 to 255. Defaults to 255 (fully opaque).</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when any of the colour components are outside their valid ranges.</exception>
     public RgbColour(decimal R, decimal G, decimal B, decimal A = 255M)
     {
         if (R is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(R), "Red value must be between 0 and 255.");
@@ -52,16 +60,42 @@ public struct RgbColour : IEquatable<RgbColour>
         Alpha = A;
     }
 
+    /// <summary>
+    /// Creates an <see cref="RgbColour"/> from an <see cref="HsvColour"/>.
+    /// </summary>
+    /// <param name="hsv">The <see cref="HsvColour"/> to convert to an <see cref="RgbColour"/>.</param>
+    /// <returns>An <see cref="RgbColour"/> representing the same colour as the provided <see cref="HsvColour"/>.</returns>
     public static RgbColour FromHsv(HsvColour hsv)
     {
         return hsv.ToRgb();
     }
 
+    /// <summary>
+    /// Creates an <see cref="RgbColour"/> from an <see cref="XyzColour"/>.
+    /// </summary>
+    /// <param name="xyz">The <see cref="XyzColour"/> to convert to an <see cref="RgbColour"/>.</param>
+    /// <returns>An <see cref="RgbColour"/> representing the same colour as the provided <see cref="XyzColour"/>.</returns>
+    public static RgbColour FromXyz(XyzColour xyz)
+    {
+        return xyz.ToRgb();
+    }
+
+    /// <summary>
+    /// Creates an <see cref="RgbColour"/> from a <see cref="Microsoft.Xna.Framework.Color"/>.
+    /// </summary>
+    /// <param name="color">The <see cref="Microsoft.Xna.Framework.Color"/> to convert to an <see cref="RgbColour"/>.</param>
+    /// <returns>An <see cref="RgbColour"/> representing the same colour as the provided <see cref="Microsoft.Xna.Framework.Color"/>.</returns>
     public static RgbColour FromXnaColor(Color color)
     {
         return new RgbColour(color.R, color.G, color.B, color.A);
     }
-    
+
+    /// <summary>
+    /// Creates an <see cref="RgbColour"/> from a hexadecimal colour string.
+    /// </summary>
+    /// <param name="hex">The hexadecimal colour string to convert to an <see cref="RgbColour"/>. It can be in the format "#RRGGBB" or "#RRGGBBAA", with or without a leading "#".</param>
+    /// <returns>An <see cref="RgbColour"/> representing the same colour as the provided hexadecimal string.</returns>
+    /// <exception cref="ArgumentException">Thrown when the provided hexadecimal string is null, whitespace, or not in a valid format.</exception>
     public static RgbColour FromHexString(string hex)
     {
         if (string.IsNullOrWhiteSpace(hex)) throw new ArgumentException("Hex string cannot be null or whitespace.", nameof(hex));
@@ -76,11 +110,10 @@ public struct RgbColour : IEquatable<RgbColour>
         return new RgbColour(r, g, b, a);
     }
 
-    public Color ToXnaColor()
-    {
-        return new Color((int)Math.Round(Red), (int)Math.Round(Green), (int)Math.Round(Blue), (int)Math.Round(Alpha));
-    }
-
+    /// <summary>
+    /// Converts this <see cref="RgbColour"/> to an <see cref="HsvColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="HsvColour"/> representing the same colour as this <see cref="RgbColour"/>.</returns>
     public HsvColour ToHsv()
     {
         decimal min, max, delta;
@@ -120,6 +153,45 @@ public struct RgbColour : IEquatable<RgbColour>
         );
     }
 
+    public XyzColour ToXyz()
+    {
+        decimal r = Red / 255;
+        decimal g = Green / 255;
+        decimal b = Blue / 255;
+        decimal a = Alpha / 255;
+        
+        // See https://en.wikipedia.org/wiki/SRGB#Transfer_function_(%22gamma%22)
+        r = r > 0.04045M ? (decimal)Math.Pow((double)((r + 0.055M) / 1.055M), 2.4) : r / 12.92M;
+        g = g > 0.04045M ? (decimal)Math.Pow((double)((g + 0.055M) / 1.055M), 2.4) : g / 12.92M;
+        b = b > 0.04045M ? (decimal)Math.Pow((double)((b + 0.055M) / 1.055M), 2.4) : b / 12.92M;
+
+        // See http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+        decimal x = r * 0.4124564M + g * 0.3575761M + b * 0.1804375M;
+        decimal y = r * 0.2126729M + g * 0.7151522M + b * 0.0721750M;
+        decimal z = r * 0.0193339M + g * 0.1191920M + b * 0.9503041M;
+
+        return new XyzColour(
+            X: x * 100,
+            Y: y * 100,
+            Z: z * 100,
+            A: a * 100
+        );
+    }
+
+    /// <summary>
+    /// Converts this <see cref="RgbColour"/> to a <see cref="Microsoft.Xna.Framework.Color"/>.
+    /// </summary>
+    /// <returns>A <see cref="Microsoft.Xna.Framework.Color"/> representing the same colour as this <see cref="RgbColour"/>.</returns>
+    public Color ToXnaColor()
+    {
+        return new Color((int)Math.Round(Red), (int)Math.Round(Green), (int)Math.Round(Blue), (int)Math.Round(Alpha));
+    }
+
+    /// <summary>
+    /// Converts this <see cref="RgbColour"/> to a hexadecimal colour string.
+    /// </summary>
+    /// <param name="includeAlpha">If true, the resulting string will include the alpha component; otherwise, it will only include the red, green, and blue components.</param>
+    /// <returns>A hexadecimal colour string representing the same colour as this <see cref="RgbColour"/> <b>without</b> a leading "#".</returns>
     public string ToHexString(bool includeAlpha = true)
     {
         return $"{(int)Math.Round(Red):X2}" +
@@ -127,7 +199,17 @@ public struct RgbColour : IEquatable<RgbColour>
                $"{(int)Math.Round(Blue):X2}" +
                $"{(includeAlpha ? $"{(int)Math.Round(Alpha):X2}" : "")}";
     }
+
+    public static bool operator==(RgbColour lhs, RgbColour rhs)
+    {
+        return lhs.Red == rhs.Red && lhs.Green == rhs.Green && lhs.Blue == rhs.Blue && lhs.Alpha == rhs.Alpha;
+    }
     
+    public static bool operator!=(RgbColour lhs, RgbColour rhs)
+    {
+        return !(lhs == rhs);
+    }
+
     public bool Equals(RgbColour other)
     {
         return this == other;
@@ -147,49 +229,62 @@ public struct RgbColour : IEquatable<RgbColour>
         return (Red + ((int)Green << 8) + ((int)Blue << 16) + ((int)Alpha << 24)).GetHashCode();
     }
 
+    /// <summary>
+    /// Returns a string representation of the <see cref="RgbColour"/> in the format:
+    /// {R: <see cref="Red" />, G: <see cref="Green" />, B: <see cref="Blue" />, A: <see cref="Alpha" />}.
+    /// </summary>
+    /// <returns>A string representation of the <see cref="RgbColour"/>.</returns>
     public override string ToString()
     {
-        return $"R: {Red}, G: {Green}, B: {Blue}, A: {Alpha}";
+        return $"{{R: {Red}, G: {Green}, B: {Blue}, A: {Alpha}}}";
     }
 }
 
+/// <summary>
+/// Represents a colour in the HSV (Hue, Saturation, Value) colour space, with hue, saturation, value, and alpha components.
+/// </summary>
 public struct HsvColour : IEquatable<HsvColour>
 {
     /// <summary>
-    /// The hue of the colour, ranging from 0 to 360.
+    /// The hue component of the colour, ranging from 0 to 360.
     /// </summary>
     public decimal Hue;
     
     /// <summary>
-    /// The saturation of the colour, ranging from 0 to 100.
+    /// The saturation component of the colour, ranging from 0 to 100.
     /// </summary>
     public decimal Saturation;
     
     /// <summary>
-    /// The value of the colour, ranging from 0 to 100.
+    /// The value component of the colour, ranging from 0 to 100.
     /// </summary>
     public decimal Value;
 
     /// <summary>
-    /// The alpha (transparency) of the colour, ranging from 0 to 100.
+    /// The alpha (transparency) component of the colour, ranging from 0 to 100.
     /// </summary>
     public decimal Alpha;
     
+    /// <inheritdoc cref="Hue" />
     public decimal H => Hue;
+    
+    /// <inheritdoc cref="Saturation" />
     public decimal S => Saturation;
+    
+    /// <inheritdoc cref="Value" />
     public decimal V => Value;
+    
+    /// <inheritdoc cref="Alpha" />
     public decimal A => Alpha;
 
-    public static bool operator==(HsvColour lhs, HsvColour rhs)
-    {
-        return lhs.Hue == rhs.Hue && lhs.Saturation == rhs.Saturation && lhs.Value == rhs.Value && lhs.Alpha == rhs.Alpha;
-    }
-    
-    public static bool operator!=(HsvColour lhs, HsvColour rhs)
-    {
-        return !(lhs == rhs);
-    }
-    
+    /// <summary>
+    /// Initializes a new instance of an <see cref="HsvColour"/> struct with the specified <paramref name="H"/>, <paramref name="S"/>, <paramref name="V"/>, and optional <paramref name="A"/> values.
+    /// </summary>
+    /// <param name="H">The hue component of the colour, ranging from 0 to 360.</param>
+    /// <param name="S">The saturation component of the colour, ranging from 0 to 100.</param>
+    /// <param name="V">The value component of the colour, ranging from 0 to 100.</param>
+    /// <param name="A">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when any of the colour components are outside their valid ranges.</exception>
     public HsvColour(decimal H, decimal S, decimal V, decimal A = 100M)
     {
         if (H is < 0 or > 360) throw new ArgumentOutOfRangeException(nameof(H), "Hue value must be between 0 and 360.");
@@ -202,18 +297,51 @@ public struct HsvColour : IEquatable<HsvColour>
         Alpha = A;
     }
 
-    public static HsvColour FromXnaColor(Color color)
+    /// <summary>
+    /// Creates an <see cref="HsvColour"/> from an <see cref="RgbColour"/>.
+    /// </summary>
+    /// <param name="rgb">The <see cref="RgbColour"/> to convert to an <see cref="HsvColour"/>.</param>
+    /// <returns>An <see cref="HsvColour"/> representing the same colour as the provided <see cref="RgbColour"/>.</returns>
+    public static HsvColour FromRgb(RgbColour rgb)
     {
-        RgbColour rgb = new RgbColour(color.R, color.G, color.B, color.A);
         return rgb.ToHsv();
     }
 
-    public Color ToXnaColor()
+    /// <summary>
+    /// Creates an <see cref="HsvColour"/> from an <see cref="XyzColour"/>.
+    /// </summary>
+    /// <param name="xyz">The <see cref="XyzColour"/> to convert to an <see cref="HsvColour"/>.</param>
+    /// <returns>An <see cref="HsvColour"/> representing the same colour as the provided <see cref="XyzColour"/>.</returns>
+    public static HsvColour FromXyz(XyzColour xyz)
     {
-        RgbColour rgb = ToRgb();
-        return rgb.ToXnaColor();
+        return RgbColour.FromXyz(xyz).ToHsv();
     }
 
+    /// <summary>
+    /// Creates an <see cref="HsvColour"/> from a <see cref="Microsoft.Xna.Framework.Color"/>.
+    /// </summary>
+    /// <param name="color">The <see cref="Microsoft.Xna.Framework.Color"/> to convert to an <see cref="HsvColour"/>.</param>
+    /// <returns>An <see cref="HsvColour"/> representing the same colour as the provided <see cref="Microsoft.Xna.Framework.Color"/>.</returns>
+    public static HsvColour FromXnaColor(Color color)
+    {
+        return RgbColour.FromXnaColor(color).ToHsv();
+    }
+
+    /// <summary>
+    /// Creates an <see cref="HsvColour"/> from a hexadecimal colour string.
+    /// </summary>
+    /// <param name="hex">The hexadecimal colour string to convert to an <see cref="HsvColour"/>. It can be in the format "#RRGGBB" or "#RRGGBBAA", with or without a leading "#".</param>
+    /// <returns>An <see cref="HsvColour"/> representing the same colour as the provided hexadecimal string.</returns>
+    /// <exception cref="ArgumentException">Thrown when the provided hexadecimal string is null, whitespace, or not in a valid format.</exception>
+    public static HsvColour FromHexString(string hex)
+    {
+        return RgbColour.FromHexString(hex).ToHsv();
+    }
+
+    /// <summary>
+    /// Converts this <see cref="HsvColour"/> to an <see cref="RgbColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="RgbColour"/> representing the same colour as this <see cref="HsvColour"/>.</returns>
     public RgbColour ToRgb()
     {
         decimal r, g, b;
@@ -286,12 +414,44 @@ public struct HsvColour : IEquatable<HsvColour>
         );
     }
 
+    /// <summary>
+    /// Converts this <see cref="HsvColour"/> to an <see cref="XyzColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="XyzColour"/> representing the same colour as this <see cref="HsvColour"/>.</returns>
+    public XyzColour ToXyz()
+    {
+        return ToRgb().ToXyz();
+    }
+
+    /// <summary>
+    /// Converts this <see cref="HsvColour"/> to a <see cref="Microsoft.Xna.Framework.Color"/>.
+    /// </summary>
+    /// <returns>A <see cref="Microsoft.Xna.Framework.Color"/> representing the same colour as this <see cref="HsvColour"/>.</returns>
+    public Color ToXnaColor()
+    {
+        return ToRgb().ToXnaColor();
+    }
+
+    /// <summary>
+    /// Converts this <see cref="HsvColour"/> to a hexadecimal colour string.
+    /// </summary>
+    /// <param name="includeAlpha">If true, the resulting string will include the alpha component; otherwise, it will only include the red, green, and blue components.</param>
+    /// <returns>A hexadecimal colour string representing the same colour as this <see cref="HsvColour"/> <b>without</b> a leading "#".</returns>
     public string ToHexString(bool includeAlpha = true)
     {
-        RgbColour rgb = ToRgb();
-        return $"#{(int)Math.Round(rgb.Red):X2}{(int)Math.Round(rgb.Green):X2}{(int)Math.Round(rgb.Blue):X2}{(includeAlpha ? $"{(int)Math.Round(rgb.Alpha):X2}" : "")}";
+        return ToRgb().ToHexString(includeAlpha);
+    }
+
+    public static bool operator==(HsvColour lhs, HsvColour rhs)
+    {
+        return lhs.Hue == rhs.Hue && lhs.Saturation == rhs.Saturation && lhs.Value == rhs.Value && lhs.Alpha == rhs.Alpha;
     }
     
+    public static bool operator!=(HsvColour lhs, HsvColour rhs)
+    {
+        return !(lhs == rhs);
+    }
+
     public bool Equals(HsvColour other)
     {
         return this == other;
@@ -311,8 +471,194 @@ public struct HsvColour : IEquatable<HsvColour>
         return (Hue + ((int)Saturation << 8) + ((int)Value << 16) + ((int)Alpha << 24)).GetHashCode();
     }
     
+    /// <summary>
+    /// Returns a string representation of the <see cref="HsvColour"/> in the format:
+    /// {H: <see cref="Hue" />, S: <see cref="Saturation" />, V: <see cref="Value" />, A: <see cref="Alpha" />}.
+    /// </summary>
+    /// <returns>A string representation of the <see cref="HsvColour"/>.</returns>
     public override string ToString()
     {
-        return $"H: {Hue}, S: {Saturation}, V: {Value}, A: {Alpha}";
+        return $"{{H: {Hue}, S: {Saturation}, V: {Value}, A: {Alpha}}}";
+    }
+}
+
+/// <summary>
+/// Represents a colour in the XYZ colour space, with X, Y, Z, and alpha components relative to standard illuminant D65.
+/// </summary>
+public struct XyzColour : IEquatable<XyzColour>
+{
+    /// <summary>
+    /// The X component of the colour, ranging from 0 to 95.047.
+    /// </summary>
+    public decimal X;
+
+    /// <summary>
+    /// The Y component of the colour, ranging from 0 to 100.
+    /// </summary>
+    public decimal Y;
+
+    /// <summary>
+    /// The Z component of the colour, ranging from 0 to 108.883.
+    /// </summary>
+    public decimal Z;
+
+    /// <summary>
+    /// The alpha (transparency) component of the colour, ranging from 0 to 100.
+    /// </summary>
+    public decimal Alpha;
+
+    /// <inheritdoc cref="Alpha" />
+    public decimal A;
+
+    /// <summary>
+    /// Initializes a new instance of an <see cref="XyzColour"/> struct with the specified <paramref name="X"/>, <paramref name="Y"/>, <paramref name="Z"/>, and optional <paramref name="A"/> values.
+    /// </summary>
+    /// <param name="X">The X component of the colour, ranging from 0 to 95.047.</param>
+    /// <param name="Y">The Y component of the colour, ranging from 0 to 100.</param>
+    /// <param name="Z">The Z component of the colour, ranging from 0 to 108.883.</param>
+    /// <param name="A">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
+    /// <remarks>The X, Y, and Z components will be clamped if out of range rather than throw an exception, as the exact ranges may differ depending on the reference illuminant.</remarks>
+    public XyzColour(decimal X, decimal Y, decimal Z, decimal A = 100)
+    {
+        this.X = Math.Clamp(X, 0, 95.0478M);
+        this.Y = Math.Clamp(Y, 0, 100);
+        this.Z = Math.Clamp(Z, 0, 108.884M);
+        Alpha = A;
+    }
+
+    /// <summary>
+    /// Creates an <see cref="XyzColour"/> from an <see cref="RgbColour"/>.
+    /// </summary>
+    /// <param name="rgb">The <see cref="RgbColour"/> to convert to an <see cref="XyzColour"/>.</param>
+    /// <returns>An <see cref="XyzColour"/> representing the same colour as the provided <see cref="RgbColour"/>.</returns>
+    public static XyzColour FromRgb(RgbColour rgb)
+    {
+        return rgb.ToXyz();
+    }
+
+    /// <summary>
+    /// Creates an <see cref="XyzColour"/> from an <see cref="HsvColour"/>.
+    /// </summary>
+    /// <param name="hsv">The <see cref="HsvColour"/> to convert to an <see cref="XyzColour"/>.</param>
+    /// <returns>An <see cref="XyzColour"/> representing the same colour as the provided <see cref="HsvColour"/>.</returns>
+    public static XyzColour FromHsv(HsvColour hsv)
+    {
+        return RgbColour.FromHsv(hsv).ToXyz();
+    }
+
+    /// <summary>
+    /// Creates an <see cref="XyzColour"/> from a <see cref="Microsoft.Xna.Framework.Color"/>.
+    /// </summary>
+    /// <param name="color">The <see cref="Microsoft.Xna.Framework.Color"/> to convert to an <see cref="XyzColour"/>.</param>
+    /// <returns>An <see cref="XyzColour"/> representing the same colour as the provided <see cref="Microsoft.Xna.Framework.Color"/>.</returns>
+    public static XyzColour FromXnaColor(Color color)
+    {
+        return RgbColour.FromXnaColor(color).ToXyz();
+    }
+
+    /// <summary>
+    /// Creates an <see cref="XyzColour"/> from a hexadecimal colour string.
+    /// </summary>
+    /// <param name="hex">The hexadecimal colour string to convert to an <see cref="XyzColour"/>. It can be in the format "#RRGGBB" or "#RRGGBBAA", with or without a leading "#".</param>
+    /// <returns>An <see cref="XyzColour"/> representing the same colour as the provided hexadecimal string.</returns>
+    public static XyzColour FromHexString(string hex)
+    {
+        return RgbColour.FromHexString(hex).ToXyz();
+    }
+
+    /// <summary>
+    /// Converts this <see cref="XyzColour"/> to an <see cref="RgbColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="RgbColour"/> representing the same colour as this <see cref="XyzColour"/>.</returns>
+    public RgbColour ToRgb()
+    {
+        decimal x = X / 100;
+        decimal y = Y / 100;
+        decimal z = Z / 100;
+        decimal a = Alpha / 100;
+
+        // See http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+        decimal r = x *  3.2404542M + y * -1.5371385M + z * -0.4985314M;
+        decimal g = x * -0.9692660M + y *  1.8760108M + z *  0.0415560M;
+        decimal b = x *  0.0556434M + y * -0.2040259M + z *  1.0572252M;
+
+        // See https://en.wikipedia.org/wiki/SRGB#Transfer_function_(%22gamma%22)
+        r = r > 0.0031308M ? (decimal)(1.055 * Math.Pow((double)r, 1 / 2.4) - 0.055) : r * 12.92M;
+        g = g > 0.0031308M ? (decimal)(1.055 * Math.Pow((double)g, 1 / 2.4) - 0.055) : g * 12.92M;
+        b = b > 0.0031308M ? (decimal)(1.055 * Math.Pow((double)b, 1 / 2.4) - 0.055) : b * 12.92M;
+
+        return new RgbColour(
+            R: Math.Round(Math.Clamp(r * 255, 0, 255)),
+            G: Math.Round(Math.Clamp(g * 255, 0, 255)),
+            B: Math.Round(Math.Clamp(b * 255, 0, 255)),
+            A: Math.Round(Math.Clamp(a * 255, 0, 255))
+        );
+    }
+
+    /// <summary>
+    /// Converts this <see cref="XyzColour"/> to an <see cref="HsvColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="HsvColour"/> representing the same colour as this <see cref="XyzColour"/>.</returns>
+    public HsvColour ToHsv()
+    {
+        return ToRgb().ToHsv();
+    }
+
+    /// <summary>
+    /// Converts this <see cref="XyzColour"/> to a <see cref="Microsoft.Xna.Framework.Color"/>.
+    /// </summary>
+    /// <returns>A <see cref="Microsoft.Xna.Framework.Color"/> representing the same colour as this <see cref="XyzColour"/>.</returns>
+    public Color ToXnaColor()
+    {
+        return ToRgb().ToXnaColor();
+    }
+
+    /// <summary>
+    /// Converts this <see cref="XyzColour"/> to a hexadecimal colour string.
+    /// </summary>
+    /// <param name="includeAlpha">If true, the resulting string will include the alpha component; otherwise, it will only include the red, green, and blue components.</param>
+    /// <returns>A hexadecimal colour string representing the same colour as this <see cref="XyzColour"/> <b>without</b> a leading "#".</returns>
+    public string ToHexString(bool includeAlpha = true)
+    {
+        return ToRgb().ToHexString(includeAlpha);
+    }
+
+    public static bool operator ==(XyzColour lhs, XyzColour rhs)
+    {
+        return lhs.X == rhs.X && lhs.Y == rhs.Y && lhs.Z == rhs.Z && lhs.Alpha == rhs.Alpha;
+    }
+
+    public static bool operator !=(XyzColour lhs, XyzColour rhs)
+    {
+        return !(lhs == rhs);
+    }
+
+    public bool Equals(XyzColour other)
+    {
+        return this == other;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is XyzColour other)
+        {
+            return this == other;
+        }
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        return (X + ((int)Y << 8) + ((int)Z << 16) + ((int)Alpha << 24)).GetHashCode();
+    }
+    
+    /// <summary>
+    /// Returns a string representation of the <see cref="XyzColour"/> in the format:
+    /// {X: <see cref="X" />, Y: <see cref="Y" />, Z: <see cref="Z" />, A: <see cref="Alpha" />}.
+    /// </summary>
+    /// <returns>A string representation of the <see cref="XyzColour"/>.</returns>
+    public override string ToString()
+    {
+        return $"{{X: {X}, Y: {Y}, Z: {Z}, A: {Alpha}}}";
     }
 }
