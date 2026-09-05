@@ -1,5 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedMember.Global
 
 namespace TheInfinityTones.Helpers;
 
@@ -8,6 +10,15 @@ namespace TheInfinityTones.Helpers;
 /// </summary>
 public struct RgbColour : IEquatable<RgbColour>
 {
+    /// <summary>The maximum possible value for the red component of the colour.</summary>
+    public const decimal MAX_RED = 255M;
+    /// <summary>The maximum possible value for the green component of the colour.</summary>
+    public const decimal MAX_GREEN = 255M;
+    /// <summary>The maximum possible value for the blue component of the colour.</summary>
+    public const decimal MAX_BLUE = 255M;
+    /// <summary>The maximum possible value for the alpha (transparency) component of the colour.</summary>
+    public const decimal MAX_ALPHA = 255M;
+    
     /// <summary>
     /// The red component of the colour, ranging from 0 to 255.
     /// </summary>
@@ -48,12 +59,12 @@ public struct RgbColour : IEquatable<RgbColour>
     /// <param name="B">The blue component of the colour, ranging from 0 to 255.</param>
     /// <param name="A">The alpha (transparency) component of the colour, ranging from 0 to 255. Defaults to 255 (fully opaque).</param>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when any of the colour components are outside their valid ranges.</exception>
-    public RgbColour(decimal R, decimal G, decimal B, decimal A = 255M)
+    public RgbColour(decimal R, decimal G, decimal B, decimal A = MAX_ALPHA)
     {
-        if (R is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(R), "Red value must be between 0 and 255.");
-        if (G is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(G), "Green value must be between 0 and 255.");
-        if (B is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(B), "Blue value must be between 0 and 255.");
-        if (A is < 0 or > 255) throw new ArgumentOutOfRangeException(nameof(A), "Alpha value must be between 0 and 255.");
+        if (R is < 0 or > MAX_RED) throw new ArgumentOutOfRangeException(nameof(R), $"Red value must be between 0 and {MAX_RED}.");
+        if (G is < 0 or > MAX_GREEN) throw new ArgumentOutOfRangeException(nameof(G), $"Green value must be between 0 and {MAX_GREEN}.");
+        if (B is < 0 or > MAX_BLUE) throw new ArgumentOutOfRangeException(nameof(B), $"Blue value must be between 0 and {MAX_BLUE}.");
+        if (A is < 0 or > MAX_ALPHA) throw new ArgumentOutOfRangeException(nameof(A), $"Alpha value must be between 0 and {MAX_ALPHA}.");
         Red = R;
         Green = G;
         Blue = B;
@@ -105,7 +116,7 @@ public struct RgbColour : IEquatable<RgbColour>
         decimal r = Convert.ToInt32(hex.Substring(0, 2), 16);
         decimal g = Convert.ToInt32(hex.Substring(2, 2), 16);
         decimal b = Convert.ToInt32(hex.Substring(4, 2), 16);
-        decimal a = hex.Length == 8 ? Convert.ToInt32(hex.Substring(6, 2), 16) : 255;
+        decimal a = hex.Length == 8 ? Convert.ToInt32(hex.Substring(6, 2), 16) : MAX_ALPHA;
 
         return new RgbColour(r, g, b, a);
     }
@@ -118,10 +129,10 @@ public struct RgbColour : IEquatable<RgbColour>
     {
         decimal min, max, delta;
 
-        decimal r = Red / 255;
-        decimal g = Green / 255;
-        decimal b = Blue / 255;
-        decimal a = Alpha / 255;
+        decimal r = Red / MAX_RED;
+        decimal g = Green / MAX_GREEN;
+        decimal b = Blue / MAX_BLUE;
+        decimal a = Alpha / MAX_ALPHA;
 
         decimal h, s, v;
 
@@ -155,10 +166,10 @@ public struct RgbColour : IEquatable<RgbColour>
 
     public XyzColour ToXyz()
     {
-        decimal r = Red / 255;
-        decimal g = Green / 255;
-        decimal b = Blue / 255;
-        decimal a = Alpha / 255;
+        decimal r = Red / MAX_RED;
+        decimal g = Green / MAX_GREEN;
+        decimal b = Blue / MAX_BLUE;
+        decimal a = Alpha / MAX_ALPHA;
         
         // See https://en.wikipedia.org/wiki/SRGB#Transfer_function_(%22gamma%22)
         r = r > 0.04045M ? (decimal)Math.Pow((double)((r + 0.055M) / 1.055M), 2.4) : r / 12.92M;
@@ -245,6 +256,15 @@ public struct RgbColour : IEquatable<RgbColour>
 /// </summary>
 public struct HsvColour : IEquatable<HsvColour>
 {
+    /// <summary>The maximum possible value for the hue component of the colour.</summary>
+    public const decimal MAX_HUE = 360M;
+    /// <summary>The maximum possible value for the saturation component of the colour.</summary>
+    public const decimal MAX_SATURATION = 100M;
+    /// <summary>The maximum possible value for the value component of the colour.</summary>
+    public const decimal MAX_VALUE = 100M;
+    /// <summary>The maximum possible value for the alpha (transparency) component of the colour.</summary>
+    public const decimal MAX_ALPHA = 100M;
+    
     /// <summary>
     /// The hue component of the colour, ranging from 0 to 360.
     /// </summary>
@@ -285,12 +305,12 @@ public struct HsvColour : IEquatable<HsvColour>
     /// <param name="V">The value component of the colour, ranging from 0 to 100.</param>
     /// <param name="A">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when any of the colour components are outside their valid ranges.</exception>
-    public HsvColour(decimal H, decimal S, decimal V, decimal A = 100M)
+    public HsvColour(decimal H, decimal S, decimal V, decimal A = MAX_ALPHA)
     {
-        if (H is < 0 or > 360) throw new ArgumentOutOfRangeException(nameof(H), "Hue value must be between 0 and 360.");
-        if (S is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(S), "Saturation value must be between 0 and 100.");
-        if (V is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(V), "Value must be between 0 and 100.");
-        if (A is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(A), "Alpha must be between 0 and 100.");
+        if (H is < 0 or > MAX_HUE) throw new ArgumentOutOfRangeException(nameof(H), $"Hue value must be between 0 and {MAX_HUE}.");
+        if (S is < 0 or > MAX_SATURATION) throw new ArgumentOutOfRangeException(nameof(S), $"Saturation value must be between 0 and {MAX_SATURATION}.");
+        if (V is < 0 or > MAX_VALUE) throw new ArgumentOutOfRangeException(nameof(V), $"Value must be between 0 and {MAX_VALUE}.");
+        if (A is < 0 or > MAX_ALPHA) throw new ArgumentOutOfRangeException(nameof(A), $"Alpha must be between 0 and {MAX_ALPHA}.");
         Hue = H;
         Saturation = S;
         Value = V;
@@ -346,10 +366,10 @@ public struct HsvColour : IEquatable<HsvColour>
     {
         decimal r, g, b;
 
-        decimal h = Hue % 360;
-        decimal s = Saturation / 100;
-        decimal v = Value / 100;
-        decimal a = Alpha / 100;
+        decimal h = Hue % MAX_HUE;
+        decimal s = Saturation / MAX_SATURATION;
+        decimal v = Value / MAX_VALUE;
+        decimal a = Alpha / MAX_ALPHA;
 
         if (s is 0)
         {
@@ -407,10 +427,10 @@ public struct HsvColour : IEquatable<HsvColour>
         }
         
         return new RgbColour(
-            R: r * 255,
-            G: g * 255,
-            B: b * 255,
-            A: a * 255
+            R: r * RgbColour.MAX_RED,
+            G: g * RgbColour.MAX_GREEN,
+            B: b * RgbColour.MAX_BLUE,
+            A: a * RgbColour.MAX_ALPHA
         );
     }
 
@@ -487,8 +507,17 @@ public struct HsvColour : IEquatable<HsvColour>
 /// </summary>
 public struct XyzColour : IEquatable<XyzColour>
 {
+    /// <summary>The maximum possible value for the X component of the colour.</summary>
+    public const decimal MAX_X = 95.0489M;
+    /// <summary>The maximum possible value for the Y component of the colour.</summary>
+    public const decimal MAX_Y = 100M;
+    /// <summary>The maximum possible value for the Z component of the colour.</summary>
+    public const decimal MAX_Z = 108.884M;
+    /// <summary>The maximum possible value for the alpha (transparency) component of the colour.</summary>
+    public const decimal MAX_ALPHA = 100M;
+    
     /// <summary>
-    /// The X component of the colour, ranging from 0 to 95.047.
+    /// The X component of the colour, ranging from 0 to 95.0489.
     /// </summary>
     public decimal X;
 
@@ -498,7 +527,7 @@ public struct XyzColour : IEquatable<XyzColour>
     public decimal Y;
 
     /// <summary>
-    /// The Z component of the colour, ranging from 0 to 108.883.
+    /// The Z component of the colour, ranging from 0 to 108.884.
     /// </summary>
     public decimal Z;
 
@@ -513,17 +542,19 @@ public struct XyzColour : IEquatable<XyzColour>
     /// <summary>
     /// Initializes a new instance of an <see cref="XyzColour"/> struct with the specified <paramref name="X"/>, <paramref name="Y"/>, <paramref name="Z"/>, and optional <paramref name="A"/> values.
     /// </summary>
-    /// <param name="X">The X component of the colour, ranging from 0 to 95.047.</param>
+    /// <param name="X">The X component of the colour, ranging from 0 to 95.0489.</param>
     /// <param name="Y">The Y component of the colour, ranging from 0 to 100.</param>
-    /// <param name="Z">The Z component of the colour, ranging from 0 to 108.883.</param>
+    /// <param name="Z">The Z component of the colour, ranging from 0 to 108.884.</param>
     /// <param name="A">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
     /// <remarks>The X, Y, and Z components will be clamped if out of range rather than throw an exception, as the exact ranges may differ depending on the reference illuminant.</remarks>
-    public XyzColour(decimal X, decimal Y, decimal Z, decimal A = 100)
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when the alpha component is outside its valid range.</exception>
+    public XyzColour(decimal X, decimal Y, decimal Z, decimal A = MAX_ALPHA)
     {
-        this.X = Math.Clamp(X, 0, 95.0478M);
-        this.Y = Math.Clamp(Y, 0, 100);
-        this.Z = Math.Clamp(Z, 0, 108.884M);
-        Alpha = A;
+        this.X = Math.Clamp(X, 0, MAX_X);
+        this.Y = Math.Clamp(Y, 0, MAX_Y);
+        this.Z = Math.Clamp(Z, 0, MAX_Z);
+        if (A is < 0 or > MAX_ALPHA) throw new ArgumentOutOfRangeException(nameof(A), $"Alpha value must be between 0 and {MAX_ALPHA}.");
+        this.Alpha = A;
     }
 
     /// <summary>
@@ -588,10 +619,10 @@ public struct XyzColour : IEquatable<XyzColour>
         b = b > 0.0031308M ? (decimal)(1.055 * Math.Pow((double)b, 1 / 2.4) - 0.055) : b * 12.92M;
 
         return new RgbColour(
-            R: Math.Round(Math.Clamp(r * 255, 0, 255)),
-            G: Math.Round(Math.Clamp(g * 255, 0, 255)),
-            B: Math.Round(Math.Clamp(b * 255, 0, 255)),
-            A: Math.Round(Math.Clamp(a * 255, 0, 255))
+            R: Math.Round(Math.Clamp(r * RgbColour.MAX_RED, 0, RgbColour.MAX_RED)),
+            G: Math.Round(Math.Clamp(g * RgbColour.MAX_GREEN, 0, RgbColour.MAX_GREEN)),
+            B: Math.Round(Math.Clamp(b * RgbColour.MAX_BLUE, 0, RgbColour.MAX_BLUE)),
+            A: Math.Round(Math.Clamp(a * RgbColour.MAX_ALPHA, 0, RgbColour.MAX_ALPHA))
         );
     }
 
