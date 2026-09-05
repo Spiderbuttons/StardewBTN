@@ -686,6 +686,7 @@ public struct XyzColour : IEquatable<XyzColour>
 
     public LabColour ToLab()
     {
+        // https://en.wikipedia.org/wiki/CIELAB_color_space#Converting_between_CIELAB_and_CIE_XYZ_coordinates
         decimal x = X / MAX_X;
         decimal y = Y / MAX_Y;
         decimal z = Z / MAX_Z;
@@ -761,6 +762,9 @@ public struct XyzColour : IEquatable<XyzColour>
     }
 }
 
+/// <summary>
+/// Represents a colour in the CIE LAB colour space, with L, A, B, and alpha components relative to <see href="https://en.wikipedia.org/wiki/Standard_illuminant#Illuminant_series_D">CIE Standard illuminant D65</see>.
+/// </summary>
 public struct LabColour : IEquatable<LabColour>
 {
     /// <summary>The maximum possible value for the L component of the colour.</summary>
@@ -880,6 +884,7 @@ public struct LabColour : IEquatable<LabColour>
     /// <returns>An <see cref="XyzColour"/> representing the same colour as this <see cref="LabColour"/>.</returns>
     public XyzColour ToXyz()
     {
+        // https://en.wikipedia.org/wiki/CIELAB_color_space#Converting_between_CIELAB_and_CIE_XYZ_coordinates
         decimal y = (L + 16M) / 116M;
         decimal x = A / 500M + y;
         decimal z = y - B / 200M;
