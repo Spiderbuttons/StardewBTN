@@ -11,6 +11,7 @@ using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Mods;
 using TheInfinityTones.Helpers;
+using TheInfinityTones.Helpers.ColourSpace;
 using TheInfinityTones.Menus.ColourPickerMenu;
 using TheInfinityTones.Menus.ColourPickerMenu.Components;
 // ReSharper disable UnusedMember.Local

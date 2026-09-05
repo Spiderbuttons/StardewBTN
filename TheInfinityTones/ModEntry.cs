@@ -10,6 +10,8 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Menus;
+using TheInfinityTones.Helpers;
+using TheInfinityTones.Helpers.ColourSpace;
 using TheInfinityTones.Menus.ColourPickerMenu;
 using TheInfinityTones.Patches;
 
@@ -76,13 +78,24 @@ namespace TheInfinityTones
 
         private static void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
-            if (!Context.IsWorldReady)
-                return;
-
             if (e.Button is SButton.F2)
             {
-                //
+                RgbColour rgb = RgbColour.FromXnaColor(new Color(219, 125, 183));
+                Log.Info($"RGB: {rgb.R}, {rgb.G}, {rgb.B}");
+                XyzColour xyz = XyzColour.FromRgb(rgb);
+                Log.Info($"XYZ: {xyz.X}, {xyz.Y}, {xyz.Z}");
+                LabColour lab = LabColour.FromXyz(xyz);
+                Log.Info($"Lab: {lab.L}, {lab.A}, {lab.B}");
+                XyzColour backToXyz = lab.ToXyz();
+                Log.Info($"Back to XYZ: {backToXyz.X}, {backToXyz.Y}, {backToXyz.Z}");
+                RgbColour backToRgb = backToXyz.ToRgb();
+                Log.Info($"Back to RGB: {backToRgb.R}, {backToRgb.G}, {backToRgb.B}");
+                Color backToColor = backToRgb.ToXnaColor();
+                Log.Info($"Back to Color: {backToColor.R}, {backToColor.G}, {backToColor.B}");
             }
+
+            if (!Context.IsWorldReady)
+                return;
         }
 
         private static void OnGameLaunched(object? sender, GameLaunchedEventArgs e)

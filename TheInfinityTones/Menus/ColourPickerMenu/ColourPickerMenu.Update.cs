@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using StardewValley;
 using StardewValley.Menus;
+using TheInfinityTones.Helpers.ColourSpace;
 
 namespace TheInfinityTones.Menus.ColourPickerMenu;
 
