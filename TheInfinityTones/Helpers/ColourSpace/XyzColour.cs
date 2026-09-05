@@ -92,7 +92,12 @@ public readonly struct XyzColour : IEquatable<XyzColour>
     /// <returns>An <see cref="XyzColour"/> representing the same colour as the provided <see cref="LabColour"/>.</returns>
     public static XyzColour FromLab(LabColour lab)
     {
-        return lab.ToXyz();
+        return RgbColour.FromLab(lab).ToXyz();
+    }
+    
+    public static XyzColour FromLch(LchColour lch)
+    {
+        return RgbColour.FromLch(lch).ToXyz();
     }
 
     /// <summary>
@@ -153,23 +158,36 @@ public readonly struct XyzColour : IEquatable<XyzColour>
         return ToRgb().ToHsv();
     }
 
+    /// <summary>
+    /// Converts this <see cref="XyzColour"/> to a <see cref="LabColour"/>.
+    /// </summary>
+    /// <returns>A <see cref="LabColour"/> representing the same colour as this <see cref="XyzColour"/>.</returns>
     public LabColour ToLab()
     {
         // https://en.wikipedia.org/wiki/CIELAB_color_space#Converting_between_CIELAB_and_CIE_XYZ_coordinates
         decimal x = X / MAX_X;
         decimal y = Y / MAX_Y;
         decimal z = Z / MAX_Z;
-
+        
         x = x > 0.008856M ? (decimal)Math.Pow((double)x, 1.0 / 3.0) : 7.787037M * x + 16M / 116M;
         y = y > 0.008856M ? (decimal)Math.Pow((double)y, 1.0 / 3.0) : 7.787037M * y + 16M / 116M;
         z = z > 0.008856M ? (decimal)Math.Pow((double)z, 1.0 / 3.0) : 7.787037M * z + 16M / 116M;
-
+        
         return new LabColour(
             L: 116M * y - 16M,
             A: 500M * (x - y),
             B: 200M * (y - z),
             Alpha: Alpha
         );
+    }
+
+    /// <summary>
+    /// Converts this <see cref="XyzColour"/> to a <see cref="LchColour"/>.
+    /// </summary>
+    /// <returns>A <see cref="LchColour"/> representing the same colour as this <see cref="XyzColour"/>.</returns>
+    public LchColour ToLch()
+    {
+        return ToRgb().ToLch();
     }
 
     /// <summary>

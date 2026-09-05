@@ -93,7 +93,17 @@ public readonly struct RgbColour : IEquatable<RgbColour>
     /// <returns>An <see cref="RgbColour"/> representing the same colour as the provided <see cref="LabColour"/>.</returns>
     public static RgbColour FromLab(LabColour lab)
     {
-        return lab.ToXyz().ToRgb();
+        return lab.ToRgb();
+    }
+
+    /// <summary>
+    /// Creates an <see cref="RgbColour"/> from an <see cref="LchColour"/>.
+    /// </summary>
+    /// <param name="lch">The <see cref="LchColour"/> to convert to an <see cref="RgbColour"/>.</param>
+    /// <returns>An <see cref="RgbColour"/> representing the same colour as the provided <see cref="LchColour"/>.</returns>
+    public static RgbColour FromLch(LchColour lch)
+    {
+        return lch.ToRgb();
     }
 
     /// <summary>
@@ -166,6 +176,10 @@ public readonly struct RgbColour : IEquatable<RgbColour>
         );
     }
 
+    /// <summary>
+    /// Converts this <see cref="RgbColour"/> to an <see cref="XyzColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="XyzColour"/> representing the same colour as this <see cref="RgbColour"/>.</returns>
     public XyzColour ToXyz()
     {
         decimal r = Red / MAX_RED;
@@ -191,9 +205,22 @@ public readonly struct RgbColour : IEquatable<RgbColour>
         );
     }
 
+    /// <summary>
+    /// Converts this <see cref="RgbColour"/> to a <see cref="LabColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="LabColour"/> representing the same colour as this <see cref="RgbColour"/>.</returns>
     public LabColour ToLab()
     {
         return ToXyz().ToLab();
+    }
+
+    /// <summary>
+    /// Converts this <see cref="RgbColour"/> to an <see cref="LchColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="LchColour"/> representing the same colour as this <see cref="RgbColour"/>.</returns>
+    public LchColour ToLch()
+    {
+        return ToLab().ToLch();
     }
 
     /// <summary>

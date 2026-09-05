@@ -17,7 +17,7 @@ public readonly struct LabColour : IEquatable<LabColour>
     /// <summary>
     /// The L component of the colour, ranging from 0 to 100.
     /// </summary>
-    public readonly decimal L;
+    public readonly decimal Lightness;
     
     /// <summary>
     /// The A component of the colour.
@@ -34,17 +34,20 @@ public readonly struct LabColour : IEquatable<LabColour>
     /// </summary>
     public readonly decimal Alpha;
     
+    /// <inheritdoc cref="Lightness"/>
+    public decimal L => Lightness;
+    
     /// <summary>
     /// Initializes a new instance of an <see cref="LabColour"/> struct with the specified <paramref name="L"/>, <paramref name="A"/>, <paramref name="B"/>, and optional <paramref name="Alpha"/> values.
     /// </summary>
-    /// <param name="L">The L component of the colour, ranging from 0 to 100.</param>
+    /// <param name="L">The lightness component of the colour, ranging from 0 to 100.</param>
     /// <param name="A">The A component of the colour.</param>
     /// <param name="B">The B component of the colour.</param>
     /// <param name="Alpha">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
     /// <remarks>The <paramref name="L"/> and <paramref name="Alpha"/> components will be clamped to the range [0, 100].</remarks>
     public LabColour(decimal L, decimal A, decimal B, decimal Alpha = MAX_ALPHA)
     {
-        this.L = Math.Clamp(L, 0M, MAX_L);
+        Lightness = Math.Clamp(L, 0M, MAX_L);
         this.A = A;
         this.B = B;
         this.Alpha = Math.Clamp(Alpha, 0M, MAX_ALPHA);
@@ -77,7 +80,17 @@ public readonly struct LabColour : IEquatable<LabColour>
     /// <returns>A <see cref="LabColour"/> representing the same colour as the provided <see cref="XyzColour"/>.</returns>
     public static LabColour FromXyz(XyzColour xyz)
     {
-        return xyz.ToLab();
+        return RgbColour.FromXyz(xyz).ToLab();
+    }
+
+    /// <summary>
+    /// Creates a <see cref="LabColour"/> from an <see cref="LchColour"/>.
+    /// </summary>
+    /// <param name="lch">The <see cref="LchColour"/> to convert to a <see cref="LabColour"/>.</param>
+    /// <returns>A <see cref="LabColour"/> representing the same colour as the provided <see cref="LchColour"/>.</returns>
+    public static LabColour FromLch(LchColour lch)
+    {
+        return RgbColour.FromLch(lch).ToLab();
     }
 
     /// <summary>
@@ -125,14 +138,14 @@ public readonly struct LabColour : IEquatable<LabColour>
     public XyzColour ToXyz()
     {
         // https://en.wikipedia.org/wiki/CIELAB_color_space#Converting_between_CIELAB_and_CIE_XYZ_coordinates
-        decimal y = (L + 16M) / 116M;
+        decimal y = (Lightness + 16M) / 116M;
         decimal x = A / 500M + y;
         decimal z = y - B / 200M;
-
+        
         decimal x3 = x * x * x;
         decimal y3 = y * y * y;
         decimal z3 = z * z * z;
-
+        
         x = x3 > 0.008856M ? x3 : (x - 16M / 116M) / 7.787037M;
         y = y3 > 0.008856M ? y3 : (y - 16M / 116M) / 7.787037M;
         z = z3 > 0.008856M ? z3 : (z - 16M / 116M) / 7.787037M;
@@ -141,6 +154,20 @@ public readonly struct LabColour : IEquatable<LabColour>
             X: x * XyzColour.MAX_X,
             Y: y * XyzColour.MAX_Y,
             Z: z * XyzColour.MAX_Z,
+            Alpha: Alpha
+        );
+    }
+
+    /// <summary>
+    /// Converts this <see cref="LabColour"/> to an <see cref="LchColour"/>.
+    /// </summary>
+    /// <returns>>An <see cref="LchColour"/> representing the same colour as this <see cref="LabColour"/>.</returns>
+    public LchColour ToLch()
+    {
+        return new LchColour(
+            L: Lightness,
+            C: (decimal)Math.Sqrt((double)(A * A + B * B)),
+            H: (decimal)(Math.Atan2((double)B, (double)A) * (180.0 / Math.PI)),
             Alpha: Alpha
         );
     }
@@ -166,7 +193,7 @@ public readonly struct LabColour : IEquatable<LabColour>
     
     public static bool operator ==(LabColour lhs, LabColour rhs)
     {
-        return lhs.L == rhs.L && lhs.A == rhs.A && lhs.B == rhs.B && lhs.Alpha == rhs.Alpha;
+        return lhs.Lightness == rhs.Lightness && lhs.A == rhs.A && lhs.B == rhs.B && lhs.Alpha == rhs.Alpha;
     }
 
     public static bool operator !=(LabColour lhs, LabColour rhs)
@@ -190,16 +217,16 @@ public readonly struct LabColour : IEquatable<LabColour>
 
     public override int GetHashCode()
     {
-        return (L + ((int)A << 8) + ((int)B << 16) + ((int)Alpha << 24)).GetHashCode();
+        return (Lightness + ((int)A << 8) + ((int)B << 16) + ((int)Alpha << 24)).GetHashCode();
     }
     
     /// <summary>
     /// Returns a string representation of the <see cref="LabColour"/> in the format:
-    /// {L: <see cref="L" />, A: <see cref="A" />, B: <see cref="B" />, Alpha: <see cref="Alpha" />}.
+    /// {L: <see cref="Lightness" />, A: <see cref="A" />, B: <see cref="B" />, Alpha: <see cref="Alpha" />}.
     /// </summary>
     /// <returns>A string representation of the <see cref="LabColour"/>.</returns>
     public override string ToString()
     {
-        return $"{{L: {L}, A: {A}, B: {B}, Alpha: {Alpha}}}";
+        return $"{{L: {Lightness}, A: {A}, B: {B}, Alpha: {Alpha}}}";
     }
 }

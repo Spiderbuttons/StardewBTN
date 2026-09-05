@@ -103,6 +103,16 @@ public readonly struct HsvColour : IEquatable<HsvColour>
     {
         return RgbColour.FromLab(lab).ToHsv();
     }
+    
+    /// <summary>
+    /// Creates an <see cref="HsvColour"/> from a <see cref="LchColour"/>.
+    /// </summary>
+    /// <param name="lch">The <see cref="LchColour"/> to convert to an <see cref="HsvColour"/>.</param>
+    /// <returns>An <see cref="HsvColour"/> representing the same colour as the provided <see cref="LchColour"/>.</returns>
+    public static HsvColour FromLch(LchColour lch)
+    {
+        return RgbColour.FromLch(lch).ToHsv();
+    }
 
     /// <summary>
     /// Creates an <see cref="HsvColour"/> from a <see cref="Microsoft.Xna.Framework.Color"/>.
@@ -216,7 +226,16 @@ public readonly struct HsvColour : IEquatable<HsvColour>
     /// <returns>A <see cref="LabColour"/> representing the same colour as this <see cref="HsvColour"/>.</returns>
     public LabColour ToLab()
     {
-        return ToXyz().ToLab();
+        return ToRgb().ToLab();
+    }
+
+    /// <summary>
+    /// Converts this <see cref="HsvColour"/> to a <see cref="LchColour"/>.
+    /// </summary>
+    /// <returns>A <see cref="LchColour"/> representing the same colour as this <see cref="HsvColour"/>.</returns>
+    public LchColour ToLch()
+    {
+        return ToRgb().ToLch();
     }
 
     /// <summary>

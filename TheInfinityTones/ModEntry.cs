@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -80,18 +81,32 @@ namespace TheInfinityTones
         {
             if (e.Button is SButton.F2)
             {
-                RgbColour rgb = RgbColour.FromXnaColor(new Color(219, 125, 183));
+                Color color = new Color(219, 125, 183);
+                Log.Info($"Color: {color.R}, {color.G}, {color.B}");
+                RgbColour rgb = RgbColour.FromXnaColor(color);
                 Log.Info($"RGB: {rgb.R}, {rgb.G}, {rgb.B}");
-                XyzColour xyz = XyzColour.FromRgb(rgb);
+                XyzColour xyz = rgb.ToXyz();
                 Log.Info($"XYZ: {xyz.X}, {xyz.Y}, {xyz.Z}");
-                LabColour lab = LabColour.FromXyz(xyz);
-                Log.Info($"Lab: {lab.L}, {lab.A}, {lab.B}");
-                XyzColour backToXyz = lab.ToXyz();
-                Log.Info($"Back to XYZ: {backToXyz.X}, {backToXyz.Y}, {backToXyz.Z}");
+                LabColour lab = xyz.ToLab();
+                Log.Info($"Lab: {lab.Lightness}, {lab.A}, {lab.B}");
+                LchColour lch = lab.ToLch();
+                Log.Info($"Lch: {lch.Lightness}, {lch.C}, {lch.H}");
+                LabColour backToLab = lch.ToLab();
+                Log.Info($"Lab: {backToLab.L}, {backToLab.A}, {backToLab.B}");
+                XyzColour backToXyz = backToLab.ToXyz();
+                Log.Info($"XYZ: {backToXyz.X}, {backToXyz.Y}, {backToXyz.Z}");
                 RgbColour backToRgb = backToXyz.ToRgb();
-                Log.Info($"Back to RGB: {backToRgb.R}, {backToRgb.G}, {backToRgb.B}");
+                Log.Info($"RGB: {backToRgb.R}, {backToRgb.G}, {backToRgb.B}");
                 Color backToColor = backToRgb.ToXnaColor();
-                Log.Info($"Back to Color: {backToColor.R}, {backToColor.G}, {backToColor.B}");
+                Log.Info($"Color: {backToColor.R}, {backToColor.G}, {backToColor.B}");
+            }
+
+            if (e.Button is SButton.F3)
+            {
+                LabColour lab = new LabColour(60, 20, 40);
+                Log.Info($"Lab: {lab.Lightness}, {lab.A}, {lab.B}");
+                LchColour lch = LchColour.FromLab(lab);
+                Log.Info($"Lch: {lch.Lightness}, {lch.C}, {lch.H}");
             }
 
             if (!Context.IsWorldReady)
