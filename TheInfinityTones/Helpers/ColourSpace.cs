@@ -92,6 +92,16 @@ public struct RgbColour : IEquatable<RgbColour>
     }
 
     /// <summary>
+    /// Creates an <see cref="RgbColour"/> from a <see cref="LabColour"/>.
+    /// </summary>
+    /// <param name="lab">The <see cref="LabColour"/> to convert to an <see cref="RgbColour"/>.</param>
+    /// <returns>An <see cref="RgbColour"/> representing the same colour as the provided <see cref="LabColour"/>.</returns>
+    public static RgbColour FromLab(LabColour lab)
+    {
+        return lab.ToXyz().ToRgb();
+    }
+
+    /// <summary>
     /// Creates an <see cref="RgbColour"/> from a <see cref="Microsoft.Xna.Framework.Color"/>.
     /// </summary>
     /// <param name="color">The <see cref="Microsoft.Xna.Framework.Color"/> to convert to an <see cref="RgbColour"/>.</param>
@@ -189,13 +199,23 @@ public struct RgbColour : IEquatable<RgbColour>
         );
     }
 
+    public LabColour ToLab()
+    {
+        return ToXyz().ToLab();
+    }
+
     /// <summary>
     /// Converts this <see cref="RgbColour"/> to a <see cref="Microsoft.Xna.Framework.Color"/>.
     /// </summary>
     /// <returns>A <see cref="Microsoft.Xna.Framework.Color"/> representing the same colour as this <see cref="RgbColour"/>.</returns>
     public Color ToXnaColor()
     {
-        return new Color((int)Math.Round(Red), (int)Math.Round(Green), (int)Math.Round(Blue), (int)Math.Round(Alpha));
+        return new Color(
+            r: (int)Math.Round(Red),
+            g: (int)Math.Round(Green),
+            b: (int)Math.Round(Blue),
+            alpha: (int)Math.Round(Alpha)
+        );
     }
 
     /// <summary>
@@ -338,6 +358,16 @@ public struct HsvColour : IEquatable<HsvColour>
     }
 
     /// <summary>
+    /// Creates an <see cref="HsvColour"/> from a <see cref="LabColour"/>.
+    /// </summary>
+    /// <param name="lab">The <see cref="LabColour"/> to convert to an <see cref="HsvColour"/>.</param>
+    /// <returns>An <see cref="HsvColour"/> representing the same colour as the provided <see cref="LabColour"/>.</returns>
+    public static HsvColour FromLab(LabColour lab)
+    {
+        return RgbColour.FromLab(lab).ToHsv();
+    }
+
+    /// <summary>
     /// Creates an <see cref="HsvColour"/> from a <see cref="Microsoft.Xna.Framework.Color"/>.
     /// </summary>
     /// <param name="color">The <see cref="Microsoft.Xna.Framework.Color"/> to convert to an <see cref="HsvColour"/>.</param>
@@ -444,6 +474,15 @@ public struct HsvColour : IEquatable<HsvColour>
     }
 
     /// <summary>
+    /// Converts this <see cref="HsvColour"/> to a <see cref="LabColour"/>.
+    /// </summary>
+    /// <returns>A <see cref="LabColour"/> representing the same colour as this <see cref="HsvColour"/>.</returns>
+    public LabColour ToLab()
+    {
+        return ToXyz().ToLab();
+    }
+
+    /// <summary>
     /// Converts this <see cref="HsvColour"/> to a <see cref="Microsoft.Xna.Framework.Color"/>.
     /// </summary>
     /// <returns>A <see cref="Microsoft.Xna.Framework.Color"/> representing the same colour as this <see cref="HsvColour"/>.</returns>
@@ -503,16 +542,16 @@ public struct HsvColour : IEquatable<HsvColour>
 }
 
 /// <summary>
-/// Represents a colour in the XYZ colour space, with X, Y, Z, and alpha components relative to standard illuminant D65.
+/// Represents a colour in the XYZ colour space, with X, Y, Z, and alpha components relative to <see href="https://en.wikipedia.org/wiki/Standard_illuminant#Illuminant_series_D">CIE Standard illuminant D65</see>.
 /// </summary>
 public struct XyzColour : IEquatable<XyzColour>
 {
     /// <summary>The maximum possible value for the X component of the colour.</summary>
-    public const decimal MAX_X = 95.0489M;
+    public const decimal MAX_X = 95.047M;
     /// <summary>The maximum possible value for the Y component of the colour.</summary>
     public const decimal MAX_Y = 100M;
     /// <summary>The maximum possible value for the Z component of the colour.</summary>
-    public const decimal MAX_Z = 108.884M;
+    public const decimal MAX_Z = 108.883M;
     /// <summary>The maximum possible value for the alpha (transparency) component of the colour.</summary>
     public const decimal MAX_ALPHA = 100M;
     
@@ -536,7 +575,7 @@ public struct XyzColour : IEquatable<XyzColour>
     /// </summary>
     public decimal Alpha;
 
-    /// <inheritdoc cref="Alpha" />
+    /// <inheritdoc cref="A" />
     public decimal A;
 
     /// <summary>
@@ -554,7 +593,7 @@ public struct XyzColour : IEquatable<XyzColour>
         this.Y = Math.Clamp(Y, 0, MAX_Y);
         this.Z = Math.Clamp(Z, 0, MAX_Z);
         if (A is < 0 or > MAX_ALPHA) throw new ArgumentOutOfRangeException(nameof(A), $"Alpha value must be between 0 and {MAX_ALPHA}.");
-        this.Alpha = A;
+        Alpha = A;
     }
 
     /// <summary>
@@ -575,6 +614,16 @@ public struct XyzColour : IEquatable<XyzColour>
     public static XyzColour FromHsv(HsvColour hsv)
     {
         return RgbColour.FromHsv(hsv).ToXyz();
+    }
+    
+    /// <summary>
+    /// Creates an <see cref="XyzColour"/> from a <see cref="LabColour"/>.
+    /// </summary>
+    /// <param name="lab">The <see cref="LabColour"/> to convert to an <see cref="XyzColour"/>.</param>
+    /// <returns>An <see cref="XyzColour"/> representing the same colour as the provided <see cref="LabColour"/>.</returns>
+    public static XyzColour FromLab(LabColour lab)
+    {
+        return lab.ToXyz();
     }
 
     /// <summary>
@@ -635,6 +684,24 @@ public struct XyzColour : IEquatable<XyzColour>
         return ToRgb().ToHsv();
     }
 
+    public LabColour ToLab()
+    {
+        decimal x = X / MAX_X;
+        decimal y = Y / MAX_Y;
+        decimal z = Z / MAX_Z;
+
+        x = x > 0.008856M ? (decimal)Math.Pow((double)x, 1.0 / 3.0) : 7.787037M * x + 16M / 116M;
+        y = y > 0.008856M ? (decimal)Math.Pow((double)y, 1.0 / 3.0) : 7.787037M * y + 16M / 116M;
+        z = z > 0.008856M ? (decimal)Math.Pow((double)z, 1.0 / 3.0) : 7.787037M * z + 16M / 116M;
+
+        return new LabColour(
+            L: 116M * y - 16M,
+            A: 500M * (x - y),
+            B: 200M * (y - z),
+            Alpha: Alpha
+        );
+    }
+
     /// <summary>
     /// Converts this <see cref="XyzColour"/> to a <see cref="Microsoft.Xna.Framework.Color"/>.
     /// </summary>
@@ -685,11 +752,209 @@ public struct XyzColour : IEquatable<XyzColour>
     
     /// <summary>
     /// Returns a string representation of the <see cref="XyzColour"/> in the format:
-    /// {X: <see cref="X" />, Y: <see cref="Y" />, Z: <see cref="Z" />, A: <see cref="Alpha" />}.
+    /// {X: <see cref="X" />, Y: <see cref="Y" />, Z: <see cref="Z" />, A: <see cref="A" />}.
     /// </summary>
     /// <returns>A string representation of the <see cref="XyzColour"/>.</returns>
     public override string ToString()
     {
         return $"{{X: {X}, Y: {Y}, Z: {Z}, A: {Alpha}}}";
+    }
+}
+
+public struct LabColour : IEquatable<LabColour>
+{
+    /// <summary>The maximum possible value for the L component of the colour.</summary>
+    public const decimal MAX_L = 100M;
+    /// <summary>The maximum possible value for the alpha (transparency) component of the colour.</summary>
+    public const decimal MAX_ALPHA = 100M;
+    
+    /// <summary>
+    /// The L component of the colour, ranging from 0 to 100.
+    /// </summary>
+    public decimal L;
+    
+    /// <summary>
+    /// The A component of the colour.
+    /// </summary>
+    public decimal A;
+    
+    /// <summary>
+    /// The B component of the colour.
+    /// </summary>
+    public decimal B;
+    
+    /// <summary>
+    /// The alpha (transparency) component of the colour, ranging from 0 to 100.
+    /// </summary>
+    public decimal Alpha;
+    
+    /// <summary>
+    /// Initializes a new instance of an <see cref="LabColour"/> struct with the specified <paramref name="L"/>, <paramref name="A"/>, <paramref name="B"/>, and optional <paramref name="Alpha"/> values.
+    /// </summary>
+    /// <param name="L">The L component of the colour, ranging from 0 to 100.</param>
+    /// <param name="A">The A component of the colour.</param>
+    /// <param name="B">The B component of the colour.</param>
+    /// <param name="Alpha">The alpha (transparency) component of the colour, ranging from 0 to 100. Defaults to 100 (fully opaque).</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when the L or Alpha component is outside its valid range.</exception>
+    public LabColour(decimal L, decimal A, decimal B, decimal Alpha = MAX_ALPHA)
+    {
+        if (L is < 0 or > MAX_L) throw new ArgumentOutOfRangeException(nameof(L), $"L value must be between 0 and {MAX_L}.");
+        this.L = L;
+        this.A = A;
+        this.B = B;
+        if (Alpha is < 0 or > MAX_ALPHA) throw new ArgumentOutOfRangeException(nameof(Alpha), $"Alpha value must be between 0 and {MAX_ALPHA}.");
+        this.Alpha = Alpha;
+    }
+
+    /// <summary>
+    /// Creates a <see cref="LabColour"/> from an <see cref="RgbColour"/>.
+    /// </summary>
+    /// <param name="rgb">The <see cref="RgbColour"/> to convert to a <see cref="LabColour"/>.</param>
+    /// <returns>A <see cref="LabColour"/> representing the same colour as the provided <see cref="RgbColour"/>.</returns>
+    public static LabColour FromRgb(RgbColour rgb)
+    {
+        return rgb.ToLab();
+    }
+    
+    /// <summary>
+    /// Creates a <see cref="LabColour"/> from an <see cref="HsvColour"/>.
+    /// </summary>
+    /// <param name="hsv">The <see cref="HsvColour"/> to convert to a <see cref="LabColour"/>.</param>
+    /// <returns>A <see cref="LabColour"/> representing the same colour as the provided <see cref="HsvColour"/>.</returns>
+    public static LabColour FromHsv(HsvColour hsv)
+    {
+        return RgbColour.FromHsv(hsv).ToLab();
+    }
+
+    /// <summary>
+    /// Creates a <see cref="LabColour"/> from an <see cref="XyzColour"/>.
+    /// </summary>
+    /// <param name="xyz">The <see cref="XyzColour"/> to convert to a <see cref="LabColour"/>.</param>
+    /// <returns>A <see cref="LabColour"/> representing the same colour as the provided <see cref="XyzColour"/>.</returns>
+    public static LabColour FromXyz(XyzColour xyz)
+    {
+        return xyz.ToLab();
+    }
+
+    /// <summary>
+    /// Creates a <see cref="LabColour"/> from a <see cref="Microsoft.Xna.Framework.Color"/>.
+    /// </summary>
+    /// <param name="color">The <see cref="Microsoft.Xna.Framework.Color"/> to convert to a <see cref="LabColour"/>.</param>
+    /// <returns>A <see cref="LabColour"/> representing the same colour as the provided <see cref="Microsoft.Xna.Framework.Color"/>.</returns>
+    public static LabColour FromXnaColor(Color color)
+    {
+        return RgbColour.FromXnaColor(color).ToLab();
+    }
+    
+    /// <summary>
+    /// Creates a <see cref="LabColour"/> from a hexadecimal colour string.
+    /// </summary>
+    /// <param name="hex">The hexadecimal colour string to convert to a <see cref="LabColour"/>. It can be in the format "#RRGGBB" or "#RRGGBBAA", with or without a leading "#".</param>
+    /// <returns>A <see cref="LabColour"/> representing the same colour as the provided hexadecimal string.</returns>
+    public static LabColour FromHexString(string hex)
+    {
+        return RgbColour.FromHexString(hex).ToLab();
+    }
+    
+    /// <summary>
+    /// Converts this <see cref="LabColour"/> to an <see cref="RgbColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="RgbColour"/> representing the same colour as this <see cref="LabColour"/>.</returns>
+    public RgbColour ToRgb()
+    {
+        return ToXyz().ToRgb();
+    }
+    
+    /// <summary>
+    /// Converts this <see cref="LabColour"/> to an <see cref="HsvColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="HsvColour"/> representing the same colour as this <see cref="LabColour"/>.</returns>
+    public HsvColour ToHsv()
+    {
+        return ToRgb().ToHsv();
+    }
+
+    /// <summary>
+    /// Converts this <see cref="LabColour"/> to an <see cref="XyzColour"/>.
+    /// </summary>
+    /// <returns>An <see cref="XyzColour"/> representing the same colour as this <see cref="LabColour"/>.</returns>
+    public XyzColour ToXyz()
+    {
+        decimal y = (L + 16M) / 116M;
+        decimal x = A / 500M + y;
+        decimal z = y - B / 200M;
+
+        decimal x3 = x * x * x;
+        decimal y3 = y * y * y;
+        decimal z3 = z * z * z;
+
+        x = x3 > 0.008856M ? x3 : (x - 16M / 116M) / 7.787037M;
+        y = y3 > 0.008856M ? y3 : (y - 16M / 116M) / 7.787037M;
+        z = z3 > 0.008856M ? z3 : (z - 16M / 116M) / 7.787037M;
+        
+        return new XyzColour(
+            X: x * XyzColour.MAX_X,
+            Y: y * XyzColour.MAX_Y,
+            Z: z * XyzColour.MAX_Z,
+            A: Alpha
+        );
+    }
+
+    /// <summary>
+    /// Converts this <see cref="LabColour"/> to a <see cref="Microsoft.Xna.Framework.Color"/>.
+    /// </summary>
+    /// <returns>A <see cref="Microsoft.Xna.Framework.Color"/> representing the same colour as this <see cref="LabColour"/>.</returns>
+    public Color ToXnaColor()
+    {
+        return ToRgb().ToXnaColor();
+    }
+    
+    /// <summary>
+    /// Converts this <see cref="LabColour"/> to a hexadecimal colour string.
+    /// </summary>
+    /// <param name="includeAlpha">If true, the resulting string will include the alpha component; otherwise, it will only include the red, green, and blue components.</param>
+    /// <returns>A hexadecimal colour string representing the same colour as this <see cref="LabColour"/> <b>without</b> a leading "#".</returns>
+    public string ToHexString(bool includeAlpha = true)
+    {
+        return ToRgb().ToHexString(includeAlpha);
+    }
+    
+    public static bool operator ==(LabColour lhs, LabColour rhs)
+    {
+        return lhs.L == rhs.L && lhs.A == rhs.A && lhs.B == rhs.B && lhs.Alpha == rhs.Alpha;
+    }
+
+    public static bool operator !=(LabColour lhs, LabColour rhs)
+    {
+        return !(lhs == rhs);
+    }
+
+    public bool Equals(LabColour other)
+    {
+        return this == other;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is LabColour other)
+        {
+            return this == other;
+        }
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        return (L + ((int)A << 8) + ((int)B << 16) + ((int)Alpha << 24)).GetHashCode();
+    }
+    
+    /// <summary>
+    /// Returns a string representation of the <see cref="LabColour"/> in the format:
+    /// {L: <see cref="L" />, A: <see cref="A" />, B: <see cref="B" />, Alpha: <see cref="Alpha" />}.
+    /// </summary>
+    /// <returns>A string representation of the <see cref="LabColour"/>.</returns>
+    public override string ToString()
+    {
+        return $"{{L: {L}, A: {A}, B: {B}, Alpha: {Alpha}}}";
     }
 }
