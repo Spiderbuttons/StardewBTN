@@ -191,6 +191,11 @@ public readonly struct LabColour : IEquatable<LabColour>
         return ToRgb().ToHexString(includeAlpha);
     }
 
+    /// <summary>
+    /// Calculates the CIEDE2000 colour difference (DeltaE) between this <see cref="LabColour"/> and another <see cref="LabColour"/>.
+    /// </summary>
+    /// <param name="other">The other <see cref="LabColour"/> to compare with this <see cref="LabColour"/>.</param>
+    /// <returns>A decimal value representing the CIEDE2000 colour difference (DeltaE) between the two colours.</returns>
     public decimal CIEDE2000(LabColour other)
     {
         // All painfully implemented from https://en.wikipedia.org/wiki/Color_difference#CIEDE2000
@@ -217,7 +222,7 @@ public readonly struct LabColour : IEquatable<LabColour>
                 goto h2Calculation;
             }
             decimal atan2baOnePrime = (decimal)Math.Atan2((double)B, (double)aOnePrime);
-            if (atan2baOnePrime < 0) atan2baOnePrime += 2 * (decimal)Math.PI; // TODO: Check this.
+            if (atan2baOnePrime < 0) atan2baOnePrime += 2 * (decimal)Math.PI;
             if (atan2baOnePrime >= 0)
             {
                 hOnePrime = atan2baOnePrime;
@@ -235,7 +240,7 @@ public readonly struct LabColour : IEquatable<LabColour>
                 goto deltaHCalculation;
             }
             decimal atan2baTwoPrime = (decimal)Math.Atan2((double)other.B, (double)aTwoPrime);
-            if (atan2baTwoPrime < 0) atan2baTwoPrime += 2 * (decimal)Math.PI; // TODO: Check this.
+            if (atan2baTwoPrime < 0) atan2baTwoPrime += 2 * (decimal)Math.PI;
             if (atan2baTwoPrime >= 0)
             {
                 hTwoPrime = atan2baTwoPrime;
