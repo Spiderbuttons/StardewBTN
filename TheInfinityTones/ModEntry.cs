@@ -255,6 +255,7 @@ namespace TheInfinityTones
                 _storedCustomizationMenu.ResetComponents();
                 _storedCustomizationMenu.populateClickableComponentList();
                 _storedCustomizationMenu = null;
+                _previousPreviewTone = null;
             }
         }
 
@@ -277,8 +278,13 @@ namespace TheInfinityTones
             b.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, SamplerState.PointClamp);
             
             StoredSkinTone.Value = skinTone;
-            if (_previousPreviewTone != skinTone &&
-                Game1.currentGameTime.TotalGameTime.Ticks % 4 == 0)
+            if (_previousPreviewTone is null)
+            {
+                // Gotta do this the first time because if Fashion Sense is installed, it won't draw boots if my prefix
+                // on its ApplyShoeColour prefix doesn't stop it from running. But it needs to be forced to run again here.
+                farmer.FarmerRenderer.MarkSpriteDirty();
+            } else if (_previousPreviewTone != skinTone &&
+                       Game1.currentGameTime.TotalGameTime.Ticks % 4 == 0)
             {
                 Color[] pixelData = new Color[farmer.FarmerRenderer.baseTexture.Width * farmer.FarmerRenderer.baseTexture.Height];
                 farmer.FarmerRenderer.baseTexture.GetData(pixelData);
