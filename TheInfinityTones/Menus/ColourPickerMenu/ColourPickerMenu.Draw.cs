@@ -197,7 +197,10 @@ public partial class ColourPickerMenu
         b.DrawString(
             spriteFont: Game1.dialogueFont,
             text: "Vanilla Skin Tone",
-            position: new Vector2(vanillaTextBounds.X + (vanillaTextBounds.Width - textSize.X * scale) / 2f, vanillaTextBounds.Y + (vanillaTextBounds.Height - textSize.Y * scale) / 1.25f),
+            position: new Vector2(
+                x: vanillaTextBounds.X + (vanillaTextBounds.Width - textSize.X * scale) / 2f,
+                y: vanillaTextBounds.Y + (vanillaTextBounds.Height - textSize.Y * scale)
+            ),
             color: Game1.textColor,
             rotation: 0f,
             origin: Vector2.Zero,

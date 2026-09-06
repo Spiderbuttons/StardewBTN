@@ -451,7 +451,7 @@ public partial class ColourPickerMenu
     {
         Rectangle vanillaTextBounds = GetBottomMenuBounds();
         Vector2 textSize = Game1.smallFont.MeasureString("Vanilla Skin Tone");
-        return Math.Min(vanillaTextBounds.Width / textSize.X, vanillaTextBounds.Height / textSize.Y) * 0.75f / 1.35f;
+        return Math.Min(vanillaTextBounds.Width / textSize.X, vanillaTextBounds.Height / textSize.Y) * 0.75f / 1.25f;
     }
 
     #endregion
