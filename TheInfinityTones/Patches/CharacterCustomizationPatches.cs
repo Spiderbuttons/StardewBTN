@@ -139,6 +139,7 @@ public static class CharacterCustomizationPatches
                 }
                 
                 ModEntry.GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
+                FashionSensePatches.SetSpriteDirtyMethod?.Invoke(null, [ModEntry.GetStoredCustomizationMenu()?._displayFarmer, false]);
                 ModEntry.RestoreCustomizationMenu();
             }, onCancel: (_) =>
             {
@@ -153,6 +154,7 @@ public static class CharacterCustomizationPatches
                 }
                 
                 ModEntry.GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
+                FashionSensePatches.SetSpriteDirtyMethod?.Invoke(null, [ModEntry.GetStoredCustomizationMenu()?._displayFarmer, false]);
                 ModEntry.RestoreCustomizationMenu();
             }, drawPreview: ModEntry.PreviewFarmer);
                     

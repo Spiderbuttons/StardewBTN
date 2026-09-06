@@ -158,6 +158,7 @@ namespace TheInfinityTones
                 }
                 
                 farmer.FarmerRenderer.MarkSpriteDirty();
+                FashionSensePatches.SetSpriteDirtyMethod?.Invoke(null, [farmer, false]);
                 QueuedSkinUpdates.Value.Remove(playerId);
             }
         }

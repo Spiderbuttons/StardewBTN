@@ -18,6 +18,8 @@ public static class FashionSensePatches
     private static MethodInfo? GetBodyFromFacingDirectionMethod;
     private static MethodInfo? ShouldHideLegsMethod;
     
+    public static MethodInfo? SetSpriteDirtyMethod;
+    
     public static void Patch(Harmony harmony)
     {
         if (!ModEntry.ModHelper.ModRegistry.IsLoaded("PeacefulEnd.FashionSense")) return;
@@ -43,6 +45,7 @@ public static class FashionSensePatches
             
             Type fashionSenseType = AccessTools.TypeByName("FashionSense.FashionSense") ?? throw new Exception("Could not find FashionSense type.");
             TextureManagerInstance = AccessTools.Field(fashionSenseType, "textureManager")?.GetValue(null) ?? throw new Exception("Could not find TextureManager instance.");
+            SetSpriteDirtyMethod = AccessTools.Method(fashionSenseType, "SetSpriteDirty") ?? throw new Exception("Could not find SetSpriteDirty method.");
 
             Type bodyContentPackType = AccessTools.TypeByName("FashionSense.Framework.Models.Appearances.Body.BodyContentPack") ?? throw new Exception("Could not find BodyContentPack type.");
             GetBodyFromFacingDirectionMethod = AccessTools.Method(bodyContentPackType, "GetBodyFromFacingDirection") ??
