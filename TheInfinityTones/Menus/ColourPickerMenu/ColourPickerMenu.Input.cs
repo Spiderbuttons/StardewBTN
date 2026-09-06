@@ -156,7 +156,11 @@ public partial class ColourPickerMenu
         {
             _hexInput.Selected = false;
         }
-        
+
+        if (Game1.options.doesInputListContain(Game1.options.menuButton, key) && readyToClose())
+        {
+            _onCancel?.Invoke(GetPickedSkinTone());
+        }
         base.receiveKeyPress(key);
     }
 
