@@ -190,6 +190,131 @@ public readonly struct LabColour : IEquatable<LabColour>
     {
         return ToRgb().ToHexString(includeAlpha);
     }
+
+    public decimal CIEDE2000(LabColour other)
+    {
+        // All painfully implemented from https://en.wikipedia.org/wiki/Color_difference#CIEDE2000
+        
+        LchColour thisLch = ToLch();
+        LchColour otherLch = other.ToLch();
+        decimal deltaL = other.Lightness - Lightness;
+        decimal avgL = (Lightness + other.Lightness) / 2M;
+        decimal avgC = (thisLch.C + otherLch.C) / 2M;
+        decimal avgCPow7 = (decimal)Math.Pow((double)avgC, 7);
+        decimal aPrimeFactor = 1 - (decimal)Math.Sqrt((double)(avgCPow7 / (avgCPow7 + (decimal)Math.Pow(25, 7))));
+        decimal aOnePrime = A + A / 2 * aPrimeFactor;
+        decimal aTwoPrime = other.A + other.A / 2 * aPrimeFactor;
+        decimal cOnePrime = (decimal)Math.Sqrt((double)(aOnePrime * aOnePrime + B * B));
+        decimal cTwoPrime = (decimal)Math.Sqrt((double)(aTwoPrime * aTwoPrime + other.B * other.B));
+        decimal avgCPrime = (cOnePrime + cTwoPrime) / 2M;
+        decimal deltaCPrime = cTwoPrime - cOnePrime;
+        
+        decimal hOnePrime;
+        {
+            if (B == 0 && aOnePrime == 0)
+            {
+                hOnePrime = 0;
+                goto h2Calculation;
+            }
+            decimal atan2baOnePrime = (decimal)Math.Atan2((double)B, (double)aOnePrime);
+            if (atan2baOnePrime < 0) atan2baOnePrime += 2 * (decimal)Math.PI; // TODO: Check this.
+            if (atan2baOnePrime >= 0)
+            {
+                hOnePrime = atan2baOnePrime;
+                goto h2Calculation;
+            }
+            hOnePrime = atan2baOnePrime + 2 * (decimal)Math.PI;
+        }
+        h2Calculation:
+        hOnePrime *= 180M / (decimal)Math.PI; // Back to degrees.
+        decimal hTwoPrime;
+        {
+            if (other.B == 0 && aTwoPrime == 0)
+            {
+                hTwoPrime = 0;
+                goto deltaHCalculation;
+            }
+            decimal atan2baTwoPrime = (decimal)Math.Atan2((double)other.B, (double)aTwoPrime);
+            if (atan2baTwoPrime < 0) atan2baTwoPrime += 2 * (decimal)Math.PI; // TODO: Check this.
+            if (atan2baTwoPrime >= 0)
+            {
+                hTwoPrime = atan2baTwoPrime;
+                goto deltaHCalculation;
+            }
+            hTwoPrime = atan2baTwoPrime + 2 * (decimal)Math.PI;
+        }
+        deltaHCalculation:
+        hTwoPrime *= 180M / (decimal)Math.PI; // Back to degrees.
+        decimal deltaHPrime;
+        {
+            if (cOnePrime == 0 || cTwoPrime == 0)
+            {
+                deltaHPrime = 0;
+                goto bigDeltaHPrime;
+            }
+            
+            if (Math.Abs(hTwoPrime - hOnePrime) <= 180)
+            {
+                deltaHPrime = hTwoPrime - hOnePrime;
+                goto bigDeltaHPrime;
+            }
+            if (hTwoPrime - hOnePrime > 180)
+            {
+                deltaHPrime = hTwoPrime - hOnePrime - 360;
+                goto bigDeltaHPrime;
+            }
+            deltaHPrime = hTwoPrime - hOnePrime + 360;
+        }
+        
+        bigDeltaHPrime:
+        decimal sinFactor = (decimal)Math.Sin((double)(deltaHPrime / 2M * (decimal)(Math.PI / 180)));
+        decimal bigDeltaHPrime = 2 * (decimal)Math.Sqrt((double)(cOnePrime * cTwoPrime)) * sinFactor;
+
+        decimal avgHPrime;
+        {
+            if (cOnePrime == 0 || cTwoPrime == 0)
+            {
+                avgHPrime = hOnePrime + hTwoPrime;
+                goto tCalculation;
+            }
+            if (Math.Abs(hOnePrime - hTwoPrime) <= 180)
+            {
+                avgHPrime = (hOnePrime + hTwoPrime) / 2M;
+                goto tCalculation;
+            }
+            if (Math.Abs(hOnePrime - hTwoPrime) > 180 && hOnePrime + hTwoPrime < 360)
+            {
+                avgHPrime = (hOnePrime + hTwoPrime + 360) / 2M;
+                goto tCalculation;
+            }
+            avgHPrime = (hOnePrime + hTwoPrime - 360) / 2M;
+        }
+        
+        tCalculation:
+        decimal T = 1 - 0.17M * (decimal)Math.Cos((double)((avgHPrime - 30) * (decimal)(Math.PI / 180))) +
+                    0.24M * (decimal)Math.Cos((double)(2 * avgHPrime * (decimal)(Math.PI / 180))) +
+                    0.32M * (decimal)Math.Cos((double)((3 * avgHPrime + 6) * (decimal)(Math.PI / 180))) -
+                    0.20M * (decimal)Math.Cos((double)((4 * avgHPrime - 63) * (decimal)(Math.PI / 180)));
+        decimal sL = 1 + 0.015M * (avgL - 50) * (avgL - 50) / (decimal)Math.Sqrt((double)(20 + (avgL - 50) * (avgL - 50)));
+        decimal sC = 1 + 0.045M * avgCPrime;
+        decimal sH = 1 + 0.015M * avgCPrime * T;
+        
+        decimal rTSqrtFactor = (decimal)Math.Sqrt(Math.Pow((double)avgCPrime, 7) / (Math.Pow((double)avgCPrime, 7) + Math.Pow(25, 7)));
+        decimal rTSinFactor = (decimal)Math.Sin((double)(60 * (decimal)Math.Exp(-(double)((avgHPrime - 275) / 25 * ((avgHPrime - 275) / 25))) * (decimal)(Math.PI / 180)));
+        decimal rT = -2 * rTSqrtFactor * rTSinFactor;
+
+        const decimal kL = 1M;
+        const decimal kC = 1M;
+        const decimal kH = 1M;
+
+        decimal deltaEFirstTerm = deltaL / (kL * sL) * (deltaL / (kL * sL));
+        decimal deltaESecondTerm = deltaCPrime / (kC * sC) * (deltaCPrime / (kC * sC));
+        decimal deltaEThirdTerm = bigDeltaHPrime / (kH * sH) * (bigDeltaHPrime / (kH * sH));
+        decimal deltaEFourthTerm = rT * (deltaCPrime / (kC * sC)) * (bigDeltaHPrime / (kH * sH));
+        
+        decimal deltaE = (decimal)Math.Sqrt((double)(deltaEFirstTerm + deltaESecondTerm + deltaEThirdTerm + deltaEFourthTerm));
+        return deltaE;
+    }
     
     public static bool operator ==(LabColour lhs, LabColour rhs)
     {
