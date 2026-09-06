@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -48,6 +47,7 @@ namespace TheInfinityTones
         public static readonly PerScreen<bool?> StoredDarkSkinToggle = new(createNewState: () => null);
         
         private static CharacterCustomization? _storedCustomizationMenu;
+        private static SkinTone? _previousPreviewTone;
 
         public override void Entry(IModHelper helper)
         {
@@ -81,32 +81,44 @@ namespace TheInfinityTones
         {
             if (e.Button is SButton.F2)
             {
-                Color color = new Color(219, 125, 183);
-                Log.Info($"Color: {color.R}, {color.G}, {color.B}");
-                RgbColour rgb = RgbColour.FromXnaColor(color);
-                Log.Info($"RGB: {rgb.R}, {rgb.G}, {rgb.B}");
-                XyzColour xyz = rgb.ToXyz();
-                Log.Info($"XYZ: {xyz.X}, {xyz.Y}, {xyz.Z}");
-                LabColour lab = xyz.ToLab();
-                Log.Info($"Lab: {lab.Lightness}, {lab.A}, {lab.B}");
-                LchColour lch = lab.ToLch();
-                Log.Info($"Lch: {lch.Lightness}, {lch.C}, {lch.H}");
-                LabColour backToLab = lch.ToLab();
-                Log.Info($"Lab: {backToLab.L}, {backToLab.A}, {backToLab.B}");
-                XyzColour backToXyz = backToLab.ToXyz();
-                Log.Info($"XYZ: {backToXyz.X}, {backToXyz.Y}, {backToXyz.Z}");
-                RgbColour backToRgb = backToXyz.ToRgb();
-                Log.Info($"RGB: {backToRgb.R}, {backToRgb.G}, {backToRgb.B}");
-                Color backToColor = backToRgb.ToXnaColor();
-                Log.Info($"Color: {backToColor.R}, {backToColor.G}, {backToColor.B}");
+                if (Game1.activeClickableMenu is not null) Game1.activeClickableMenu = null;
+                else Game1.activeClickableMenu = new CharacterCustomization(CharacterCustomization.Source.Wizard);
             }
 
             if (e.Button is SButton.F3)
             {
-                LabColour lab = new LabColour(60, 20, 40);
-                Log.Info($"Lab: {lab.Lightness}, {lab.A}, {lab.B}");
-                LchColour lch = LchColour.FromLab(lab);
-                Log.Info($"Lch: {lch.Lightness}, {lch.C}, {lch.H}");
+                LabColour lab1 = new LabColour(35.0831M, -44.1164M, 3.7933M);
+                LabColour lab2 = new LabColour(35.0232M, -40.0716M, 1.5901M);
+                decimal deltaE = lab1.CIEDE2000(lab2);
+                Log.Info($"Delta E (CIEDE2000) between Lab1 and Lab2: {deltaE}");
+            }
+
+            if (e.Button is SButton.F7)
+            {
+                var vanillaTones = SkinTone.VanillaSkinTones;
+                decimal minDeltaE = decimal.MaxValue;
+                SkinTone? closestTone = null;
+                int closestIndex = -1;
+                LabColour referenceColour = LabColour.FromRgb(new RgbColour(vanillaTones[6].Lightest.R * 0.99M,
+                    vanillaTones[6].Lightest.G * 0.99M, vanillaTones[6].Lightest.B * 0.99M));
+                for (var index = 0; index < vanillaTones.Count; index++)
+                {
+                    var tone = vanillaTones[index];
+                    LabColour sampleColour = LabColour.FromXnaColor(tone.Lightest);
+                    decimal deltaE = sampleColour.CIEDE2000(referenceColour);
+                    Log.Info($"Delta E (CIEDE2000) between tone {tone} and target: {deltaE}");
+                    if (deltaE < minDeltaE)
+                    {
+                        minDeltaE = deltaE;
+                        closestTone = tone;
+                        closestIndex = index;
+                    }
+                }
+
+                if (closestTone is not null)
+                {
+                    Log.Info($"Closest tone to target: {closestTone} ({closestIndex}) with Delta E: {minDeltaE}");
+                }
             }
 
             if (!Context.IsWorldReady)
@@ -265,7 +277,7 @@ namespace TheInfinityTones
             b.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, SamplerState.PointClamp);
             
             StoredSkinTone.Value = skinTone;
-            farmer.FarmerRenderer.MarkSpriteDirty();
+            if (_previousPreviewTone != skinTone) farmer.FarmerRenderer.MarkSpriteDirty();
             float scale = Math.Min(bounds.Width / 72f, bounds.Height / 144f);
             drawFarmer(
                 b: b,
@@ -277,6 +289,7 @@ namespace TheInfinityTones
                 scale: scale,
                 who: farmer
             );
+            _previousPreviewTone = skinTone;
             
             b.End();
             b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
@@ -306,6 +319,7 @@ namespace TheInfinityTones
             {
                 pantsRect.X += 96;
             }
+            
             if (renderer.skin.Value != -12345 || who.pantsItem.Value != null)
             {
                 b.Draw(texture, position + renderer.positionOffset, pantsRect, Utility.MakeCompletelyOpaque(who.GetPantsColor()), rotation, Vector2.Zero, scaledPixelZoom, animationFrame.flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, FarmerRenderer.GetLayerDepth(layerDepth, who.FarmerSprite.CurrentAnimationFrame.frame == 5 ? FarmerRenderer.FarmerSpriteLayers.PantsPassedOut : FarmerRenderer.FarmerSpriteLayers.Pants));
