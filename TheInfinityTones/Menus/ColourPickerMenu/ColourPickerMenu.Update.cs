@@ -339,5 +339,23 @@ public partial class ColourPickerMenu
         Color maxValue = new HsvColour(_hue[_activeColourIndex], _saturation[_activeColourIndex], 100).ToXnaColor();
         _sliders["Saturation"].UpdateColours(minSaturation, maxSaturation);
         _sliders["Value"].UpdateColours(minValue, maxValue);
+
+        if (_previousColourCache != PickedColourHsv)
+        {
+            UpdateVanillaEquivalentSlider();
+            _previousColourCache = PickedColourHsv;
+        }
+    }
+
+    public void UpdateVanillaEquivalentSlider()
+    {
+        UpdateClosestVanillaEquivalentColour();
+        VanillaEquivalentSlider.UpdateColours(_closestVanillaEquivalent, _closestVanillaEquivalent);
+    }
+    
+    private void UpdateClosestVanillaEquivalentColour()
+    {
+        var (tone, _) = GetPickedSkinTone().GetClosestVanillaSkinTone();
+        _closestVanillaEquivalent = tone.Lightest;
     }
 }

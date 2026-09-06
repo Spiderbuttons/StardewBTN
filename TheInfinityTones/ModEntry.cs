@@ -277,7 +277,15 @@ namespace TheInfinityTones
             b.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, SamplerState.PointClamp);
             
             StoredSkinTone.Value = skinTone;
-            if (_previousPreviewTone != skinTone) farmer.FarmerRenderer.MarkSpriteDirty();
+            if (_previousPreviewTone != skinTone &&
+                Game1.currentGameTime.TotalGameTime.Ticks % 4 == 0)
+            {
+                Color[] pixelData = new Color[farmer.FarmerRenderer.baseTexture.Width * farmer.FarmerRenderer.baseTexture.Height];
+                farmer.FarmerRenderer.baseTexture.GetData(pixelData);
+                farmer.FarmerRenderer.ApplySkinColor(farmer.FarmerRenderer.textureName.Value, pixelData);
+                farmer.FarmerRenderer.baseTexture.SetData(pixelData);
+                _previousPreviewTone = skinTone;
+            }
             float scale = Math.Min(bounds.Width / 72f, bounds.Height / 144f);
             drawFarmer(
                 b: b,
@@ -289,7 +297,6 @@ namespace TheInfinityTones
                 scale: scale,
                 who: farmer
             );
-            _previousPreviewTone = skinTone;
             
             b.End();
             b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);

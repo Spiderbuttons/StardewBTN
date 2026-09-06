@@ -428,4 +428,31 @@ public partial class ColourPickerMenu
         return Math.Min(scaleX, scaleY);
     }
     #endregion
+    
+    #region BottomMenu
+    // * BOTTOM MENU * //
+    private Rectangle GetBottomMenuBounds()
+    {
+        Rectangle centerMenuBounds = new Rectangle(
+            x: (int)_colourWheel.CenterPoint.X - width / 2 - borderWidth / 2,
+            y: (int)_colourWheel.CenterPoint.Y - width / 2 - borderWidth,
+            width: width + borderWidth,
+            height: height + borderWidth
+        );
+        return new Rectangle(
+            x: (int)(_screenCenter.X - width / 2f),
+            y: (int)(centerMenuBounds.Bottom + borderWidth * 1.5f),
+            width: width,
+            height: (int)(height * 0.125f)
+        );
+    }
+    
+    private float GetVanillaEquivalentTextScale()
+    {
+        Rectangle vanillaTextBounds = GetBottomMenuBounds();
+        Vector2 textSize = Game1.smallFont.MeasureString("Vanilla Skin Tone");
+        return Math.Min(vanillaTextBounds.Width / textSize.X, vanillaTextBounds.Height / textSize.Y) * 0.75f / 1.35f;
+    }
+
+    #endregion
 }

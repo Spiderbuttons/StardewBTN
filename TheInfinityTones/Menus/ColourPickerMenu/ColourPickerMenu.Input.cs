@@ -271,7 +271,11 @@ public partial class ColourPickerMenu
             _autoPalette = !_autoPalette;
             ModEntry.StoredPaletteToggle.Value = _autoPalette;
             _autoPaletteToggle.sourceRect.X = (_autoPalette ? 236 : 227);
-            if (_autoPalette) _activeColourIndex = 0;
+            if (_autoPalette)
+            {
+                _activeColourIndex = 0;
+                _previousColourCache = null;
+            }
             Game1.playSound("drumkit6");
         }
         
@@ -302,6 +306,7 @@ public partial class ColourPickerMenu
             int b = rng.Next(0, 256);
             Color newColour = new Color(r, g, b, PickedColourRgb.ToXnaColor().A);
             SetColour(HsvColour.FromXnaColor(newColour));
+            _previousColourCache = null;
             Game1.playSound("drumkit6");
         }
     }

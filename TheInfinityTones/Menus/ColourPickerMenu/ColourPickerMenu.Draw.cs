@@ -44,6 +44,7 @@ public partial class ColourPickerMenu
         drawLeftMenu(b);
         drawRightMenu(b);
         drawCenterMenu(b);
+        drawBottomMenu(b);
 
         drawMouse(b);
     }
@@ -173,6 +174,37 @@ public partial class ColourPickerMenu
         drawRightHexInput(b);
         drawRightAutoPaletteToggle(b);
         drawRightDarkSkinToggle(b);
+    }
+
+    private void drawBottomMenu(SpriteBatch b)
+    {
+        Rectangle bottomMenuBounds = GetBottomMenuBounds();
+        
+        Game1.DrawBox(
+            x: bottomMenuBounds.X,
+            y: bottomMenuBounds.Y,
+            width: bottomMenuBounds.Width,
+            height: bottomMenuBounds.Height,
+            color: _closestVanillaEquivalent
+        );
+        
+        VanillaEquivalentSlider.UpdateBarBounds(GetBottomMenuBounds());
+        VanillaEquivalentSlider.draw(b, seeThrough: false);
+        
+        Rectangle vanillaTextBounds = GetBottomMenuBounds();
+        float scale = GetVanillaEquivalentTextScale();
+        Vector2 textSize = Game1.dialogueFont.MeasureString("Vanilla Skin Tone");
+        b.DrawString(
+            spriteFont: Game1.dialogueFont,
+            text: "Vanilla Skin Tone",
+            position: new Vector2(vanillaTextBounds.X + (vanillaTextBounds.Width - textSize.X * scale) / 2f, vanillaTextBounds.Y + (vanillaTextBounds.Height - textSize.Y * scale) / 1.25f),
+            color: Game1.textColor,
+            rotation: 0f,
+            origin: Vector2.Zero,
+            scale: scale,
+            effects: SpriteEffects.None,
+            layerDepth: 1f
+        );
     }
 
     private void drawRightSliders(SpriteBatch b)

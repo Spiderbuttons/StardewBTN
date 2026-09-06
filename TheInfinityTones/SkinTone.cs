@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using TheInfinityTones.Helpers;
+using TheInfinityTones.Helpers.ColourSpace;
 
 namespace TheInfinityTones;
 
@@ -55,6 +56,27 @@ public struct SkinTone(Color darkest, Color medium, Color lightest, bool isDark)
             return VanillaSkinTones.ElementAtOrDefault(who.skin.Value);
         }
         return FromString(skinToneString);
+    }
+
+    public (SkinTone, int) GetClosestVanillaSkinTone()
+    {
+        LabColour thisLab = LabColour.FromXnaColor(Lightest);
+        int closestIndex = -1;
+        decimal closestDistance = decimal.MaxValue;
+
+        for (int i = 0; i < VanillaSkinTones.Count; i++)
+        {
+            SkinTone vanillaTone = VanillaSkinTones[i];
+            LabColour vanillaLab = LabColour.FromXnaColor(vanillaTone.Lightest);
+            decimal distance = thisLab.CIEDE2000(vanillaLab);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestIndex = i;
+            }
+        }
+
+        return (VanillaSkinTones[closestIndex], closestIndex);
     }
 
     public override string ToString()

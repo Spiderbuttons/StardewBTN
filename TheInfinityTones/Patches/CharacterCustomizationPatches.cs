@@ -131,6 +131,12 @@ public static class CharacterCustomizationPatches
                     Game1.player.skin.Value = i;
                     break;
                 }
+
+                if (ModEntry.StoredSkinTone.Value is not null)
+                {
+                    var (_, index) = skinTone.GetClosestVanillaSkinTone();
+                    Game1.player.skin.Value = index;
+                }
                 
                 ModEntry.GetStoredCustomizationMenu()?._displayFarmer.FarmerRenderer.MarkSpriteDirty();
                 ModEntry.RestoreCustomizationMenu();
@@ -156,6 +162,7 @@ public static class CharacterCustomizationPatches
             colourPicker.ShowPreview();
             colourPicker.ShowAdvancedControls();
             colourPicker.update(Game1.currentGameTime);
+            colourPicker.UpdateVanillaEquivalentSlider();
             if (Game1.options.SnappyMenus) colourPicker.snapToDefaultClickableComponent();
             
             if (Game1.activeClickableMenu is TitleMenu) TitleMenu.subMenu = colourPicker;

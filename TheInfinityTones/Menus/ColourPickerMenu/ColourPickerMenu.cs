@@ -240,7 +240,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
 
     // Reusing the ColourSlider because it already draws the border I want.
     private readonly ColourSlider ToneSlider = new(
-        name: "PickedColourSlider",
+        name: "ToneSlider",
         getBackingValue: null,
         setBackingValue: null,
         min: 0,
@@ -257,7 +257,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     };
     
     private readonly ColourSlider ShadingSlider = new(
-        name: "PickedColourSlider",
+        name: "ShadingSlider",
         getBackingValue: null,
         setBackingValue: null,
         min: 0,
@@ -275,7 +275,7 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     };
     
     private readonly ColourSlider OutlineSlider = new(
-        name: "PickedColourSlider",
+        name: "OutlineSlider",
         getBackingValue: null,
         setBackingValue: null,
         min: 0,
@@ -291,6 +291,26 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         rightNeighborID = ClickableComponent.CUSTOM_SNAP_BEHAVIOR,
         IsHorizontal = true
     };
+    
+    private readonly ColourSlider VanillaEquivalentSlider = new(
+        name: "VanillaEquivalentSlider",
+        getBackingValue: null,
+        setBackingValue: null,
+        min: 0,
+        max: 1,
+        bounds: new Rectangle(0, 0, 0, 0),
+        colourOne: Color.White,
+        colourTwo: Color.White
+    )
+    {
+        myID = ClickableComponent.ID_ignore,
+        IsHorizontal = true
+    };
+
+    // This ain't a property because the calculation isn't the cheapest thing so I don't wanna be recalculating it all the time.
+    private Color _closestVanillaEquivalent;
+
+    private HsvColour? _previousColourCache;
     
     private float timeUntilNextSound = 50f;
 
@@ -495,6 +515,19 @@ public sealed partial class ColourPickerMenu : IClickableMenu
             lightest: pickedColours[2].ToXnaColor(),
             isDark: _darkSkin
         );
+    }
+
+    public SkinTone? GetClosestVanillaSkintone()
+    {
+        var tones = SkinTone.VanillaSkinTones;
+        foreach (var tone in tones)
+        {
+            if (tone.Lightest == _closestVanillaEquivalent)
+            {
+                return tone;
+            }
+        }
+        return null;
     }
 
     public void ShowPreview()
