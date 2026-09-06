@@ -174,6 +174,13 @@ public static class CharacterCustomizationPatches
     private static void selectionClick_Postfix(string name)
     {
         if (name is not "Skin") return;
+
+        if (ModEntry.StoredSkinTone.Value is {  } tone)
+        {
+            var (_, index) = tone.GetClosestVanillaSkinTone();
+            Game1.player.changeSkinColor(index);
+        }
+        
         ModEntry.StoredSkinTone.Value = null;
         ModEntry.StoredPaletteToggle.Value = null;
         ModEntry.StoredDarkSkinToggle.Value = null;
