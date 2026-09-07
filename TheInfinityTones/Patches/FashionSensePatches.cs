@@ -17,7 +17,7 @@ public static class FashionSensePatches
     private static MethodInfo? GetBodyFromFacingDirectionMethod;
     private static MethodInfo? ShouldHideLegsMethod;
     
-    public static object? TextureManagerInstance;
+    private static object? TextureManagerInstance;
     public static MethodInfo? SetSpriteDirtyMethod;
     
     public static void Patch(Harmony harmony)

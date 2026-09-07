@@ -16,9 +16,9 @@ namespace TheInfinityTones.Patches;
 // https://www.nexusmods.com/stardewvalley/mods/46160
 public static class SaveAndLoadCharacterPresetsPatches
 {
-    private static Type PresetSlotType;
-    private static MethodInfo PresetSlotSummaryGetter;
-    private static MethodInfo PresetSummaryIdGetter;
+    private static Type? PresetSlotType;
+    private static MethodInfo? PresetSlotSummaryGetter;
+    private static MethodInfo? PresetSummaryIdGetter;
 
     private static IModHelper? SaveAndLoadPresetsHelper => SCore.Instance.ModRegistry.Get("dylanjames.charactercreation")?.Mod?.Helper ?? null;
     
@@ -65,7 +65,7 @@ public static class SaveAndLoadCharacterPresetsPatches
         string topFolder = Path.GetDirectoryName(relativePath) ?? string.Empty;
         string fileName = Path.GetFileName(relativePath);
         string skinDataPath = Path.Combine(topFolder, ModEntry.UNIQUE_ID.ToLowerInvariant(), fileName);
-        SaveAndLoadPresetsHelper?.Data.WriteJsonFile(skinDataPath, ModEntry.StoredSkinTone.Value.ToString());
+        SaveAndLoadPresetsHelper.Data.WriteJsonFile(skinDataPath, ModEntry.StoredSkinTone.Value.ToString());
     }
 
     private static void FarmerPresetLoadMenu_LoadPreset_Postfix(object[] __args)
@@ -73,8 +73,8 @@ public static class SaveAndLoadCharacterPresetsPatches
         if (SaveAndLoadPresetsHelper is null || __args[0].GetType() != PresetSlotType) return;
         
         var presetSlot = __args[0];
-        var summary = PresetSlotSummaryGetter.Invoke(presetSlot, null);
-        var presetId = (string?)PresetSummaryIdGetter.Invoke(summary, null);
+        var summary = PresetSlotSummaryGetter?.Invoke(presetSlot, null);
+        var presetId = (string?)PresetSummaryIdGetter?.Invoke(summary, null);
         
         if (string.IsNullOrEmpty(presetId)) return;
         

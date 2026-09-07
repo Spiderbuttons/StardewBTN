@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
-using TheInfinityTones.Helpers;
 using TheInfinityTones.Helpers.ColourSpace;
 
 namespace TheInfinityTones;
@@ -44,7 +42,7 @@ public struct SkinTone(Color darkest, Color medium, Color lightest, bool isDark)
     public Color Lightest = lightest;
     public readonly bool IsDarkSkin = isDark;
 
-    public SkinTone(uint darkest, uint medium, uint lightest, bool isDarkSkin) : this(new Color(darkest), new Color(medium), new Color(lightest), isDarkSkin) { }
+    private SkinTone(uint darkest, uint medium, uint lightest, bool isDarkSkin) : this(new Color(darkest), new Color(medium), new Color(lightest), isDarkSkin) { }
     
     public static SkinTone GetSkinToneFromFarmer(Farmer who)
     {
