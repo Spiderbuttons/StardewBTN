@@ -12,7 +12,6 @@ using StardewValley;
 using StardewValley.Menus;
 using TheInfinityTones.Apis;
 using TheInfinityTones.Helpers;
-using TheInfinityTones.Helpers.ColourSpace;
 using TheInfinityTones.Menus.ColourPickerMenu;
 using TheInfinityTones.Patches;
 
@@ -88,8 +87,8 @@ namespace TheInfinityTones
         {
             if (e.Button is SButton.F2)
             {
-                if (Game1.activeClickableMenu is not null) Game1.activeClickableMenu = null;
-                else Game1.activeClickableMenu = new CharacterCustomization(CharacterCustomization.Source.Wizard);
+                var thing = AccessTools.Method(typeof(IDataHelper), nameof(IDataHelper.WriteJsonFile));
+                Log.Info(thing);
             }
 
             if (!Context.IsWorldReady)
