@@ -29,7 +29,6 @@ namespace TheInfinityTones
                 field = new Effect(Game1.graphics.GraphicsDevice, stream);
                 return field;
             }
-            set;
         }
         
         internal static string UNIQUE_ID => Manifest.UniqueID;
@@ -48,8 +47,8 @@ namespace TheInfinityTones
         
         private static CharacterCustomization? _storedCustomizationMenu;
         private static SkinTone? _previousPreviewTone;
-        
-        internal static IFashionSense? FashionSenseApi { get; private set; }
+
+        private static IFashionSense? FashionSenseApi { get; set; }
 
         public override void Entry(IModHelper helper)
         {
@@ -73,26 +72,12 @@ namespace TheInfinityTones
                 original: AccessTools.Method(typeof(TitleMenu), nameof(TitleMenu.backButtonPressed)),
                 prefix: new HarmonyMethod(typeof(ModEntry), nameof(TitleMenu_backButtonPressed_Prefix))
             );
-
-            Helper.Events.Input.ButtonPressed += OnButtonPressed;
+            
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
             Helper.Events.GameLoop.OneSecondUpdateTicked += OnOneSecondUpdateTicked;
             Helper.Events.Multiplayer.PeerConnected += OnPeerConnected;
             Helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
-            Helper.Events.Content.AssetsInvalidated += OnAssetsInvalidated;
-        }
-
-        private static void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
-        {
-            if (e.Button is SButton.F2)
-            {
-                var thing = AccessTools.Method(typeof(IDataHelper), nameof(IDataHelper.WriteJsonFile));
-                Log.Info(thing);
-            }
-
-            if (!Context.IsWorldReady)
-                return;
         }
 
         private static void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
@@ -175,14 +160,6 @@ namespace TheInfinityTones
             ModHelper.Multiplayer.SendMessage(newTone.ToString() ?? "", "SkinChange");
         }
 
-        private static void OnAssetsInvalidated(object? sender, AssetsInvalidatedEventArgs e)
-        {
-            if (e.NamesWithoutLocale.Any(asset => asset.IsEquivalentTo("Characters/Farmer/skinColors")))
-            {
-                SkinTone.VanillaSkinTones = null!;
-            }
-        }
-
         private static void TitleMenu_overrideSnappyMenuCursorMovementBan_Postfix(ref bool __result)
         {
             if (TitleMenu.subMenu is ColourPickerMenu picker)
@@ -191,7 +168,7 @@ namespace TheInfinityTones
             }
         }
         
-        private static bool TitleMenu_backButtonPressed_Prefix(TitleMenu __instance)
+        private static bool TitleMenu_backButtonPressed_Prefix()
         {
             if (TitleMenu.subMenu is not ColourPickerMenu cMenu || !cMenu.readyToClose()) return true;
             
@@ -237,7 +214,7 @@ namespace TheInfinityTones
             };
         }
 
-        public static void ResetAllEquippedFashionSenseTextures(Farmer? who)
+        private static void ResetAllEquippedFashionSenseTextures(Farmer? who)
         {
             if (FashionSenseApi is null || who is null) return;
             foreach (var type in Enum.GetValues(typeof(IFashionSense.Type)).Cast<IFashionSense.Type>())
