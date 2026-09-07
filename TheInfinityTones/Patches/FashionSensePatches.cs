@@ -81,7 +81,7 @@ public static class FashionSensePatches
             }
         }
         
-        if (who.modData["FashionSense.CustomShoes.Id"] == "Override Shoe Color" && ShouldHideLegsMethod?.Invoke(null, [who, who.FacingDirection]) is false)
+        if (who.modData.TryGetValue("FashionSense.CustomShoes.Id", out var val) && val == "Override Shoe Color" && ShouldHideLegsMethod?.Invoke(null, [who, who.FacingDirection]) is false)
         {
             return true;
         }
