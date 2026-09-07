@@ -2,8 +2,8 @@
     "Name": "The Infinity Tones",
     "Author": "Spiderbuttons",
     "Version": "1.0.0",
-    "Description": "Choose your skin tone from a normal colour picker, rather than from a list of 24.",
+    "Description": "Choose any colour you want for your skin tone. No longer are you stuck choosing from a list of 24 preset tones.",
     "UniqueID": "Spiderbuttons.TheInfinityTones",
     "EntryDll": "TheInfinityTones.dll",
-    "UpdateKeys": []
+    "UpdateKeys": [ "Nexus:51901" ]
 }
