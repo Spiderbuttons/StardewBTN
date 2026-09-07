@@ -1,3 +1,11 @@
 ﻿{
-  "Key": "Value"
+  "Tone": "Tone",
+  "Shading": "Shading",
+  "Outline": "Outline",
+  
+  "AutoPalette": "Auto Palette",
+  "DarkSkin": "Dark Skin",
+  "DarkSkinTooltip": "Affects baby genetics.",
+  
+  "VanillaSkinTone": "Vanilla Skin Tone"
 }

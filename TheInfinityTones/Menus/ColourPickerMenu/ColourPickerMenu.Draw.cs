@@ -45,6 +45,11 @@ public partial class ColourPickerMenu
         drawRightMenu(b);
         drawCenterMenu(b);
         drawBottomMenu(b);
+        
+        if (!string.IsNullOrWhiteSpace(hoverText))
+        {
+            drawHoverText(b, hoverText, Game1.smallFont);
+        }
 
         drawMouse(b);
     }
@@ -67,7 +72,7 @@ public partial class ColourPickerMenu
         float scaleMultiplier = (float)(1.0 + 0.05 * Math.Sin(Game1.currentGameTime.TotalGameTime.TotalSeconds * 4.0));
         b.DrawString(
             spriteFont: Game1.smallFont,
-            text: "Tone",
+            text: i18n.Tone(),
             position: new Vector2(toneTextBounds.X, toneTextBounds.Y),
             color: Game1.textColor,
             rotation: 0f,
@@ -81,7 +86,7 @@ public partial class ColourPickerMenu
         Rectangle shadingTextBounds = GetColourTextBounds(1);
         b.DrawString(
             spriteFont: Game1.smallFont,
-            text: "Shading",
+            text: i18n.Shading(),
             position: new Vector2(shadingTextBounds.X, shadingTextBounds.Y),
             color: Game1.textColor,
             rotation: 0f,
@@ -109,7 +114,7 @@ public partial class ColourPickerMenu
         Rectangle outlineTextBounds = GetColourTextBounds(2);
         b.DrawString(
             spriteFont: Game1.smallFont,
-            text: "Outline",
+            text: i18n.Outline(),
             position: new Vector2(outlineTextBounds.X, outlineTextBounds.Y),
             color: Game1.textColor,
             rotation: 0f,
@@ -193,10 +198,10 @@ public partial class ColourPickerMenu
         
         Rectangle vanillaTextBounds = GetBottomMenuBounds();
         float scale = GetVanillaEquivalentTextScale();
-        Vector2 textSize = Game1.dialogueFont.MeasureString("Vanilla Skin Tone");
+        Vector2 textSize = Game1.dialogueFont.MeasureString(i18n.VanillaSkinTone());
         b.DrawString(
             spriteFont: Game1.dialogueFont,
-            text: "Vanilla Skin Tone",
+            text: i18n.VanillaSkinTone(),
             position: new Vector2(
                 x: vanillaTextBounds.X + (vanillaTextBounds.Width - textSize.X * scale) / 2f,
                 y: vanillaTextBounds.Y + (vanillaTextBounds.Height - textSize.Y * scale)
@@ -245,7 +250,7 @@ public partial class ColourPickerMenu
         Rectangle hexInputBounds = GetHexInputBounds();
         drawHeader(
             b: b,
-            header: "Auto Palette",
+            header: i18n.AutoPalette(),
             bounds: new Rectangle(
                 x: hexInputBounds.X,
                 y: autoPaletteHeaderBounds.Y + 2,
@@ -263,7 +268,7 @@ public partial class ColourPickerMenu
         Rectangle hexInputBounds = GetHexInputBounds();
         drawHeader(
             b: b,
-            header: "Dark Skin",
+            header: i18n.DarkSkin(),
             bounds: new Rectangle(
                 x: hexInputBounds.X,
                 y: darkSkinHeaderBounds.Y + 2,

@@ -86,9 +86,9 @@ public partial class ColourPickerMenu
         Rectangle colourBarBounds = GetPickedColourBounds(colourIndex);
         string text = colourIndex switch
         {
-            0 => "Tone",
-            1 => "Shading",
-            2 => "Outline",
+            0 => i18n.Tone(),
+            1 => i18n.Shading(),
+            2 => i18n.Outline(),
             _ => throw new ArgumentOutOfRangeException(nameof(colourIndex), "Colour index must be 0, 1, or 2.")
         };
         Vector2 textSize = Game1.smallFont.MeasureString(text);
@@ -450,7 +450,7 @@ public partial class ColourPickerMenu
     private float GetVanillaEquivalentTextScale()
     {
         Rectangle vanillaTextBounds = GetBottomMenuBounds();
-        Vector2 textSize = Game1.smallFont.MeasureString("Vanilla Skin Tone");
+        Vector2 textSize = Game1.smallFont.MeasureString(i18n.VanillaSkinTone());
         return Math.Min(vanillaTextBounds.Width / textSize.X, vanillaTextBounds.Height / textSize.Y) * 0.75f / 1.25f;
     }
 

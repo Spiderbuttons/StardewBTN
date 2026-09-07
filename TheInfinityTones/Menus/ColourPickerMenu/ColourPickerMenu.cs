@@ -201,6 +201,8 @@ public sealed partial class ColourPickerMenu : IClickableMenu
     private bool _autoPalette;
     private bool _darkSkin;
 
+    private string hoverText = string.Empty;
+
     private ClickableTextureComponent _autoPaletteToggle = new(
         name: "AutoPaletteToggle",
         bounds: Rectangle.Empty,

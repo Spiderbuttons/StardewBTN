@@ -88,45 +88,6 @@ namespace TheInfinityTones
                 else Game1.activeClickableMenu = new CharacterCustomization(CharacterCustomization.Source.Wizard);
             }
 
-            if (e.Button is SButton.F3)
-            {
-                foreach (var farmer in Game1.getOnlineFarmers())
-                {
-                    farmer.FarmerRenderer.MarkSpriteDirty();
-                    FashionSensePatches.SetSpriteDirtyMethod?.Invoke(null, [farmer, false]);
-                    ResetAllEquippedFashionSenseTextures(farmer);
-                    farmer.modData.Pairs.LogPairs();
-                }
-            }
-
-            if (e.Button is SButton.F7)
-            {
-                var vanillaTones = SkinTone.VanillaSkinTones;
-                decimal minDeltaE = decimal.MaxValue;
-                SkinTone? closestTone = null;
-                int closestIndex = -1;
-                LabColour referenceColour = LabColour.FromRgb(new RgbColour(vanillaTones[6].Lightest.R * 0.99M,
-                    vanillaTones[6].Lightest.G * 0.99M, vanillaTones[6].Lightest.B * 0.99M));
-                for (var index = 0; index < vanillaTones.Count; index++)
-                {
-                    var tone = vanillaTones[index];
-                    LabColour sampleColour = LabColour.FromXnaColor(tone.Lightest);
-                    decimal deltaE = sampleColour.CIEDE2000(referenceColour);
-                    Log.Info($"Delta E (CIEDE2000) between tone {tone} and target: {deltaE}");
-                    if (deltaE < minDeltaE)
-                    {
-                        minDeltaE = deltaE;
-                        closestTone = tone;
-                        closestIndex = index;
-                    }
-                }
-
-                if (closestTone is not null)
-                {
-                    Log.Info($"Closest tone to target: {closestTone} ({closestIndex}) with Delta E: {minDeltaE}");
-                }
-            }
-
             if (!Context.IsWorldReady)
                 return;
         }

@@ -328,5 +328,7 @@ public partial class ColourPickerMenu
         _cancelButton.tryHover(x, y, maxScaleIncrease: 0.1f / 4f);
         _confirmButton.tryHover(x, y, maxScaleIncrease: 0.1f / 4f);
         _randomHexButton.tryHover(x, y);
+
+        hoverText = _darkSkinToggle.containsPoint(x, y) ? i18n.DarkSkinTooltip() : string.Empty;
     }
 }
