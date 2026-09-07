@@ -640,6 +640,18 @@ public sealed partial class ColourPickerMenu : IClickableMenu
         _alpha[_activeColourIndex] = alpha;
     }
 
+    public void Confirm()
+    {
+        _onConfirm?.Invoke(GetPickedSkinTone());
+        exitThisMenu();
+    }
+
+    public void Cancel()
+    {
+        _onCancel?.Invoke(GetPickedSkinTone());
+        exitThisMenu();
+    }
+
     public override void cleanupBeforeExit()
     {
         base.cleanupBeforeExit();

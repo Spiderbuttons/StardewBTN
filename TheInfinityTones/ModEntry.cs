@@ -70,6 +70,10 @@ namespace TheInfinityTones
                 original: AccessTools.Method(typeof(TitleMenu), nameof(TitleMenu.overrideSnappyMenuCursorMovementBan)),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(TitleMenu_overrideSnappyMenuCursorMovementBan_Postfix))
             );
+            Harmony.Patch(
+                original: AccessTools.Method(typeof(TitleMenu), nameof(TitleMenu.backButtonPressed)),
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(TitleMenu_backButtonPressed_Prefix))
+            );
 
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
@@ -186,6 +190,15 @@ namespace TheInfinityTones
             {
                 __result = picker.overrideSnappyMenuCursorMovementBan();
             }
+        }
+        
+        private static bool TitleMenu_backButtonPressed_Prefix(TitleMenu __instance)
+        {
+            if (TitleMenu.subMenu is not ColourPickerMenu cMenu || !cMenu.readyToClose()) return true;
+            
+            cMenu.Cancel();
+            Game1.playSound("bigDeSelect");
+            return false;
         }
         
         private static void Game1_ResetGameStateOnTitleScreen_Postfix()
