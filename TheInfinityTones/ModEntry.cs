@@ -106,6 +106,11 @@ namespace TheInfinityTones
                     Log.Error($"Failed to get Fashion Sense API: {ex}");
                 }
             }
+            
+            if (ModHelper.ModRegistry.IsLoaded("dylanjames.charactercreation"))
+            {
+                SaveAndLoadCharacterPresetsPatches.Patch(Harmony);
+            }
         }
 
         private static void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
