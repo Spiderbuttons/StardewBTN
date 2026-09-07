@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using System.IO;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -10,6 +10,7 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Menus;
+using TheInfinityTones.Apis;
 using TheInfinityTones.Helpers;
 using TheInfinityTones.Helpers.ColourSpace;
 using TheInfinityTones.Menus.ColourPickerMenu;
@@ -48,6 +49,8 @@ namespace TheInfinityTones
         
         private static CharacterCustomization? _storedCustomizationMenu;
         private static SkinTone? _previousPreviewTone;
+        
+        internal static IFashionSense? FashionSenseApi { get; private set; }
 
         public override void Entry(IModHelper helper)
         {
@@ -87,10 +90,13 @@ namespace TheInfinityTones
 
             if (e.Button is SButton.F3)
             {
-                LabColour lab1 = new LabColour(35.0831M, -44.1164M, 3.7933M);
-                LabColour lab2 = new LabColour(35.0232M, -40.0716M, 1.5901M);
-                decimal deltaE = lab1.CIEDE2000(lab2);
-                Log.Info($"Delta E (CIEDE2000) between Lab1 and Lab2: {deltaE}");
+                foreach (var farmer in Game1.getOnlineFarmers())
+                {
+                    farmer.FarmerRenderer.MarkSpriteDirty();
+                    FashionSensePatches.SetSpriteDirtyMethod?.Invoke(null, [farmer, false]);
+                    ResetAllEquippedFashionSenseTextures(farmer);
+                    farmer.modData.Pairs.LogPairs();
+                }
             }
 
             if (e.Button is SButton.F7)
@@ -130,6 +136,14 @@ namespace TheInfinityTones
             if (ModHelper.ModRegistry.IsLoaded("PeacefulEnd.FashionSense"))
             {
                 FashionSensePatches.Patch(Harmony);
+                try
+                {
+                    FashionSenseApi = ModHelper.ModRegistry.GetApi<IFashionSense>("PeacefulEnd.FashionSense") ?? throw new Exception("Registry returned null for Fashion Sense API.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Failed to get Fashion Sense API: {ex}");
+                }
             }
         }
 
@@ -158,7 +172,7 @@ namespace TheInfinityTones
                 }
                 
                 farmer.FarmerRenderer.MarkSpriteDirty();
-                FashionSensePatches.SetSpriteDirtyMethod?.Invoke(null, [farmer, false]);
+                ResetAllEquippedFashionSenseTextures(farmer);
                 QueuedSkinUpdates.Value.Remove(playerId);
             }
         }
@@ -243,6 +257,17 @@ namespace TheInfinityTones
                 2 => (StoredSkinTone.Value ?? SkinTone.VanillaSkinTones[0]).Lightest,
                 _ => throw new ArgumentOutOfRangeException(nameof(column), column, "Column must be 0, 1, or 2.")
             };
+        }
+
+        public static void ResetAllEquippedFashionSenseTextures(Farmer? who)
+        {
+            if (FashionSenseApi is null || who is null) return;
+            foreach (var type in Enum.GetValues(typeof(IFashionSense.Type)).Cast<IFashionSense.Type>())
+            {
+                var appearance = FashionSenseApi.GetCurrentAppearanceId(type, Game1.player);
+                if (!appearance.Key) continue;
+                FashionSenseApi.ResetAppearanceTexture(FashionSenseApi.GetCurrentAppearanceId(type, who).Value, Manifest);
+            }
         }
         
         public static void RestoreCustomizationMenu()

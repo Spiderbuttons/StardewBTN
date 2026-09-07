@@ -13,11 +13,11 @@ public static class FashionSensePatches
 {
     private static ConstructorInfo SkinToneModelCtor = null!;
     private static MethodInfo? GetBodyColorMethod;
-    private static object? TextureManagerInstance;
     private static MethodInfo? GetSpecificAppearanceModelMethod;
     private static MethodInfo? GetBodyFromFacingDirectionMethod;
     private static MethodInfo? ShouldHideLegsMethod;
     
+    public static object? TextureManagerInstance;
     public static MethodInfo? SetSpriteDirtyMethod;
     
     public static void Patch(Harmony harmony)
