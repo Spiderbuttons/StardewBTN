@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Xna.Framework.Graphics;
@@ -27,6 +29,7 @@ namespace SpiderCore.Common.Shaders
 
         public static Effect LoadShader(string shaderName)
         {
+            if (Helper is null) throw new NullReferenceException(nameof(Helper));
             byte[] stream = File.ReadAllBytes(Path.Combine(Helper.DirectoryPath, "assets", "shaders", $"{shaderName}.mgfx"));
             return new Effect(Game1.graphics.GraphicsDevice, stream);
         }
