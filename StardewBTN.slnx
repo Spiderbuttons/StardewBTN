@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/SpiderCore/">
+    <Project Path="SpiderCore/SpiderCore.Common/SpiderCore.Common.shproj" />
+  </Folder>
   <Project Path="FishPondDye/FishPondDye.csproj" />
   <Project Path="NoRedecoratingPlease/NoRedecoratingPlease.csproj" />
   <Project Path="TheInfinityTones/TheInfinityTones.csproj" />

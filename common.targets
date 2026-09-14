@@ -1,0 +1,22 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>Latest</LangVersion>
+        <GamePath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley</GamePath>
+        <GameModsPath>$(GamePath)\ModsDebug</GameModsPath>
+        <StartArguments>--mods-path "$(GameModsPath)"</StartArguments>
+        <EnableModDeploy>true</EnableModDeploy>
+        <EnableModZip>true</EnableModZip>
+        <EnableHarmony>true</EnableHarmony>
+        <Authors>Spiderbuttons</Authors>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <OutputPath>bin\Debug</OutputPath>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.*"/>
+    </ItemGroup>
+
+    <Import Project="$(SolutionDir)SpiderCore\SpiderCore.Common\SpiderCore.Common.projitems" Label="Shared" />
+</Project>
