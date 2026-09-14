@@ -1,0 +1,82 @@
+{
+    "author": "Spiderbuttons",
+    "name": "Stardew Valley MonoRepo Mod",
+    "description": "A project for creating a Stardew Valley mod with SMAPI, tailored to my monorepo.",
+    "identity": "Spiderbuttons.StardewModTemplateMono",
+    "shortName": "buttonsdvmono",
+    "tags": {
+        "language": "C#",
+        "type": "project"
+    },
+    "sourceName": "StardewModTemplate",
+	"preferNameDirectory": "true",
+    "symbols": {
+        "Framework": {
+            "type": "parameter",
+            "description": "The target framework for the project.",
+            "dataType": "choice",
+            "choices": [
+                {
+                    "choice": "net6.0"
+                }
+            ],
+            "defaultValue": "net6.0"
+        },
+		"EnableConsoleCommands": {
+			"type": "parameter",
+			"dataType": "bool",
+			"defaultValue": "false",
+			"displayName": "Console Commands"
+		},
+		"RootCommand": {
+			"type": "parameter",
+			"dataType": "text",
+			"isEnabled": "EnableConsoleCommands == true",
+			"defaultValue": "btn",
+			"replaces": "$(RootCommand)",
+			"displayName": "Root Command"
+		},
+		"EnableTranslations": {
+			"type": "parameter",
+			"dataType": "bool",
+			"defaultValue": "false",
+			"displayName": "i18n Support"
+		},
+		"EnableConfig": {
+			"type": "parameter",
+			"dataType": "bool",
+			"defaultValue": "false",
+			"displayName": "Configurability"
+		},
+		"EnablePublicizer": {
+			"type": "parameter",
+			"dataType": "bool",
+			"defaultValue": "false",
+			"displayName": "Publicize Game & SMAPI"
+		}
+    },
+	"sources": [
+		{
+			"modifiers": [
+				{
+					"condition": "(!EnableTranslations)",
+					"exclude": [
+						"i18n/**"
+					]
+				},
+				{
+					"condition": "(!EnableConfig)",
+					"exclude": [
+						"Config/**"
+					]
+				},
+				{
+					"condition": "(!EnableConsoleCommands)",
+					"exclude": [
+						"Commands/**"
+					]
+				}
+			]
+		}
+	]
+}

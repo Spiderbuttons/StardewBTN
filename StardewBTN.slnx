@@ -4,6 +4,7 @@
   </Folder>
   <Project Path="FishPondDye/FishPondDye.csproj" />
   <Project Path="NoRedecoratingPlease/NoRedecoratingPlease.csproj" />
+  <Project Path="StardewModTemplate/StardewModTemplate.csproj" />
   <Project Path="TheInfinityTones/TheInfinityTones.csproj" />
   <Project Path="ThePhoneIsRinging/ThePhoneIsRinging.csproj" />
 </Solution>

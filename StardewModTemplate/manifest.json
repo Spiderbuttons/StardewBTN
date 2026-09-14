@@ -1,0 +1,9 @@
+{
+    "Name": "StardewModTemplate",
+    "Author": "Spiderbuttons",
+    "Version": "1.0.0",
+    "Description": "A template for a Stardew Valley mod.",
+    "UniqueID": "Spiderbuttons.StardewModTemplate",
+    "EntryDll": "StardewModTemplate.dll",
+    "UpdateKeys": [ "Nexus:????" ]
+}
