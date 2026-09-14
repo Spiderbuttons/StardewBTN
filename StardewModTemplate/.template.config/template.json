@@ -48,6 +48,12 @@
 			"defaultValue": "false",
 			"displayName": "Configurability"
 		},
+		"EnableShaders": {
+			"type": "parameter",
+			"dataType": "bool",
+			"defaultValue": "false",
+			"displayName": "Using Shaders"
+		},
 		"EnablePublicizer": {
 			"type": "parameter",
 			"dataType": "bool",
@@ -75,7 +81,13 @@
 					"exclude": [
 						"Commands/**"
 					]
-				}
+				},
+				{
+					"condition": "(!EnableShaders)",
+					"exclude": [
+						"assets/shaders/**"
+					]
+				},
 			]
 		}
 	]

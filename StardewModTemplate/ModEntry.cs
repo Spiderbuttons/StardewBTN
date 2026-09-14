@@ -6,6 +6,9 @@ using SpiderCore.Common.Integration;
 using SpiderCore.Common.Commands;
 #endif
 using SpiderCore.Common.Logging;
+#if (EnableShaders)
+using SpiderCore.Common.Shaders;
+#endif
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 #if (EnableConfig)
@@ -36,6 +39,9 @@ namespace StardewModTemplate
             ModHelper = helper;
             #if (EnableTranslations)
             i18n.Init(ModHelper.Translation);
+            #endif
+            #if (EnableShaders)
+            ShaderUtilities.Helper = ModHelper;
             #endif
             #if (EnableConsoleCommands)
             CommandHandler = new CommandHandler(ModHelper, Manifest, "$(RootCommand)");
