@@ -1,0 +1,9 @@
+{
+    "Name": "Unlimited Chest Colours",
+    "Author": "Spiderbuttons",
+    "Version": "1.0.0",
+    "Description": "Pick whatever colour you want for your chests from a standard colour picker.",
+    "UniqueID": "Spiderbuttons.UnlimitedChestColours",
+    "EntryDll": "UnlimitedChestColours.dll",
+    "UpdateKeys": [ "Nexus:????" ]
+}
