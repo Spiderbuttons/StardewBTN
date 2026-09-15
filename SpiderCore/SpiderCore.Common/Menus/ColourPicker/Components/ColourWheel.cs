@@ -19,12 +19,12 @@ namespace SpiderCore.Common.Menus.ColourPicker.Components
 
                 try
                 {
-                    field = ShaderUtilities.LoadShader("colourWheel");
+                    field = ShaderUtilities.LoadShader("ColourWheel");
                     return field;
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Failed to load colourWheel shader: {e.Message}");
+                    Log.Error($"Failed to load ColourWheel shader: {e.Message}");
                     throw;
                 }
             }
