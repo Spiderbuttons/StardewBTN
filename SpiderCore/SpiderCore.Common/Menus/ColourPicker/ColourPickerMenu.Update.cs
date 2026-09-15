@@ -241,7 +241,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
 
         private void UpdateSliderPositions()
         {
-            for (var i = 0; i < 7; i++)
+            for (var i = 0; i < _sliders.Count; i++)
             {
                 string sliderKey = i switch
                 {
@@ -251,7 +251,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
                     3 => "Hue",
                     4 => "Saturation",
                     5 => "Value",
-                    _ => "Alpha",
+                    _ => _allowAlpha ? "Alpha" : throw new InvalidOperationException("Alpha slider is disabled but being updated anyway."),
                 };
                 ColourSlider slider = _sliders[sliderKey];
             
@@ -293,11 +293,14 @@ namespace SpiderCore.Common.Menus.ColourPicker
             Color maxSaturation = new HsvColour(_hue, 100, _value).ToXnaColor();
             Color minValue = new HsvColour(_hue, _saturation, 0).ToXnaColor();
             Color maxValue = new HsvColour(_hue, _saturation, 100).ToXnaColor();
-            Color minAlpha = new HsvColour(_hue, _saturation, _value, 0).ToXnaColor();
-            Color maxAlpha = new HsvColour(_hue, _saturation, _value, 100).ToXnaColor();
             _sliders["Saturation"].UpdateColours(minSaturation, maxSaturation);
             _sliders["Value"].UpdateColours(minValue, maxValue);
-            _sliders["Alpha"].UpdateColours(minAlpha, maxAlpha);
+            if (_allowAlpha)
+            {
+                Color minAlpha = new HsvColour(_hue, _saturation, _value, 0).ToXnaColor();
+                Color maxAlpha = new HsvColour(_hue, _saturation, _value, 100).ToXnaColor();
+                _sliders["Alpha"].UpdateColours(minAlpha, maxAlpha);
+            }
         }
     }
 }

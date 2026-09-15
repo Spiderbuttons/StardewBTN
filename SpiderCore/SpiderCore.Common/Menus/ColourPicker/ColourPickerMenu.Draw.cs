@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpiderCore.Common.Menus.ColourPicker.Components;
 using StardewValley;
 
 namespace SpiderCore.Common.Menus.ColourPicker
@@ -30,7 +31,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             _selectionCircle.draw(b);
         
             PickedColourSlider.draw(b, seeThrough: true);
-        
+            
             foreach (var square in _palette)
             {
                 square.draw(b);
@@ -59,7 +60,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             );
         
             Rectangle safeLeftMenuBounds = GetSafeLeftMenuBounds();
-            _drawPreview(b, safeLeftMenuBounds, PickedColourRgb);
+            _drawPreview(b, safeLeftMenuBounds, PickedColourRgb, PreviewObject);
         }
 
         private void drawRightMenu(SpriteBatch b)
@@ -112,9 +113,12 @@ namespace SpiderCore.Common.Menus.ColourPicker
         
             Rectangle hsvHeaderBounds = GetHsvHeaderBounds();
             drawHeader(b, "HSV", hsvHeaderBounds);
-        
-            Rectangle alphaHeaderBounds = GetAlphaHeaderBounds();
-            drawHeader(b, "Alpha", alphaHeaderBounds);
+
+            if (_allowAlpha)
+            {
+                Rectangle alphaHeaderBounds = GetAlphaHeaderBounds();
+                drawHeader(b, "Alpha", alphaHeaderBounds);
+            }
         }
 
         private void drawHeader(SpriteBatch b, string header, Rectangle bounds, bool includeLine = true)

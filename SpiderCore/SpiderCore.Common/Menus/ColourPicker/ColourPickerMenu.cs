@@ -12,6 +12,13 @@ namespace SpiderCore.Common.Menus.ColourPicker
 {
     public sealed partial class ColourPickerMenu : IClickableMenu
     {
+        public enum CloseReason
+        {
+            Confirmed,
+            Cancelled,
+            Other
+        }
+        
         private const int CC_SELECTION_CIRCLE = 0;
         private const int CC_CANCEL = 1;
         private const int CC_CONFIRM = 2;
@@ -216,22 +223,26 @@ namespace SpiderCore.Common.Menus.ColourPicker
             rightNeighborID = CC_RANDOM,
             fullyImmutable = true
         };
-    
-        private readonly Action<RgbColour>? _onConfirm;
-        private readonly Action<RgbColour>? _onCancel;
-        private readonly Action<SpriteBatch, Rectangle, RgbColour>? _drawPreview;
+        
+        private Action<RgbColour, CloseReason>? _onClose;
+        private readonly Action<SpriteBatch, Rectangle, RgbColour, object?>? _drawPreview;
+        private readonly bool _allowAlpha;
+
+        private readonly object? PreviewObject;
 
         /// <summary>
         /// Opens a menu that allows a player to choose a colour from a standard colour picker.
         /// </summary>
-        /// <param name="onConfirm">A callback that is called when the player confirms their colour choice. The chosen colour is passed as an argument.</param>
-        /// <param name="onCancel">A callback that is called when the player cancels the colour picker. The colour passed as an argument is whatever colour happens to be selected when the player cancels.</param>
-        /// <param name="drawPreview"> A callback that is called to draw a preview of whatever the player is choosing a colour for. The arguments are the sprite batch, the bounds of the preview area, and the currently selected colour.</param>
-        public ColourPickerMenu(Action<RgbColour>? onConfirm = null, Action<RgbColour>? onCancel = null, Action<SpriteBatch, Rectangle, RgbColour>? drawPreview = null)
+        /// <param name="onClose">
+        ///     A callback that is invoked when the menu is closed. The chosen colour is passed as an argument, as well as an enum to determine whether the menu was closed because the player confirmed their choice, cancelled picking a colour, or the menu was closed due to an emergency shutdown.
+        /// </param>
+        /// <param name="drawPreview"> A callback that is called to draw a preview of whatever the player is choosing a colour for. The arguments are the sprite batch, the bounds of the preview area, the currently selected colour, and whatever preview object you provided to the menu, if anything.</param>
+        /// <param name="allowAlpha"> Whether the player is allowed to choose an alpha value for their colour. If false, the alpha will always be 100.</param>
+        public ColourPickerMenu(Action<RgbColour, CloseReason>? onClose = null, Action<SpriteBatch, Rectangle, RgbColour, object?>? drawPreview = null, object? previewObject = null, bool allowAlpha = true)
         {
-            _onConfirm = onConfirm;
-            _onCancel = onCancel;
+            _onClose = onClose;
             _drawPreview = drawPreview;
+            _allowAlpha = allowAlpha;
         
             width = Game1.uiViewport.Width / 4;
             height = Game1.uiViewport.Width / 4;
@@ -244,6 +255,8 @@ namespace SpiderCore.Common.Menus.ColourPicker
             );
 
             List<Color>? savedPalette = null;
+            // Do not change this key!! Keeping this key the same ensures that a player's palette will be saved and loaded
+            // regardless of which mod is using this colour picker menu!
             if (Game1.player.modData.TryGetValue("Spiderbuttons.SpiderUI.ColourPickerPalette", out string? paletteString))
             {
                 if (!string.IsNullOrWhiteSpace(paletteString)) {
@@ -335,14 +348,17 @@ namespace SpiderCore.Common.Menus.ColourPicker
                 setBackingValue: SetValue
             );
 
-            _sliders["Alpha"] = new ColourSlider(
-                name: "Alpha",
-                getBackingValue: GetAlpha,
-                setBackingValue: SetAlpha
-            )
+            if (_allowAlpha)
             {
-                IsAlphaBar = true
-            };
+                _sliders["Alpha"] = new ColourSlider(
+                    name: "Alpha",
+                    getBackingValue: GetAlpha,
+                    setBackingValue: SetAlpha
+                )
+                {
+                    IsAlphaBar = true
+                };
+            }
 
             _hexInput = new HexInput(
                 font: Game1.dialogueFont,
@@ -559,9 +575,11 @@ namespace SpiderCore.Common.Menus.ColourPicker
         public override void cleanupBeforeExit()
         {
             base.cleanupBeforeExit();
+            // Do not change this key!! Keeping this key the same ensures that a player's palette will be saved and loaded
+            // regardless of which mod is using this colour picker menu!
             Game1.player.modData.Remove("Spiderbuttons.SpiderUI.ColourPickerPalette");
         
-            List<Color> paletteColours = new List<Color>();
+            List<Color> paletteColours = [];
             for (var i = _paletteSquaresPerRow; i < _palette.Count; i++)
             {
                 var square = _palette[i];
@@ -571,13 +589,25 @@ namespace SpiderCore.Common.Menus.ColourPicker
                 }
             }
         
+            // Do not change this key!! Keeping this key the same ensures that a player's palette will be saved and loaded
+            // regardless of which mod is using this colour picker menu!
             Game1.player.modData["Spiderbuttons.SpiderUI.ColourPickerPalette"] = string.Join(" ", paletteColours.Select(c => c.PackedValue));
+            
+            // In the input code, we null this callback out after clicking confirm or cancel.
+            // So if it's still here by this point, then the menu must be closing for some other reason.
+            _onClose?.Invoke(PickedColourRgb, CloseReason.Other);
         }
 
         public override bool readyToClose()
         {
             if (_hexInput.Selected) return false;
             return base.readyToClose();
+        }
+
+        public override void emergencyShutDown()
+        {
+            _onClose?.Invoke(PickedColourRgb, CloseReason.Other);
+            base.emergencyShutDown();
         }
     }
 }

@@ -197,9 +197,11 @@ namespace SpiderCore.Common.Menus.ColourPicker
                     break;
                 }
 
-                SetColour(square is { StoredColour: not null }
+                HsvColour storedColour = square.StoredColour.HasValue
                     ? HsvColour.FromXnaColor(square.StoredColour.Value)
-                    : HsvColour.FromXnaColor(Color.White));
+                    : HsvColour.FromXnaColor(Color.White);
+                if (!_allowAlpha) storedColour = new HsvColour(storedColour.Hue, storedColour.Saturation, storedColour.Value);
+                SetColour(storedColour);
 
                 Game1.playSound("smallSelect");
             }
@@ -222,15 +224,17 @@ namespace SpiderCore.Common.Menus.ColourPicker
             if (_cancelButton.containsPoint(x, y))
             {
                 _cancelButton.scale = _cancelButton.baseScale * 0.975f;
-                _onCancel?.Invoke(PickedColourRgb);
+                _onClose?.Invoke(PickedColourRgb, CloseReason.Cancelled);
+                _onClose = null;
                 exitThisMenu();
             }
         
             if (_confirmButton.containsPoint(x, y))
             {
                 _confirmButton.scale = _confirmButton.baseScale * 0.975f;
-                _onConfirm?.Invoke(PickedColourRgb);
-                exitThisMenuNoSound();
+                _onClose?.Invoke(PickedColourRgb, CloseReason.Confirmed);
+                _onClose = null;
+                exitThisMenu();
             }
 
             if (!_showingAdvancedControls || _rightSectionOffset.X < width * 0.9f) return;
@@ -285,7 +289,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             _togglePreviewBase.tryHover(x, y);
             _cancelButton.tryHover(x, y, maxScaleIncrease: 0.1f / 4f);
             _confirmButton.tryHover(x, y, maxScaleIncrease: 0.1f / 4f);
-            _randomHexButton.tryHover(x, y);
+            _randomHexButton.tryHover(x, y, maxScaleIncrease: 0.2f);
         }
     }
 }
