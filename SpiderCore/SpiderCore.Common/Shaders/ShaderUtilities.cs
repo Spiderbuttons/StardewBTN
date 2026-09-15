@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Xna.Framework.Graphics;
@@ -19,8 +17,7 @@ namespace SpiderCore.Common.Shaders
         
         private static DirectoryInfo? DevelopmentDirectory;
 
-        private static DirectoryInfo? ShaderDirectory =>
-            DevelopmentDirectory?.GetDirectories(Path.Combine("assets", "shaders")).FirstOrDefault();
+        private static DirectoryInfo? ShaderDirectory => DevelopmentDirectory?.GetDirectories(Path.Combine("assets", "shaders")).FirstOrDefault();
 
         private static DirectoryInfo? FxDirectory => DevelopmentDirectory?.GetDirectories("fx").FirstOrDefault();
 
