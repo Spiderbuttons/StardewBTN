@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Globalization;
-using SpiderCore.Common.Colour;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
@@ -134,6 +132,7 @@ namespace SpiderCore.Common.Menus.ColourPicker.Components
         public void UpdateBarBounds(Rectangle newBounds)
         {
             Bar.Bounds = newBounds;
+            bounds = newBounds;
         }
 
         public void UpdateInputBounds(Rectangle newBounds)

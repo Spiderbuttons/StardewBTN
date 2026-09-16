@@ -133,6 +133,12 @@ namespace SpiderCore.Common.Menus.ColourPicker
             {
                 _hexInput.Selected = false;
             }
+            
+            if (Game1.options.doesInputListContain(Game1.options.menuButton, key) && readyToClose())
+            {
+                _onClose?.Invoke(PickedColourRgb, CloseReason.Cancelled);
+                _onClose = null;
+            }
             base.receiveKeyPress(key);
         }
 
