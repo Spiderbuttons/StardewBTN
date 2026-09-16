@@ -17,10 +17,4 @@
         <Publicize Include="Stardew Valley"/>
         <Publicize Include="StardewValley.GameData"/>
     </ItemGroup>
-
-    <ItemGroup>
-      <Compile Include="assets\shaders\Blur.mgfx" />
-      <Compile Include="assets\shaders\ColourWheel.mgfx" />
-      <Compile Include="assets\shaders\GradientBar.mgfx" />
-    </ItemGroup>
 </Project>

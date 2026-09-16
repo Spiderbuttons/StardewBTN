@@ -1,8 +1,13 @@
 ﻿using HarmonyLib;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using SpiderCore.Common.Colour;
 using SpiderCore.Common.Logging;
+using SpiderCore.Common.Menus.ColourPicker;
 using SpiderCore.Common.Shaders;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewValley;
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -33,6 +38,22 @@ namespace UnlimitedChestColours
         {
             if (!Context.IsWorldReady)
                 return;
+
+            if (e.Button is SButton.F2)
+            {
+                if (Game1.activeClickableMenu is not null) Game1.activeClickableMenu.exitThisMenu();
+                else Game1.activeClickableMenu = new ColourPickerMenu(OnColourPickerClosed, ChestPreview, allowAlpha: false);
+            }
+        }
+
+        private void OnColourPickerClosed(RgbColour colour, ColourPickerMenu.CloseReason reason)
+        {
+            Log.Info($"Colour picker closed with colour {colour} and reason {reason}");
+        }
+        
+        private void ChestPreview(SpriteBatch b, Rectangle bounds, RgbColour colour, object? previewObject)
+        {
+            b.Draw(Game1.staminaRect, bounds, colour.ToXnaColor());
         }
     }
 }
