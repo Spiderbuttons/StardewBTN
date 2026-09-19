@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using SpiderCore.Common.Colour;
-using SpiderCore.Common.Menus.ColourPicker.Components;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
@@ -136,7 +135,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             
             if (Game1.options.doesInputListContain(Game1.options.menuButton, key) && readyToClose())
             {
-                _onClose?.Invoke(PickedColourRgb, CloseReason.Cancelled);
+                _onClose?.Invoke(CloseReason.Cancelled, PickedColourRgb, _colourableObject);
                 _onClose = null;
             }
             base.receiveKeyPress(key);
@@ -230,7 +229,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             if (_cancelButton.containsPoint(x, y))
             {
                 _cancelButton.scale = _cancelButton.baseScale * 0.975f;
-                _onClose?.Invoke(PickedColourRgb, CloseReason.Cancelled);
+                _onClose?.Invoke(CloseReason.Cancelled, PickedColourRgb, _colourableObject);
                 _onClose = null;
                 exitThisMenu();
             }
@@ -238,7 +237,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             if (_confirmButton.containsPoint(x, y))
             {
                 _confirmButton.scale = _confirmButton.baseScale * 0.975f;
-                _onClose?.Invoke(PickedColourRgb, CloseReason.Confirmed);
+                _onClose?.Invoke(CloseReason.Confirmed, PickedColourRgb, _colourableObject);
                 _onClose = null;
                 exitThisMenu();
             }

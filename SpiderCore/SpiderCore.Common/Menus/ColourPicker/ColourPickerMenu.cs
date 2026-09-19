@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using SpiderCore.Common.Colour;
-using SpiderCore.Common.Menus.ColourPicker.Components;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
@@ -10,7 +9,7 @@ using StardewValley.Menus;
 
 namespace SpiderCore.Common.Menus.ColourPicker
 {
-    public sealed partial class ColourPickerMenu : IClickableMenu
+    public partial class ColourPickerMenu : IClickableMenu
     {
         public enum CloseReason
         {
@@ -156,7 +155,6 @@ namespace SpiderCore.Common.Menus.ColourPicker
             myID = CC_TOGGLE_ADVANCED,
             leftNeighborID = CC_TOGGLE_PREVIEW,
             upNeighborID = CC_SELECTION_CIRCLE,
-            downNeighborID = CC_PALETTE_START + _paletteSquaresPerRow - 1,
             rightNeighborID = ClickableComponent.CUSTOM_SNAP_BEHAVIOR,
             fullyImmutable = true
         };
@@ -194,7 +192,8 @@ namespace SpiderCore.Common.Menus.ColourPicker
 
         private readonly Dictionary<string, ColourSlider> _sliders = [];
     
-        private const int _paletteSquaresPerRow = 12;
+        private readonly int _paletteSquaresPerRow;
+        private int _paletteRows;
         private int _minimumPaletteSquareGap => width / 72;
         private readonly List<PaletteSquare> _palette = [];
     
@@ -224,35 +223,50 @@ namespace SpiderCore.Common.Menus.ColourPicker
             fullyImmutable = true
         };
         
-        private Action<RgbColour, CloseReason>? _onClose;
+        private Action<CloseReason, RgbColour, object?>? _onClose;
         private readonly Action<SpriteBatch, Rectangle, RgbColour, object?>? _drawPreview;
         private readonly bool _allowAlpha;
 
-        private readonly object? PreviewObject;
+        private readonly object? _previewObject;
+        private readonly object? _colourableObject;
+        private readonly IClickableMenu? _previousMenu;
 
         /// <summary>
         /// Opens a menu that allows a player to choose a colour from a standard colour picker.
         /// </summary>
-        /// <param name="onClose">
-        ///     A callback that is invoked when the menu is closed. The chosen colour is passed as an argument, as well as an enum to determine whether the menu was closed because the player confirmed their choice, cancelled picking a colour, or the menu was closed due to an emergency shutdown.
-        /// </param>
-        /// <param name="drawPreview"> A callback that is called to draw a preview of whatever the player is choosing a colour for. The arguments are the sprite batch, the bounds of the preview area, the currently selected colour, and whatever preview object you provided to the menu, if anything.</param>
-        /// <param name="allowAlpha"> Whether the player is allowed to choose an alpha value for their colour. If false, the alpha will always be 100.</param>
-        public ColourPickerMenu(Action<RgbColour, CloseReason>? onClose = null, Action<SpriteBatch, Rectangle, RgbColour, object?>? drawPreview = null, object? previewObject = null, bool allowAlpha = true)
+        /// <param name="onClose">A callback that is invoked when the menu is closed. The chosen colour is passed as an argument, as well as an enum to determine whether the menu was closed because the player confirmed their choice, cancelled picking a colour, or the menu was closed due to an emergency shutdown.</param>
+        /// <param name="drawPreview">A callback that is called to draw a preview of whatever the player is choosing a colour for. The arguments are the sprite batch, the bounds of the preview area, the currently selected colour, and whatever preview object you provided to the menu, if anything.</param>
+        /// <param name="previewObject">An object that is passed to the drawPreview callback. This can be used to pass in whatever the player is choosing a colour for, so that it can be drawn in the preview area.</param>
+        /// <param name="colourableObject">An object that is passed to the onClose callback. This can be used to pass in whatever the player is choosing a colour for, so that it can be used when the player confirms their choice.</param>
+        /// <param name="previousMenu">The menu that was open before the colour picker was opened. This menu will be drawn behind the colour picker, and will be returned to when the colour picker is closed.</param>
+        /// <param name="allowAlpha">Whether the player is allowed to choose an alpha value for their colour. If false, the alpha will always be 100.</param>
+        /// <param name="paletteSquaresPerRow">The number of palette squares to put in a single row.</param>
+        /// <param name="paletteRows">The number of rows of palette squares to display.</param>
+        /// <param name="paletteColours">A list of colours to use for the palette. If null, a default palette will be used. Any palette colours that would be placed in the last row will be omitted in order to leave room for the player's saved palette.</param>
+        public ColourPickerMenu(Action<CloseReason, RgbColour, object?>? onClose = null, Action<SpriteBatch, Rectangle, RgbColour, object?>? drawPreview = null, object? previewObject = null, object? colourableObject = null, IClickableMenu? previousMenu = null, bool allowAlpha = true, int paletteSquaresPerRow = 12, int paletteRows = 2, IEnumerable<Color>? paletteColours = null)
         {
+            _previousMenu = previousMenu;
+            exitFunction = () => Game1.activeClickableMenu = _previousMenu;
+            
             _onClose = onClose;
             _drawPreview = drawPreview;
+            _previewObject = previewObject;
+            _colourableObject = colourableObject;
             _allowAlpha = allowAlpha;
-        
-            width = Game1.uiViewport.Width / 4;
-            height = Game1.uiViewport.Width / 4;
 
+            width = (int)(Game1.uiViewport.Width / 4f);
+            height = width;
+            
             _colourWheel = new ColourWheel(
                 name: "ColourWheel",
                 centerPoint: new Vector2(_screenCenter.X, _screenCenter.Y - height / 6f),
                 width: width,
                 height: width
             );
+            
+            _paletteSquaresPerRow = paletteSquaresPerRow;
+            _paletteRows = paletteRows;
+            _toggleAdvancedControls.downNeighborID = CC_PALETTE_START + _paletteSquaresPerRow - 1;
 
             List<Color>? savedPalette = null;
             // Do not change this key!! Keeping this key the same ensures that a player's palette will be saved and loaded
@@ -265,29 +279,33 @@ namespace SpiderCore.Common.Menus.ColourPicker
                         .ToList();
                 }
             }
-        
-            for (int i = 0; i < _paletteSquaresPerRow * 2; i++)
-            {
-                Color? colour = i switch 
-                {
-                    0 => Color.Black,
-                    1 => Color.White,
-                    2 => Color.Red,
-                    3 => new Color(0, 255, 0),
-                    4 => Color.Blue,
-                    5 => Color.Cyan,
-                    6 => Color.Magenta,
-                    7 => Color.Yellow,
-                    8 => new Color(255, 128, 0),
-                    9 => new Color(170, 0, 255),
-                    10 => Color.Green,
-                    11 => new Color(255, 0, 170),
-                    _ => null
-                };
             
-                if (savedPalette is not null && i - 1 >= _paletteSquaresPerRow)
+            List<Color> paletteColoursList = paletteColours?.ToList() ?? [
+                Color.Black,
+                Color.White,
+                Color.Red,
+                new Color(0, 255, 0),
+                Color.Blue,
+                Color.Cyan,
+                Color.Magenta,
+                Color.Yellow,
+                new Color(255, 128, 0),
+                new Color(170, 0, 255),
+                Color.Green,
+                new Color(255, 0, 170)
+            ];
+        
+            for (int i = 0; i < _paletteSquaresPerRow * _paletteRows; i++)
+            {
+                Color? colour = null;
+                if (i < paletteColoursList.Count && i < _paletteSquaresPerRow * (_paletteRows - 1))
                 {
-                    int savedIndex = i - 1 - _paletteSquaresPerRow;
+                    colour = paletteColoursList[i];
+                }
+                
+                if (savedPalette is not null && i - 1 >= _paletteSquaresPerRow * (paletteRows - 1))
+                {
+                    int savedIndex = i - 1 - _paletteSquaresPerRow * (paletteRows - 1);
                     if (savedIndex < savedPalette.Count)
                     {
                         colour = savedPalette[savedIndex];
@@ -298,10 +316,10 @@ namespace SpiderCore.Common.Menus.ColourPicker
                     name: $"PaletteSquare{i}",
                     bounds: Rectangle.Empty,
                     storedColour: colour,
-                    locked: i < _paletteSquaresPerRow
+                    locked: i < _paletteSquaresPerRow * (paletteRows - 1)
                 )
                 {
-                    IsAddSquare = i == _paletteSquaresPerRow
+                    IsAddSquare = i == _paletteSquaresPerRow * (paletteRows - 1),
                 });
             }
 
@@ -407,14 +425,16 @@ namespace SpiderCore.Common.Menus.ColourPicker
         {
             for (int i = 0; i < _palette.Count; i++)
             {
+                int indexInRow = i % _paletteSquaresPerRow;
                 var square = _palette[i];
                 square.myID = CC_PALETTE_START + i;
                 square.upNeighborID = i < _paletteSquaresPerRow ? CC_SELECTION_CIRCLE : CC_PALETTE_START + i - _paletteSquaresPerRow;
-                if (i is < _paletteSquaresPerRow and (< 2 or >= _paletteSquaresPerRow - 2))
+                // TODO: Fix.
+                if (i < _paletteSquaresPerRow && (indexInRow < 2 || indexInRow >= _paletteSquaresPerRow - 2))
                 {
-                    square.upNeighborID = i < 4 ? CC_TOGGLE_PREVIEW : CC_TOGGLE_ADVANCED;
+                    square.upNeighborID = i < 2 ? CC_TOGGLE_PREVIEW : CC_TOGGLE_ADVANCED;
                 }
-                square.downNeighborID = i < _paletteSquaresPerRow ? CC_PALETTE_START + i + _paletteSquaresPerRow : ClickableComponent.ID_ignore;
+                square.downNeighborID = i + _paletteSquaresPerRow < _palette.Count ? CC_PALETTE_START + i + _paletteSquaresPerRow : ClickableComponent.ID_ignore;
                 square.rightNeighborID = (i + 1) % _paletteSquaresPerRow == 0 ? ClickableComponent.ID_ignore : CC_PALETTE_START + i + 1;
                 square.leftNeighborID = i % _paletteSquaresPerRow == 0 ? ClickableComponent.ID_ignore : CC_PALETTE_START + i - 1;
                 square.fullyImmutable = true;
@@ -464,6 +484,26 @@ namespace SpiderCore.Common.Menus.ColourPicker
                 sliderId++;
             }
         }
+        
+        public void ShowPreview()
+        {
+            _showingPreview = true;
+        }
+
+        public void HidePreview()
+        {
+            _showingPreview = false;
+        }
+    
+        public void ShowAdvancedControls()
+        {
+            _showingAdvancedControls = true;
+        }
+    
+        public void HideAdvancedControls()
+        {
+            _showingAdvancedControls = false;
+        }
 
         public decimal GetRed()
         {
@@ -502,19 +542,19 @@ namespace SpiderCore.Common.Menus.ColourPicker
 
         public void SetRed(decimal red)
         {
-            RgbColour rgb = new RgbColour(red, GetGreen(), GetBlue());
+            RgbColour rgb = new RgbColour(red, GetGreen(), GetBlue(), GetAlpha() / 100M * 255M);
             SetColour(rgb);
         }
     
         public void SetGreen(decimal green)
         {
-            RgbColour rgb = new RgbColour(GetRed(), green, GetBlue());
+            RgbColour rgb = new RgbColour(GetRed(), green, GetBlue(), GetAlpha() / 100M * 255M);
             SetColour(rgb);
         }
     
         public void SetBlue(decimal blue)
         {
-            RgbColour rgb = new RgbColour(GetRed(), GetGreen(), blue);
+            RgbColour rgb = new RgbColour(GetRed(), GetGreen(), blue, GetAlpha() / 100M * 255M);
             SetColour(rgb);
         }
 
@@ -555,11 +595,11 @@ namespace SpiderCore.Common.Menus.ColourPicker
         private void AddColourToPalette(HsvColour hsv)
         {
             Color colour = hsv.ToXnaColor();
-            for (var i = _palette.Count - 1; i > _paletteSquaresPerRow; i--)
+            for (var i = _palette.Count - 1; i > _paletteSquaresPerRow * (_paletteRows - 1); i--)
             {
                 _palette[i].StoredColour = _palette[i - 1].StoredColour;
             }
-            _palette[_paletteSquaresPerRow + 1].StoredColour = colour;
+            _palette[_paletteSquaresPerRow * (_paletteRows - 1) + 1].StoredColour = colour;
         }
     
         private void RemoveColourFromPalette(int index)
@@ -580,7 +620,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             Game1.player.modData.Remove("Spiderbuttons.SpiderUI.ColourPickerPalette");
         
             List<Color> paletteColours = [];
-            for (var i = _paletteSquaresPerRow; i < _palette.Count; i++)
+            for (var i = _paletteSquaresPerRow * (_paletteRows - 1); i < _palette.Count; i++)
             {
                 var square = _palette[i];
                 if (square.StoredColour.HasValue)
@@ -595,7 +635,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             
             // In the input code, we null this callback out after clicking confirm or cancel.
             // So if it's still here by this point, then the menu must be closing for some other reason.
-            _onClose?.Invoke(PickedColourRgb, CloseReason.Other);
+            _onClose?.Invoke(CloseReason.Other, PickedColourRgb, _colourableObject);
         }
 
         public override bool readyToClose()
@@ -606,7 +646,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
 
         public override void emergencyShutDown()
         {
-            _onClose?.Invoke(PickedColourRgb, CloseReason.Other);
+            _onClose?.Invoke(CloseReason.Other, PickedColourRgb, _colourableObject);
             base.emergencyShutDown();
         }
     }

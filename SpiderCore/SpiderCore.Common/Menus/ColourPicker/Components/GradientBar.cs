@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using SpiderCore.Common.Shaders;
 using StardewValley;
 
-namespace SpiderCore.Common.Menus.ColourPicker.Components
+namespace SpiderCore.Common.Menus.ColourPicker
 {
     public class GradientBar
     {

@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SpiderCore.Common.Menus.ColourPicker.Components;
 using StardewValley;
 
 namespace SpiderCore.Common.Menus.ColourPicker
@@ -9,6 +8,8 @@ namespace SpiderCore.Common.Menus.ColourPicker
     {
         public override void draw(SpriteBatch b)
         {
+            _previousMenu?.draw(b);
+            
             b.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.4f);
 
             drawLeftMenu(b);
@@ -60,7 +61,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             );
         
             Rectangle safeLeftMenuBounds = GetSafeLeftMenuBounds();
-            _drawPreview(b, safeLeftMenuBounds, PickedColourRgb, PreviewObject);
+            _drawPreview(b, safeLeftMenuBounds, PickedColourRgb, _previewObject);
         }
 
         private void drawRightMenu(SpriteBatch b)
