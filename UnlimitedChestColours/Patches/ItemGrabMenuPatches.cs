@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using SpiderCore.Common.Extensions;
+using SpiderCore.Common.Logging;
 using SpiderCore.Common.Menus.ColourPicker;
 using StardewValley;
 using StardewValley.Menus;
@@ -49,6 +50,24 @@ public static class ItemGrabMenuPatches
             __instance.allClickableComponents.Add(_colourWheel);
         }
         
+        __instance.chestColorPicker = null;
+    }
+
+    [HarmonyPrefix, HarmonyPatch(nameof(ItemGrabMenu.setSourceItem))]
+    private static void setSourceItem_Prefix(ItemGrabMenu __instance, ref Color __state)
+    {
+        if (!__instance.CanHaveColorPicker() || __instance.sourceItem is not Chest chest) return;
+        
+        __state = chest.playerChoiceColor.Value;
+        __instance.chestColorPicker = null;
+    }
+    
+    [HarmonyPostfix, HarmonyPatch(nameof(ItemGrabMenu.setSourceItem))]
+    private static void setSourceItem_Postfix(ItemGrabMenu __instance, Color __state)
+    {
+        if (!__instance.CanHaveColorPicker() || __instance.sourceItem is not Chest chest) return;
+        
+        chest.playerChoiceColor.Value = __state;
         __instance.chestColorPicker = null;
     }
 

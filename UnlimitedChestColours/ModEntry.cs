@@ -81,7 +81,6 @@ namespace UnlimitedChestColours
 
         private static void OnColourPickerClosed(ColourPickerMenu.CloseReason reason, RgbColour colour, object? colourableObject)
         {
-            Log.Info($"Colour picker closed with colour {colour} and reason {reason}");
             if (reason is not ColourPickerMenu.CloseReason.Confirmed || colourableObject is not Chest chest) return;
             
             Color finalColour = colour.ToXnaColor();
