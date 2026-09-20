@@ -21,7 +21,7 @@ public static class ItemGrabMenuPatches
     [HarmonyPostfix, HarmonyPatch(MethodType.Constructor, typeof(IList<Item>), typeof(bool), typeof(bool), typeof(InventoryMenu.highlightThisItem), typeof(ItemGrabMenu.behaviorOnItemSelect), typeof(string), typeof(ItemGrabMenu.behaviorOnItemSelect), typeof(bool), typeof(bool), typeof(bool), typeof(bool), typeof(bool), typeof(int), typeof(Item), typeof(int), typeof(object), typeof(ItemExitBehavior), typeof(bool))]
     private static void Constructor_Postfix(ItemGrabMenu __instance)
     {
-        if (!__instance.CanHaveColorPicker() || __instance.sourceItem is not Chest) return;
+        if (!__instance.CanHaveColorPicker() || __instance.colorPickerToggleButton is null || __instance.sourceItem is not Chest) return;
         
         Rectangle wheelBounds = new Rectangle(
             __instance.colorPickerToggleButton.bounds.X,
@@ -135,7 +135,7 @@ public static class ItemGrabMenuPatches
     private static bool receiveLeftClick_Prefix(ItemGrabMenu __instance, int x, int y)
     {
         if (!__instance.CanHaveColorPicker() || _colourWheel is null || __instance.sourceItem is not Chest chest) return true;
-        if (__instance.colorPickerToggleButton is null || !__instance.colorPickerToggleButton.containsPoint(x, y)) return true;
+        if (__instance.colorPickerToggleButton?.containsPoint(x, y) != true) return true;
 
         _colourWheel.Width = 40;
         if (ModEntry.ModHelper.Input.IsAnyDown(SButton.LeftShift, SButton.LeftTrigger))
