@@ -1,0 +1,1 @@
+Copyright © 2026 Spiderbuttons. All rights reserved.
