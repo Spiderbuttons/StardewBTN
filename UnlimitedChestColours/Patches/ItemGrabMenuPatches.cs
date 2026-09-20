@@ -135,7 +135,7 @@ public static class ItemGrabMenuPatches
     private static bool receiveLeftClick_Prefix(ItemGrabMenu __instance, int x, int y)
     {
         if (!__instance.CanHaveColorPicker() || _colourWheel is null || __instance.sourceItem is not Chest chest) return true;
-        if (!__instance.colorPickerToggleButton.containsPoint(x, y)) return true;
+        if (__instance.colorPickerToggleButton is null || !__instance.colorPickerToggleButton.containsPoint(x, y)) return true;
 
         _colourWheel.Width = 40;
         if (ModEntry.ModHelper.Input.IsAnyDown(SButton.LeftShift, SButton.LeftTrigger))
