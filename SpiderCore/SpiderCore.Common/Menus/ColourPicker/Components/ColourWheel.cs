@@ -7,7 +7,7 @@ using SpiderCore.Common.Shaders;
 using StardewValley;
 using StardewValley.Menus;
 
-namespace SpiderCore.Common.Menus.ColourPicker.Components
+namespace SpiderCore.Common.Menus.ColourPicker
 {
     public class ColourWheel : ClickableComponent
     {
@@ -19,12 +19,12 @@ namespace SpiderCore.Common.Menus.ColourPicker.Components
 
                 try
                 {
-                    field = ShaderUtilities.LoadShader("colourWheel");
+                    field = ShaderUtilities.LoadShader("ColourWheel");
                     return field;
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Failed to load colourWheel shader: {e.Message}");
+                    Log.Error($"Failed to load ColourWheel shader: {e.Message}");
                     throw;
                 }
             }
@@ -150,7 +150,7 @@ namespace SpiderCore.Common.Menus.ColourPicker.Components
             return new Vector2((float)(saturation * Math.Cos(angle)), (float)(saturation * Math.Sin(angle)));
         }
 
-        public void draw(SpriteBatch b)
+        public void draw(SpriteBatch b, bool includeOutline = false)
         {
             b.End();
             b.Begin(effect: ColourWheelEffect);
@@ -159,6 +159,25 @@ namespace SpiderCore.Common.Menus.ColourPicker.Components
             ColourWheelEffect.Parameters["Resolution"].SetValue(new Vector2(Width * 5f, Height * 5f));
         
             ColourWheelEffect.Parameters["Value"].SetValue(0.1f);
+            
+            if (includeOutline)
+            {
+                b.Draw(
+                    texture: Game1.staminaRect,
+                    destinationRectangle: new Rectangle(
+                        x: (int)CenterPoint.X,
+                        y: (int)CenterPoint.Y,
+                        width: (int)(Width * 1.1f),
+                        height: (int)(Height * 1.1f)
+                    ),
+                    sourceRectangle: null,
+                    color: Color.Black * 0.75f,
+                    rotation: 0f,
+                    origin: new Vector2(0.5f, 0.5f),
+                    effects: SpriteEffects.None,
+                    layerDepth: 1f
+                );
+            }
         
             b.Draw(
                 texture: Game1.staminaRect,

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using SpiderCore.Common.Colour;
-using SpiderCore.Common.Menus.ColourPicker.Components;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using StardewValley;
@@ -12,7 +11,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
     {
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
         {
-            width = Game1.uiViewport.Width / 4;
+            width = (int)(Game1.uiViewport.Width / 4f * Game1.options.uiScale);
         
             Rectangle colourWheelBounds = GetColourWheelBounds();
             _colourWheel.CenterPoint = new Vector2(colourWheelBounds.X + colourWheelBounds.Width / 2f, colourWheelBounds.Y + colourWheelBounds.Height / 2f);
@@ -53,7 +52,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
         
             // This'll make the menu fit all our stuff in it, but only just. Nice n cozy size.
             (int squareSize, int gap) = GetPaletteSquareSizeAndGap();
-            float totalHeight = _colourWheel.Height + gap * 2 + squareSize * 3 + gap * 3;
+            float totalHeight = _colourWheel.Height + gap + squareSize * (_paletteRows + 1) + gap * (_paletteRows + 1);
             height = (int)totalHeight;
         
             UpdateSliderPositions();
@@ -172,16 +171,16 @@ namespace SpiderCore.Common.Menus.ColourPicker
             bool selectionCircleIsInTopQuarter = point.Y < -0.5f;
             switch (point.X)
             {
-                case < -0.35f:
+                case < -0.45f:
                 case < 0 when !selectionCircleIsInBottomQuarter:
                     _selectionCircle.downNeighborID = CC_TOGGLE_PREVIEW;
                     break;
-                case > 0.35f:
+                case > 0.45f:
                 case >= 0 when !selectionCircleIsInBottomQuarter:
                     _selectionCircle.downNeighborID = CC_TOGGLE_ADVANCED;
                     break;
                 default:
-                    if (_selectionCircle.downNeighborID is >= CC_PALETTE_START and < CC_PALETTE_START + _paletteSquaresPerRow)
+                    if (_selectionCircle.downNeighborID >= CC_PALETTE_START && _selectionCircle.downNeighborID < CC_PALETTE_START + _paletteSquaresPerRow)
                     {
                         break;
                     }
@@ -208,21 +207,29 @@ namespace SpiderCore.Common.Menus.ColourPicker
             if (selectionCircleIsInBottomQuarter)
             {
                 _toggleAdvancedControls.leftNeighborID = CC_SELECTION_CIRCLE;
+                _toggleAdvancedControls.upNeighborID = CC_CONFIRM;
                 _togglePreviewBase.rightNeighborID = CC_SELECTION_CIRCLE;
+                _togglePreviewBase.upNeighborID = CC_CANCEL;
             } else
             {
                 _toggleAdvancedControls.leftNeighborID = CC_TOGGLE_PREVIEW;
+                _toggleAdvancedControls.upNeighborID = CC_SELECTION_CIRCLE;
                 _togglePreviewBase.rightNeighborID = CC_TOGGLE_ADVANCED;
+                _togglePreviewBase.upNeighborID = CC_SELECTION_CIRCLE;
             }
 
             if (selectionCircleIsInTopQuarter)
             {
                 _cancelButton.rightNeighborID = CC_SELECTION_CIRCLE;
+                _cancelButton.downNeighborID = CC_TOGGLE_PREVIEW;
                 _confirmButton.leftNeighborID = CC_SELECTION_CIRCLE;
+                _confirmButton.downNeighborID = CC_TOGGLE_ADVANCED;
             } else 
             {
                 _cancelButton.rightNeighborID = CC_CONFIRM;
+                _cancelButton.downNeighborID = CC_SELECTION_CIRCLE;
                 _confirmButton.leftNeighborID = CC_CANCEL;
+                _confirmButton.downNeighborID = CC_SELECTION_CIRCLE;
             }
         }
 
@@ -241,7 +248,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
 
         private void UpdateSliderPositions()
         {
-            for (var i = 0; i < 7; i++)
+            for (var i = 0; i < _sliders.Count; i++)
             {
                 string sliderKey = i switch
                 {
@@ -251,7 +258,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
                     3 => "Hue",
                     4 => "Saturation",
                     5 => "Value",
-                    _ => "Alpha",
+                    _ => _allowAlpha ? "Alpha" : throw new InvalidOperationException("Alpha slider is disabled but being updated anyway."),
                 };
                 ColourSlider slider = _sliders[sliderKey];
             
@@ -293,11 +300,14 @@ namespace SpiderCore.Common.Menus.ColourPicker
             Color maxSaturation = new HsvColour(_hue, 100, _value).ToXnaColor();
             Color minValue = new HsvColour(_hue, _saturation, 0).ToXnaColor();
             Color maxValue = new HsvColour(_hue, _saturation, 100).ToXnaColor();
-            Color minAlpha = new HsvColour(_hue, _saturation, _value, 0).ToXnaColor();
-            Color maxAlpha = new HsvColour(_hue, _saturation, _value, 100).ToXnaColor();
             _sliders["Saturation"].UpdateColours(minSaturation, maxSaturation);
             _sliders["Value"].UpdateColours(minValue, maxValue);
-            _sliders["Alpha"].UpdateColours(minAlpha, maxAlpha);
+            if (_allowAlpha)
+            {
+                Color minAlpha = new HsvColour(_hue, _saturation, _value, 0).ToXnaColor();
+                Color maxAlpha = new HsvColour(_hue, _saturation, _value, 100).ToXnaColor();
+                _sliders["Alpha"].UpdateColours(minAlpha, maxAlpha);
+            }
         }
     }
 }

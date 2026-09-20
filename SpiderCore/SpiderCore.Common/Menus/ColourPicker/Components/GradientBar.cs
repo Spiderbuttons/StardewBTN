@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using SpiderCore.Common.Shaders;
 using StardewValley;
 
-namespace SpiderCore.Common.Menus.ColourPicker.Components
+namespace SpiderCore.Common.Menus.ColourPicker
 {
     public class GradientBar
     {
@@ -17,12 +17,12 @@ namespace SpiderCore.Common.Menus.ColourPicker.Components
 
                 try
                 {
-                    field = ShaderUtilities.LoadShader("gradientBar");
+                    field = ShaderUtilities.LoadShader("GradientBar");
                     return field;
                 }
                 catch (Exception e)
                 {
-                    Log.Error($"Failed to load gradientBar shader: {e.Message}");
+                    Log.Error($"Failed to load GradientBar shader: {e.Message}");
                     throw;
                 }
             }

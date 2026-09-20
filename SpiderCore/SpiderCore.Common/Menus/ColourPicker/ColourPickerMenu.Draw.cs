@@ -8,6 +8,8 @@ namespace SpiderCore.Common.Menus.ColourPicker
     {
         public override void draw(SpriteBatch b)
         {
+            _previousMenu?.draw(b);
+            
             b.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.4f);
 
             drawLeftMenu(b);
@@ -30,7 +32,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             _selectionCircle.draw(b);
         
             PickedColourSlider.draw(b, seeThrough: true);
-        
+            
             foreach (var square in _palette)
             {
                 square.draw(b);
@@ -59,7 +61,7 @@ namespace SpiderCore.Common.Menus.ColourPicker
             );
         
             Rectangle safeLeftMenuBounds = GetSafeLeftMenuBounds();
-            _drawPreview(b, safeLeftMenuBounds, PickedColourRgb);
+            _drawPreview(b, safeLeftMenuBounds, PickedColourRgb, _previewObject);
         }
 
         private void drawRightMenu(SpriteBatch b)
@@ -112,9 +114,12 @@ namespace SpiderCore.Common.Menus.ColourPicker
         
             Rectangle hsvHeaderBounds = GetHsvHeaderBounds();
             drawHeader(b, "HSV", hsvHeaderBounds);
-        
-            Rectangle alphaHeaderBounds = GetAlphaHeaderBounds();
-            drawHeader(b, "Alpha", alphaHeaderBounds);
+
+            if (_allowAlpha)
+            {
+                Rectangle alphaHeaderBounds = GetAlphaHeaderBounds();
+                drawHeader(b, "Alpha", alphaHeaderBounds);
+            }
         }
 
         private void drawHeader(SpriteBatch b, string header, Rectangle bounds, bool includeLine = true)

@@ -89,14 +89,21 @@ namespace SpiderCore.Common.Menus.ColourPicker
             int startingX = (int)_screenCenter.X - width / 2;
             int offset = (width - (_paletteSquaresPerRow * squareSize + (_paletteSquaresPerRow - 1) * gap)) / 2;
             startingX += offset;
-        
-            int x = startingX + paletteIndex * (squareSize + gap);
+            
             int y = (int)(_colourWheel.CenterPoint.Y + _colourWheel.Height / 2 + gap * 2) + squareSize + gap * 2;
-            if (paletteIndex >= _paletteSquaresPerRow) // Second row
+            
+            while (paletteIndex >= _paletteSquaresPerRow)
             {
-                x = startingX + (paletteIndex - _paletteSquaresPerRow) * (squareSize + gap);
+                paletteIndex -= _paletteSquaresPerRow;
                 y += squareSize + gap;
             }
+            int x = startingX + paletteIndex * (squareSize + gap);
+            
+            // if (paletteIndex >= _paletteSquaresPerRow) // Second row
+            // {
+            //     x = startingX + (paletteIndex - _paletteSquaresPerRow) * (squareSize + gap);
+            //     y += squareSize + gap;
+            // }
         
             return new Rectangle(x, y, squareSize, squareSize);
         }

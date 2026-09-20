@@ -7,4 +7,5 @@
   <Project Path="StardewModTemplate/StardewModTemplate.csproj" />
   <Project Path="TheInfinityTones/TheInfinityTones.csproj" />
   <Project Path="ThePhoneIsRinging/ThePhoneIsRinging.csproj" />
+  <Project Path="UnlimitedChestColours/UnlimitedChestColours.csproj" />
 </Solution>

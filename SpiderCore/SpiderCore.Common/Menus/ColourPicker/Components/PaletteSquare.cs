@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
 
-namespace SpiderCore.Common.Menus.ColourPicker.Components
+namespace SpiderCore.Common.Menus.ColourPicker
 {
     public class PaletteSquare : ClickableComponent
     {
