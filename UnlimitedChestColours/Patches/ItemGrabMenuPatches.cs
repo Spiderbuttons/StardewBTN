@@ -82,7 +82,7 @@ public static class ItemGrabMenuPatches
     [HarmonyPostfix, HarmonyPatch(nameof(ItemGrabMenu.draw), typeof(SpriteBatch))]
     private static void draw_Postfix(ItemGrabMenu __instance, SpriteBatch b)
     {
-        if (!__instance.CanHaveColorPicker() || _colourWheel is null) return;
+        if (!__instance.CanHaveColorPicker() || __instance.colorPickerToggleButton is null || _colourWheel is null) return;
 
         Rectangle pixelSourceRect = new Rectangle(
             x: 105,
