@@ -5,5 +5,5 @@
     "Description": "Pick whatever colour you want for your chests from a standard colour picker.",
     "UniqueID": "Spiderbuttons.UnlimitedChestColours",
     "EntryDll": "UnlimitedChestColours.dll",
-    "UpdateKeys": [ "Nexus:????" ]
+    "UpdateKeys": [ "Nexus:52616" ]
 }
