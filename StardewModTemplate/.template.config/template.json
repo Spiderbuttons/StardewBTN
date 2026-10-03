@@ -92,7 +92,8 @@
 				{
 					"condition": "(!EnableShaders)",
 					"exclude": [
-						"assets/shaders/**"
+						"assets/shaders/**",
+						"fx/**"
 					]
 				},
 			]
